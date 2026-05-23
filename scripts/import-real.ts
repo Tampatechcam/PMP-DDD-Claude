@@ -30,6 +30,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, writeFileSync, appendFileSync, existsSync, unlinkSync } from 'fs'
 import { join } from 'path'
+// Node 20 lacks native WebSocket; supabase-js needs `ws` to initialize.
+// @ts-ignore — ws is not part of devDependencies; installed transiently.
+import WebSocket from 'ws'
+// @ts-ignore — patch global
+;(globalThis as any).WebSocket = WebSocket
 
 // ---------- env ----------
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -40,12 +45,16 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-  auth: { persistSession: false }
+  auth: { persistSession: false },
+  // Disable realtime so the WebSocket doesn't open connections we don't need.
+  realtime: { params: {} } as any
 })
 
 const W = join(process.cwd(), 'scripts', '.import-work')
 const UNMAPPED_LOG = join(W, 'unmapped.log.jsonl')
 if (existsSync(UNMAPPED_LOG)) unlinkSync(UNMAPPED_LOG)
+// Create empty file up-front so the path always exists even when nothing failed.
+writeFileSync(UNMAPPED_LOG, '')
 
 function logUnmapped(payload: Record<string, unknown>) {
   appendFileSync(UNMAPPED_LOG, JSON.stringify(payload) + '\n')
@@ -171,6 +180,47 @@ interface ClientBucket {
   name: string // canonical client name (e.g. "FTA", "Scout Financial Group")
 }
 
+// Independent-firm name aliases — different sheets use different spellings.
+// Map every observed variant to a single canonical client name.
+const INDEPENDENT_FIRM_ALIASES: Record<string, string> = {
+  'scout financial': 'Scout Financial Group',
+  'scout financial group': 'Scout Financial Group',
+  'bone asset': 'Bone Asset Management',
+  'bone asset management': 'Bone Asset Management',
+  'top rank advisors': 'Top Rank Advisors, LLC',
+  'top rank advisors, llc': 'Top Rank Advisors, LLC',
+  'damian sylvia': 'Damian J Sylvia Financial Solutions',
+  'damian j sylvia financial solutions': 'Damian J Sylvia Financial Solutions',
+  'kelly capital partners': 'Copper Partners II DBA Kelly Capital Partners',
+  'copper partners ii dba kelly capital partners': 'Copper Partners II DBA Kelly Capital Partners',
+  'the otoole group': "The O'Toole Group",
+  "the o'toole group": "The O'Toole Group",
+  'eagle financial solutions': 'Eagle Financial Solutions',
+  'advanced wealth management': 'Advanced Wealth Management',
+  'avinci wealth management': 'Avinci Wealth Management',
+  'mason street wealth management': 'Mason Street Wealth Management',
+  'mcguire insurance & retirement solutions': 'McGuire Insurance & Retirement Solutions',
+  'ferguson wealth & insurance solutions, llc.': 'Ferguson Wealth & Insurance Solutions, LLC.',
+  'ferguson wealth & insurance solutions': 'Ferguson Wealth & Insurance Solutions, LLC.',
+  // Group_name = "Andy Urso" in the DM sheet maps to the AdvisorMax client
+  // — handled separately below via advisor lookup.
+  'forecast estate planning': 'Forecast Estate Planning',
+  'professional group, inc.': 'Professional Group, Inc.',
+  'michael foguth financial group llc': 'Michael Foguth Financial Group LLC',
+  'barnett financial & tax': 'Barnett Financial & Tax',
+  'proper retirement, llc': 'Proper Retirement, LLC',
+  'strategic asset preservation, inc.': 'Strategic Asset Preservation, Inc.',
+  'help to retire': 'Help To Retire',
+  'ideal retirement solutions llc': 'Ideal Retirement Solutions LLC'
+}
+
+// Advisor names that should never resolve to themselves as the client when
+// they appear as group_name — they live inside a known group client.
+// (e.g. "Andy Urso" in DM sheet group column = AdvisorMax client)
+const ADVISOR_TO_GROUP_OVERRIDE: Record<string, string> = {
+  'andy urso': 'AdvisorMax'
+}
+
 function classifyClient(rawGroup: string | null, advisorName: string | null): ClientBucket {
   const g = (rawGroup || '').trim()
   const gLower = g.toLowerCase()
@@ -183,7 +233,9 @@ function classifyClient(rawGroup: string | null, advisorName: string | null): Cl
     gLower === 'financial tax architects' ||
     gLower === 'financial & tax architects' ||
     gLower.includes('financial & tax architects') ||
-    gLower.includes('financial tax architects')
+    gLower.includes('financial tax architects') ||
+    // FTA office labels that show up as group_name in DM sheet
+    gLower === 'southern illinois'
   ) {
     return { kind: 'group', name: 'FTA' }
   }
@@ -206,13 +258,28 @@ function classifyClient(rawGroup: string | null, advisorName: string | null): Cl
   }
 
   // Arrive Financial Services collapse (any "arrive ..." variant)
-  if (gLower.startsWith('arrive ')) {
+  if (gLower.startsWith('arrive ') || gLower === 'arrive') {
     return { kind: 'group', name: 'Arrive Financial Services' }
   }
 
-  // Independent firm: prefer the group/FMO column over advisor name
-  if (g) return { kind: 'firm', name: g }
-  if (advisorName) return { kind: 'firm', name: advisorName.trim() }
+  // Advisor-name override (e.g. "Andy Urso" -> AdvisorMax)
+  if (gLower in ADVISOR_TO_GROUP_OVERRIDE) {
+    return { kind: 'group', name: ADVISOR_TO_GROUP_OVERRIDE[gLower] }
+  }
+  if (advisorName && advisorName.toLowerCase() in ADVISOR_TO_GROUP_OVERRIDE) {
+    return { kind: 'group', name: ADVISOR_TO_GROUP_OVERRIDE[advisorName.toLowerCase()] }
+  }
+
+  // Independent firm: canonicalize via alias table
+  if (g) {
+    const canon = INDEPENDENT_FIRM_ALIASES[gLower]
+    return { kind: 'firm', name: canon || g }
+  }
+  if (advisorName) {
+    const aLower = advisorName.toLowerCase()
+    const canon = INDEPENDENT_FIRM_ALIASES[aLower]
+    return { kind: 'firm', name: canon || advisorName.trim() }
+  }
   return { kind: 'firm', name: 'Unknown' }
 }
 
