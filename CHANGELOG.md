@@ -37,6 +37,17 @@ every PR that lands a user-visible or operationally relevant change.
   `needs_digital`), Proofs, History.
 - `components/orders/StatusPill.tsx` maps the SQL view's display
   string to one of four tones via `lib/utils/status.ts`.
+- **Order form (Day 5):** `/orders/new` renders Part 7 as a single
+  long form. Direct Mail and Digital blocks only appear when their
+  checkbox is on, so a digital-only order doesn't get noisy mailing
+  fields. Cascading venue picker (venue → building → room) is fed
+  by a pre-fetched tree so it stays a Client Component with no
+  fetching of its own. Office field appears only for group clients
+  and defaults to the office switcher's current value. Up to 4
+  events, added one at a time. `createOrder` picks the next order
+  number with a max+1 retry loop (good enough for human-scale
+  concurrency; a Postgres sequence is the eventual fix) and
+  appends an `Order created` row to `order_events`.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).

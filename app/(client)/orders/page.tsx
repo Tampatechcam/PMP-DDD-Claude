@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { OrdersList } from '@/components/orders/OrdersList'
 import { OfficeSwitcher } from '@/components/layout/OfficeSwitcher'
 import { listOrdersForClient } from '@/lib/db/orders'
@@ -32,6 +33,14 @@ export default async function OrdersListPage({ searchParams }: Props) {
           <h1 className="text-xl font-medium">Your orders</h1>
           {client?.name && <p className="text-sm text-muted">{client.name}</p>}
         </div>
+        <Link
+          href={
+            activeOfficeId ? `/orders/new?office=${activeOfficeId}` : '/orders/new'
+          }
+          className="inline-flex items-center justify-center rounded text-sm font-medium px-3 py-2 bg-accent text-white hover:opacity-90"
+        >
+          New order
+        </Link>
       </header>
 
       <OfficeSwitcher
