@@ -28,7 +28,12 @@ export default async function AdminHome({ searchParams }: Props) {
     clients
   ] = await Promise.all([
     supabase.from('clients').select('id', { count: 'exact', head: true }),
-    supabase.from('orders').select('id', { count: 'exact', head: true }),
+    // Only DM orders — matches what shows up in the table tabs. Digital
+    // campaigns are tracked separately and don't bucket into Upcoming/Past.
+    supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('needs_direct_mail', true),
     supabase
       .from('proofs')
       .select('id', { count: 'exact', head: true })
