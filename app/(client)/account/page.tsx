@@ -1,6 +1,9 @@
+import { Card } from '@/components/ui/Card'
+import { Icon } from '@/components/ui/Icon'
 import { createClient } from '@/lib/supabase/server'
 import { PasswordForm } from '@/components/auth/PasswordForm'
 import { SignOutButton } from '@/components/auth/SignOutButton'
+import { getCurrentClientSelf } from '@/lib/db/clients'
 
 interface Props {
   searchParams: { error?: string; updated?: string }
@@ -13,28 +16,43 @@ export default async function AccountPage({ searchParams }: Props) {
   // narrowing here keeps TypeScript happy and is a free defense-in-depth.
   if (!user) return null
 
+  const client = await getCurrentClientSelf().catch(() => null)
+
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 max-w-xl">
       <header className="space-y-1">
-        <h1 className="text-xl font-medium">Account</h1>
-        <p className="text-sm text-muted">{user.email}</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
+        <p className="text-sm text-muted">
+          {user.email}
+          {client?.name && <span> · {client.name}</span>}
+        </p>
       </header>
 
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium">Password</h2>
+      <Card className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Icon name="account" className="w-4 h-4 text-muted" />
+          <h2 className="text-sm font-medium">Set or change password</h2>
+        </div>
         <p className="text-sm text-muted">
-          If you usually sign in with a magic link, you can set a password
-          here so you don’t need to fish a link out of your inbox.
+          If you usually sign in with a magic link, set a password here so
+          you don’t need to fish a link out of your inbox every time.
         </p>
         <PasswordForm
           error={searchParams.error}
           updated={searchParams.updated === '1'}
         />
-      </div>
+      </Card>
 
-      <div className="pt-4 border-t border-border">
+      <Card className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Icon name="signOut" className="w-4 h-4 text-muted" />
+          <h2 className="text-sm font-medium">Sign out</h2>
+        </div>
+        <p className="text-sm text-muted">
+          Ends this session on every device using this browser.
+        </p>
         <SignOutButton />
-      </div>
+      </Card>
     </section>
   )
 }
