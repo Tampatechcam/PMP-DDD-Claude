@@ -1,24 +1,27 @@
 /**
  * Status helpers. The string values come from orders_with_display_status,
- * so the only thing left for the UI is mapping a string -> color.
+ * which now prefers the raw Direct Mail Sheet status — so the UI sees the
+ * exact phrasing the ops team uses ("All Details Added, Pending Details",
+ * "Order Sent", "Complete"). statusTone() maps each one to one of four
+ * tones the StatusPill renders.
  */
 
-export type DisplayStatus =
-  | 'Submitted'
-  | 'In Production'
-  | 'Ready to Send'
-  | 'Completed'
-  | 'Awaiting Your Approval'
-  | 'Revision Requested'
+export type Tone = 'neutral' | 'success' | 'warning' | 'danger'
 
-export function statusTone(s: string | null | undefined):
-  'neutral' | 'success' | 'warning' | 'danger' {
-  switch (s) {
-    case 'Completed': return 'success'
-    case 'In Production':
-    case 'Ready to Send': return 'neutral'
-    case 'Awaiting Your Approval': return 'warning'
-    case 'Revision Requested': return 'danger'
-    default: return 'neutral'
-  }
+export function statusTone(s: string | null | undefined): Tone {
+  if (!s) return 'neutral'
+  const v = s.toLowerCase()
+
+  // Client-facing proof states first.
+  if (v.includes('revision')) return 'danger'
+  if (v.includes('awaiting')) return 'warning'
+
+  // Terminal states.
+  if (v.includes('complete') || v.includes('completed')) return 'success'
+
+  // Anything explicitly "pending" leans warning so it draws the eye.
+  if (v.includes('pending')) return 'warning'
+
+  // "Order Sent", "All Details Added", "Ready to Send", etc.
+  return 'neutral'
 }
