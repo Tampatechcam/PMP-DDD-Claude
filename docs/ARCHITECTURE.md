@@ -39,11 +39,14 @@ If a Route Handler grows past ~30 lines, move the logic into `lib/db` or
 
 ## How auth works
 
-1. Magic-link sign-in — Supabase emails a link with a `code` query param.
-2. The `/auth/callback` Route Handler trades `code` for a session cookie.
-3. `middleware.ts` refreshes that cookie on every request.
-4. Route-group layouts (`(client)`, `(admin)`) gate navigation with
-   `supabase.auth.getUser()` + a role check.
+1. Sign-in: password or magic-link (see ADR 0006).
+2. The `/auth/callback` Route Handler trades the magic-link `code` for a
+   session cookie.
+3. `middleware.ts` refreshes the cookie on every request — it doesn't gate.
+4. Layouts gate navigation with `supabase.auth.getUser()` + a role check.
+   The client shell lives under the `(client)` route group (no URL prefix);
+   the admin shell lives at `app/admin/*` so it has an explicit `/admin`
+   URL prefix and doesn't collide with the client routes (see ADR 0007).
 5. Every Postgres query runs under the user's anon JWT, so RLS does the rest.
 
 The first admin user is promoted manually after sign-in (Part 6.4). After
