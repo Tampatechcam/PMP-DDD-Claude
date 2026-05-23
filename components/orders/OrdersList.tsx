@@ -43,24 +43,33 @@ export function OrdersList({ orders }: { orders: OrderRow[] }) {
                     <span className="text-muted">· {o.advisor_name}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted">
-                  {o.event_1_date && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  {o.event_1_date ? (
                     <span className="inline-flex items-center gap-1">
                       <Icon name="calendar" className="w-3.5 h-3.5" />
                       {formatEventDate(o.event_1_date)}
                       {rel && <span className="text-muted/70"> · {rel}</span>}
                     </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-muted/70 italic">
+                      <Icon name="calendar" className="w-3.5 h-3.5" />
+                      date pending
+                    </span>
                   )}
-                  {o.venue_text && (
+                  {o.venue_text ? (
                     <span className="inline-flex items-center gap-1 truncate">
                       <Icon name="mapPin" className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{o.venue_text}</span>
                     </span>
-                  )}
-                  {!o.venue_text && o.market && (
+                  ) : o.market ? (
                     <span className="inline-flex items-center gap-1">
                       <Icon name="mapPin" className="w-3.5 h-3.5" />
                       {o.market}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-muted/70 italic">
+                      <Icon name="mapPin" className="w-3.5 h-3.5" />
+                      venue pending
                     </span>
                   )}
                 </div>
