@@ -1,9 +1,7 @@
 import Link from 'next/link'
+import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { adminListOrders } from '@/lib/db/orders'
 import { adminListClients } from '@/lib/db/clients'
-import { StatusPill } from '@/components/orders/StatusPill'
-import { Icon } from '@/components/ui/Icon'
-import { formatEventDate, formatRelativeDate } from '@/lib/utils/format'
 
 interface Props {
   searchParams: {
@@ -11,14 +9,13 @@ interface Props {
     class?: string
     needs?: string
     q?: string
+    tab?: string
   }
 }
 
-/**
- * /admin/orders — global orders list with simple filters. State in the URL
- * so saved searches are sharable. Capped at 200; paging is a fast-follow.
- */
 export default async function AdminOrdersPage({ searchParams }: Props) {
+  const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
+
   const [orders, clients] = await Promise.all([
     adminListOrders({
       clientId: searchParams.client || undefined,
@@ -28,22 +25,30 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           ? searchParams.needs
           : undefined,
       search: searchParams.q || undefined,
-      limit: 200
+      limit: 500
     }),
     adminListClients()
   ])
 
+  const clientNameById = Object.fromEntries(clients.map((c) => [c.id, c.name]))
   const activeClient = clients.find((c) => c.id === searchParams.client)
   const filtersActive =
     searchParams.client || searchParams.class || searchParams.needs || searchParams.q
+
+  const preserve = {
+    client: searchParams.client,
+    class: searchParams.class,
+    needs: searchParams.needs,
+    q: searchParams.q
+  }
 
   return (
     <section className="space-y-5">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">All orders</h1>
         <p className="text-sm text-muted">
-          Showing {orders.length}
-          {orders.length === 200 && ' (capped at 200)'}
+          {orders.length}
+          {orders.length === 500 && ' (capped)'}
           {activeClient && <> · client: {activeClient.name}</>}
           {filtersActive && (
             <>
@@ -110,59 +115,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         </button>
       </form>
 
-      {orders.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-10 text-center bg-surface">
-          <p className="text-sm font-medium">No orders match those filters</p>
-          <p className="text-xs text-muted mt-1">
-            Try clearing one and applying again.
-          </p>
-        </div>
-      ) : (
-        <ul className="divide-y divide-border border border-border rounded-lg bg-surface overflow-hidden">
-          {orders.map((o) => {
-            const rel = formatRelativeDate(o.event_1_date)
-            return (
-              <li key={o.id}>
-                <Link
-                  href={`/admin/orders/${o.order_number}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-bg group transition-colors"
-                >
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">#{o.order_number}</span>
-                      {o.class_type && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
-                          {o.class_type}
-                        </span>
-                      )}
-                      {o.advisor_name && (
-                        <span className="text-muted">· {o.advisor_name}</span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-                      {o.event_1_date && (
-                        <span className="inline-flex items-center gap-1">
-                          <Icon name="calendar" className="w-3.5 h-3.5" />
-                          {formatEventDate(o.event_1_date)}
-                          {rel && <span className="text-muted/70"> · {rel}</span>}
-                        </span>
-                      )}
-                      {o.market && (
-                        <span className="inline-flex items-center gap-1 truncate">
-                          <Icon name="mapPin" className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{o.market}</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <StatusPill status={o.display_status} />
-                  <Icon name="arrowRight" className="w-4 h-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      <OrdersList
+        orders={orders}
+        activeTab={activeTab}
+        basePath="/admin/orders"
+        showClient
+        clientNameById={clientNameById}
+        preserveParams={preserve}
+      />
     </section>
   )
 }

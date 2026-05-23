@@ -39,6 +39,7 @@ export type OrderRow = {
   sending_list_folder_url: string | null
   client_approval_deadline: string | null
   order_sent_deadline: string | null
+  first_class_day: string | null
   digital_budget: number | null
   landing_page_url_direct: string | null
   landing_page_url_digital: string | null

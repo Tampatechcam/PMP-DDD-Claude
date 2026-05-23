@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { OrdersList } from '@/components/orders/OrdersList'
+import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { OfficeSwitcher } from '@/components/layout/OfficeSwitcher'
 import { Icon } from '@/components/ui/Icon'
 import { listOrdersForClient } from '@/lib/db/orders'
@@ -7,19 +7,12 @@ import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { getCurrentClientSelf } from '@/lib/db/clients'
 
 interface Props {
-  searchParams: { office?: string }
+  searchParams: { office?: string; tab?: string }
 }
 
-/**
- * Orders list. Sort comes from the SQL view (event_1_date desc). The
- * office filter lives in the URL so refresh and Back/Forward do the
- * right thing (Part 10).
- *
- * For single-office clients, the OfficeSwitcher returns null and the
- * UI stays uncluttered.
- */
 export default async function OrdersListPage({ searchParams }: Props) {
   const activeOfficeId = searchParams.office ?? null
+  const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
 
   const [client, offices, orders] = await Promise.all([
     getCurrentClientSelf(),
@@ -28,7 +21,6 @@ export default async function OrdersListPage({ searchParams }: Props) {
   ])
 
   const activeOffice = offices.find((o) => o.id === activeOfficeId)
-  const summary = `${orders.length} order${orders.length === 1 ? '' : 's'}`
 
   return (
     <section className="space-y-5">
@@ -37,7 +29,7 @@ export default async function OrdersListPage({ searchParams }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
           <p className="text-sm text-muted">
             {client?.name ? `${client.name} · ` : ''}
-            {summary}
+            {orders.length} total
             {activeOffice && (
               <span className="text-muted/70"> · filtered to {activeOffice.name}</span>
             )}
@@ -60,7 +52,12 @@ export default async function OrdersListPage({ searchParams }: Props) {
         basePath="/orders"
       />
 
-      <OrdersList orders={orders} />
+      <OrdersList
+        orders={orders}
+        activeTab={activeTab}
+        basePath="/orders"
+        preserveParams={{ office: activeOfficeId ?? undefined }}
+      />
     </section>
   )
 }

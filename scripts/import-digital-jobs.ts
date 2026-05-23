@@ -59,6 +59,7 @@ function parseTime(s: string): string | null {
   const period = (m[3] ?? '').toUpperCase()
   if (period === 'PM' && h < 12) h += 12
   if (period === 'AM' && h === 12) h = 0
+  if (h < 0 || h > 23 || mm < 0 || mm > 59) return null
   return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`
 }
 
@@ -115,20 +116,23 @@ async function lookupClientByGroup(): Promise<Map<string, string>> {
   )
 }
 
-async function lookupOfficeByAdvisor(): Promise<Map<string, string>> {
+async function lookupOfficeByAdvisor(): Promise<
+  Map<string, { office_id: string; client_id: string }>
+> {
   const rows = await adminSql<{
     id: string
     name: string
     advisor_names: string[] | null
     client_id: string
   }>('select id, name, advisor_names, client_id from offices')
-  const m = new Map<string, string>()
+  const m = new Map<string, { office_id: string; client_id: string }>()
   for (const o of rows) {
+    const entry = { office_id: o.id, client_id: o.client_id }
     const key = o.name.toLowerCase().trim()
-    if (!m.has(key)) m.set(key, o.id)
+    if (!m.has(key)) m.set(key, entry)
     for (const a of o.advisor_names ?? []) {
       const k = a.toLowerCase().trim()
-      if (!m.has(k)) m.set(k, o.id)
+      if (!m.has(k)) m.set(k, entry)
     }
   }
   return m
@@ -160,19 +164,59 @@ async function main() {
   // Bulk insert via one big multi-row SQL statement.
   const inserts: string[] = []
   let unmapped = 0
+  let blankSkipped = 0
+  let autoCreated = 0
   for (const r of missing) {
+    // Skip blank rows in the sheet — no advisor at all, nothing to map.
+    if (!r.advisor_name.trim() && !r.group_name.trim()) {
+      blankSkipped++
+      continue
+    }
+
     const groupKey = (r.group_name || r.advisor_name)
       .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim()
     const advisorKey = r.advisor_name.toLowerCase().trim()
 
-    const client_id =
-      clientByName.get(groupKey) ?? clientByName.get(advisorKey)
-    const office_id = officeByAdvisor.get(advisorKey)
+    // Three-tier match: office by advisor → office by group name →
+    // client by name. The first one that lands wins, and an office hit
+    // gives us its client_id directly.
+    const officeHit =
+      officeByAdvisor.get(advisorKey) ?? officeByAdvisor.get(groupKey)
+    let client_id =
+      officeHit?.client_id ??
+      clientByName.get(groupKey) ??
+      clientByName.get(advisorKey)
+    let office_id = officeHit?.office_id ?? null
+
+    // Still nothing? Auto-create a client + office for this new advisor
+    // so the row makes it in. Caches the new ids on the maps so the
+    // next campaign for the same advisor reuses them.
     if (!client_id) {
-      unmapped++
-      continue
+      const newClientName = (r.group_name || r.advisor_name).trim()
+      const newOfficeName = r.advisor_name.trim() || newClientName
+      const created = await adminSql<{ client_id: string; office_id: string }>(
+        `with c as (
+           insert into clients (name, is_group, responsibility)
+           values (${escSql(newClientName)}, false, 'Auto-created from Digital Jobs')
+           returning id
+         ),
+         o as (
+           insert into offices (client_id, name, advisor_names, is_primary)
+           select id, ${escSql(newOfficeName)}, ARRAY[${escSql(r.advisor_name.trim() || newOfficeName)}], true
+           from c
+           returning id, client_id
+         )
+         select o.client_id, o.id as office_id from o`
+      )
+      const row = created[0]!
+      client_id = row.client_id
+      office_id = row.office_id
+      clientByName.set(groupKey, client_id)
+      clientByName.set(advisorKey, client_id)
+      officeByAdvisor.set(advisorKey, { office_id, client_id })
+      autoCreated++
     }
 
     const values = [
@@ -204,7 +248,9 @@ async function main() {
     ]
     inserts.push(`(${values.join(', ')})`)
   }
-  console.log(`Built ${inserts.length} inserts; ${unmapped} unmapped (no client)`)
+  console.log(
+    `Built ${inserts.length} inserts; ${autoCreated} new clients auto-created; ${unmapped} unmapped; ${blankSkipped} blank rows skipped`
+  )
 
   if (inserts.length === 0) {
     console.log('Nothing to insert.')
