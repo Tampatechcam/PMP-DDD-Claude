@@ -58,7 +58,6 @@ function jsonAddress(form: FormData, prefix: string): object | null {
 }
 
 export async function createOrder(form: FormData) {
-  const client_id = await getCurrentClientIdOrThrow()
   const supabase = createClient()
 
   const needs_direct_mail = bool(form, 'needs_direct_mail')
@@ -68,6 +67,24 @@ export async function createOrder(form: FormData) {
   if (!needs_direct_mail && !needs_digital && !needs_google_sheet) {
     throw new Error('Pick at least one of Direct Mail, Digital, or Sheet.')
   }
+
+  // Parallelize the two independent reads — client_id from the profile,
+  // max(order_number) for the next slot. They're on the same HTTP/2
+  // connection so wall-time becomes max(a, b) instead of a + b.
+  const [client_id, maxRow] = await Promise.all([
+    getCurrentClientIdOrThrow(),
+    supabase
+      .from('orders')
+      .select('order_number')
+      .order('order_number', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then((r) => {
+        if (r.error) throw r.error
+        return r.data
+      })
+  ])
+  let nextNumber = (maxRow?.order_number ?? 0) + 1
 
   const payload = {
     client_id,
@@ -127,26 +144,16 @@ export async function createOrder(form: FormData) {
     notes: s(form, 'notes')
   } as const
 
-  let inserted: { order_number: number } | null = null
+  let inserted: { id: string; order_number: number } | null = null
   let lastError: unknown = null
 
+  // Loop bumps nextNumber by 1 on each collision and retries. The unique
+  // constraint catches the race; we don't re-query max in the retry.
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    // Atomic enough for our concurrency: read max, write max+1.
-    // The unique constraint on order_number catches the race.
-    const { data: maxRow, error: maxErr } = await supabase
-      .from('orders')
-      .select('order_number')
-      .order('order_number', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (maxErr) throw maxErr
-
-    const nextNumber = (maxRow?.order_number ?? 0) + 1
-
     const { data, error } = await supabase
       .from('orders')
       .insert({ ...payload, order_number: nextNumber })
-      .select('order_number')
+      .select('id, order_number')
       .single()
 
     if (!error && data) {
@@ -154,12 +161,13 @@ export async function createOrder(form: FormData) {
       break
     }
 
-    // 23505 = unique_violation. Retry; anything else, bail.
+    // 23505 = unique_violation. Bump the number locally and retry.
     const pgError = error as { code?: string } | null
     if (pgError?.code !== '23505') {
       throw error
     }
     lastError = error
+    nextNumber++
   }
 
   if (!inserted) {
@@ -169,27 +177,17 @@ export async function createOrder(form: FormData) {
     )
   }
 
-  // Append an audit row so the History section on the order card has content
-  // on day one. RLS lets the caller insert because they own the order.
-  // We fetch the new order's id to FK it, but we already have order_number;
-  // easier to just look it up.
-  const { data: created } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('order_number', inserted.order_number)
-    .single()
-  if (created) {
-    await supabase.from('order_events').insert({
-      order_id: created.id,
-      event: 'Order created',
-      payload: {
-        needs_direct_mail,
-        needs_digital,
-        needs_google_sheet,
-        class_type: payload.class_type
-      }
-    })
-  }
+  // Audit row. INSERT...RETURNING id meant we never had to re-query.
+  await supabase.from('order_events').insert({
+    order_id: inserted.id,
+    event: 'Order created',
+    payload: {
+      needs_direct_mail,
+      needs_digital,
+      needs_google_sheet,
+      class_type: payload.class_type
+    }
+  })
 
   revalidatePath('/orders')
   redirect(`/orders/${inserted.order_number}`)
