@@ -6,16 +6,16 @@ import type { OrderRow } from '@/lib/db/orders'
 
 /**
  * Orders grouped into four buckets:
- *   Upcoming  — event_1_date in the next 6 weeks (the active production
- *               window). Open by default.
+ *   Upcoming  — event_1_date in the next 3 weeks (the active production
+ *               window where ops is doing real work). Open by default.
  *   Past      — event_1_date already happened. Collapsed.
- *   Later     — event_1_date more than 6 weeks out. Collapsed.
+ *   Later     — event_1_date more than 3 weeks out. Collapsed.
  *   No date   — event_1_date is null (placeholder orders). Collapsed.
  *
  * Each bucket is a native <details> element so the open/closed state is
  * preserved across navigation by the browser, no client JS needed.
  */
-const UPCOMING_WINDOW_DAYS = 42 // 6 weeks
+const UPCOMING_WINDOW_DAYS = 21 // 3 weeks
 
 type Bucket = 'upcoming' | 'past' | 'later' | 'none'
 
