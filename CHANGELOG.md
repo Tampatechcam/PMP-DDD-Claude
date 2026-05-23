@@ -66,11 +66,24 @@ every PR that lands a user-visible or operationally relevant change.
   reuses the OrderCard plus an Upload-proof CTA. `/admin/invoices`
   lists every invoice with totals.
 
+- **RLS verification (Part 17 DoD #6):** `scripts/verify-rls.ts`
+  provisions two throw-away clients + users, signs in as user A,
+  and asserts A cannot read B's order by UUID, cannot update B's
+  order, cannot read B's events / proofs / invoices. Tears down
+  whether the assertions pass or fail. `npm run verify:rls`.
+- **Demo sign-in:** `lib/actions/demo.ts` + Demo: Client / Demo: Admin
+  buttons on `/login`. Provision idempotent demo accounts and a seed
+  order via the service-role client. Marked for deletion before
+  production.
+
 ### Fixed
 - `components/ui/Input.tsx` — replaced an ad-hoc module-level ID
   counter with `useId()`. The counter generated different sequences
   on server vs client and tripped React's hydration mismatch warning
   on the login page.
+- `lib/supabase/server.ts` + `middleware.ts` — typed `setAll`'s
+  parameter explicitly so the repo passes `tsc --noEmit` and stays
+  inside the "zero `any` in lib/" rule.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).

@@ -14,8 +14,8 @@
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > types/db.ts",
     "db:diff": "supabase db diff",
     "db:push": "supabase db push",
-    "import:sheets": "tsx scripts/import-sheets.ts",
-    "verify:rls": "tsx scripts/verify-rls.ts"
+    "import:sheets": "tsx --env-file=.env.local scripts/import-sheets.ts",
+    "verify:rls": "tsx --env-file=.env.local scripts/verify-rls.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.0",
