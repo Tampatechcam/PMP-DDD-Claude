@@ -27,19 +27,29 @@ function pivotDate(o: OrderRow): string | null {
 
 /**
  * The Orders table tracks direct-mail orders. Digital-only campaigns
- * (no DM component) fall out of both tabs — they aren't "events" in the
- * production sense, just standalone campaigns shown elsewhere.
+ * (no DM component) fall out of both tabs — they aren't "events" in
+ * the production sense.
  *
- * Past = the DM has been mailed (`dm_status = "Order Sent"`).
- * Upcoming = anything else still being prepped (Pending Details,
- * All Details Added, Proof Sent to Client, …). Order Sent never
- * appears in Upcoming.
+ * Past     = the event has already happened (event_1_date < today).
+ * Upcoming = the event is in the future AND the DM hasn't been sent
+ *            yet (Pending Details, All Details Added, Proof Sent…).
+ *
+ * The middle case — DM has been mailed but the event is still ahead —
+ * is intentionally hidden from both tabs. Per user direction, Order
+ * Sent can't appear in Upcoming, and a future seminar shouldn't show
+ * up in Past either.
  */
 function tabOf(o: OrderRow): OrdersTab | null {
   if (!o.needs_direct_mail) return null
   if (!o.event_1_date) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const d = new Date(o.event_1_date)
+  d.setHours(0, 0, 0, 0)
+  if (d.getTime() < today.getTime()) return 'past'
+  // Future event:
   if (o.dm_status && o.dm_status.toLowerCase().includes('order sent')) {
-    return 'past'
+    return null // mail's out, waiting for the date — hidden from both
   }
   return 'upcoming'
 }
