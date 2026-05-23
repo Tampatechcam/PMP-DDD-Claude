@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
+import { Icon, type IconName } from '@/components/ui/Icon'
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * Admin home — a few counts and quick links. Deliberately minimal: this
- * isn't a reporting dashboard. The day-to-day work lives on /admin/orders.
+ * Admin home. Three count tiles + a "needs your attention" row when
+ * there are pending proofs. Deliberately not a reporting dashboard —
+ * day-to-day work lives in the sidebar.
  */
 export default async function AdminHome() {
   const supabase = createClient()
@@ -12,34 +14,38 @@ export default async function AdminHome() {
   const [
     { count: clientsCount },
     { count: ordersCount },
-    { count: pendingProofsCount }
+    { count: pendingProofsCount },
+    { count: invoicesCount }
   ] = await Promise.all([
     supabase.from('clients').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase
       .from('proofs')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
+      .eq('status', 'pending'),
+    supabase.from('invoices').select('id', { count: 'exact', head: true })
   ])
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-xl font-medium">Admin</h1>
+    <section className="space-y-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
         <p className="text-sm text-muted">
-          Overview. Day-to-day work lives in the nav above.
+          Quick counts across every client. Day-to-day work lives in the nav.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Tile href="/admin/clients" label="Clients" value={clientsCount ?? 0} />
-        <Tile href="/admin/orders" label="Orders" value={ordersCount ?? 0} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Tile href="/admin/clients" label="Clients" icon="clients" value={clientsCount ?? 0} />
+        <Tile href="/admin/orders" label="Orders" icon="orders" value={ordersCount ?? 0} />
         <Tile
           href="/admin/orders"
           label="Proofs awaiting client"
+          icon="document"
           value={pendingProofsCount ?? 0}
           tone={pendingProofsCount && pendingProofsCount > 0 ? 'warning' : 'neutral'}
         />
+        <Tile href="/admin/invoices" label="Invoices" icon="invoices" value={invoicesCount ?? 0} />
       </div>
     </section>
   )
@@ -49,22 +55,24 @@ function Tile({
   href,
   label,
   value,
+  icon,
   tone = 'neutral'
 }: {
   href: string
   label: string
   value: number
+  icon: IconName
   tone?: 'neutral' | 'warning'
 }) {
+  const valueTone = tone === 'warning' ? 'text-warning' : 'text-ink'
   return (
-    <Link href={href} className="block">
-      <Card className="hover:bg-bg">
-        <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
-        <p
-          className={`mt-1 text-2xl font-medium ${
-            tone === 'warning' ? 'text-warning' : 'text-ink'
-          }`}
-        >
+    <Link href={href} className="block group">
+      <Card className="hover:bg-bg transition-colors h-full">
+        <div className="flex items-center justify-between text-muted text-xs uppercase tracking-wider font-medium">
+          <span>{label}</span>
+          <Icon name={icon} className="w-4 h-4 opacity-70 group-hover:opacity-100" />
+        </div>
+        <p className={`mt-2 text-3xl font-semibold tracking-tight ${valueTone}`}>
           {value}
         </p>
       </Card>

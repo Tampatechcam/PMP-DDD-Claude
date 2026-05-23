@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { OrderCard } from '@/components/orders/OrderCard'
 import { getOrderByNumber, listEventsForOrder } from '@/lib/db/orders'
@@ -10,8 +11,7 @@ interface Props {
 /**
  * Order detail. Route, not modal — deep-linkable, refresh-safe (Part 8).
  * Three queries in parallel; the page is a Server Component so the
- * browser ships zero JS for it (proof actions arrive Day 6 as a small
- * Client island).
+ * browser ships zero JS for it. Proof actions are a small Client island.
  */
 export default async function OrderDetailPage({ params }: Props) {
   const n = Number(params.order_number)
@@ -25,5 +25,14 @@ export default async function OrderDetailPage({ params }: Props) {
     listEventsForOrder(order.id)
   ])
 
-  return <OrderCard order={order} proofs={proofs} events={events} />
+  return (
+    <div className="space-y-4">
+      <p className="text-xs">
+        <Link href="/orders" className="text-muted hover:text-ink underline underline-offset-2">
+          ← Orders
+        </Link>
+      </p>
+      <OrderCard order={order} proofs={proofs} events={events} />
+    </div>
+  )
 }

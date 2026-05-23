@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { OrderForm } from '@/components/orders/OrderForm'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { listVenuesForCurrentClient } from '@/lib/db/venues'
@@ -26,9 +27,24 @@ export default async function NewOrderPage({ searchParams }: Props) {
 
   return (
     <section className="space-y-5">
-      <header>
-        <h1 className="text-xl font-medium">New order</h1>
-        {client?.name && <p className="text-sm text-muted">{client.name}</p>}
+      <header className="space-y-1">
+        <p className="text-xs">
+          <Link href="/orders" className="text-muted hover:text-ink underline underline-offset-2">
+            ← Orders
+          </Link>
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">New order</h1>
+        {client?.name && (
+          <p className="text-sm text-muted">
+            {client.name}
+            {isGroup && (
+              <span className="text-muted/70">
+                {' · '}
+                {offices.length} office{offices.length === 1 ? '' : 's'}
+              </span>
+            )}
+          </p>
+        )}
       </header>
 
       <OrderForm

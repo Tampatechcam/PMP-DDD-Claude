@@ -65,9 +65,11 @@ export async function adminListProfiles(): Promise<AdminProfileRow[]> {
   )
 
   return (profileRows ?? []).map((p) => {
-    // PostgREST single-FK relationship returns object | null; types may be
-    // looser in dev so cope with either shape.
-    const linked = (p as { clients?: { name: string } | null }).clients
+    // The generated type widens the single-FK relationship to an array
+    // (`{ name: string }[]`) because PostgREST returns it ambiguously.
+    // At runtime it's either an object or null, so handle both.
+    const raw = (p as { clients?: { name: string } | { name: string }[] | null }).clients
+    const linked = Array.isArray(raw) ? raw[0] : raw
     return {
       id: p.id,
       full_name: p.full_name,
