@@ -196,7 +196,7 @@ function Table({
         <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
           <tr className="border-b border-border">
             <Th>Order</Th>
-            <Th>First class</Th>
+            <Th>Mail drop</Th>
             <Th>Event</Th>
             {showClient && <Th>Client</Th>}
             <Th>Advisor</Th>

@@ -33,7 +33,7 @@ const DEMO_PASSWORD = 'demo-pmp-passw0rd!'
  * After re-importing real data with scripts/import-real.ts this uuid may
  * change — update it here to keep the demo client login pointing at FTA.
  */
-const FTA_CLIENT_ID = '490a9889-5f01-436d-8b5e-749adfc41ac4'
+const FTA_CLIENT_ID = 'd9410982-0bc3-4ac2-af48-241372bdc0f2'
 
 async function signInOrCreate(email: string): Promise<string> {
   const supabase = createClient()
