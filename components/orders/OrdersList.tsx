@@ -64,7 +64,9 @@ export function OrdersList({
   const upcoming = orders.filter((o) => tabOf(o) === 'upcoming')
   const past = orders.filter((o) => tabOf(o) === 'past')
 
-  upcoming.sort(byPivotAsc)
+  // Both tabs sort newest-first per user direction: most recent past at
+  // the top of Past, furthest-out future at the top of Upcoming.
+  upcoming.sort(byPivotDesc)
   past.sort(byPivotDesc)
 
   const visible = activeTab === 'past' ? past : upcoming
