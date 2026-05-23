@@ -277,8 +277,10 @@ function Row({
       <td className="px-3 py-2.5 truncate max-w-[10rem]">
         {o.advisor_name ?? <span className="text-muted">—</span>}
       </td>
-      <td className="px-3 py-2.5 truncate max-w-[18rem]">
-        {o.venue_text ?? o.market ?? <span className="text-muted italic">pending</span>}
+      <td className="px-3 py-2.5 max-w-[32rem] align-top">
+        <span className="line-clamp-2">
+          {o.venue_text ?? o.market ?? <span className="text-muted italic">pending</span>}
+        </span>
       </td>
       <td className="px-3 py-2.5 whitespace-nowrap">
         <StatusPill status={o.display_status} />

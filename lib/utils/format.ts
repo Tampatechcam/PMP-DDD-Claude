@@ -6,9 +6,10 @@ export function formatEventDate(d: string | Date | null | undefined): string {
   if (!d) return ''
   const date = typeof d === 'string' ? new Date(d) : d
   return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
   })
 }
 

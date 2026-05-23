@@ -1,20 +1,20 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { OrderCard } from '@/components/orders/OrderCard'
+import { ClientInfoCard } from '@/components/orders/ClientInfoCard'
 import { getOrderByNumber, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { adminGetClient } from '@/lib/db/clients'
+import { createClient } from '@/lib/supabase/server'
 
 interface Props {
   params: { order_number: string }
 }
 
 /**
- * Admin order detail. Same Part 8 layout as the client view, with the
- * admin-only Upload-proof affordance plus a back-link to the client.
- *
- * Client read uses the base table (RLS still applies; admin policy lets
- * us see all rows).
+ * Admin order detail. Same Part 8 OrderCard plus the static Client Dictionary
+ * info on the side. Internal pricing/responsibility fields are shown here
+ * (the client-side equivalent at /orders/[n] hides them via client_self_view).
  */
 export default async function AdminOrderDetailPage({ params }: Props) {
   const n = Number(params.order_number)
@@ -23,10 +23,18 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const order = await getOrderByNumber(n)
   if (!order) notFound()
 
-  const [proofs, events, client] = await Promise.all([
+  const supabase = createClient()
+  const [proofs, events, client, officeRes] = await Promise.all([
     listProofsForOrder(order.id),
     listEventsForOrder(order.id),
-    adminGetClient(order.client_id)
+    adminGetClient(order.client_id),
+    order.office_id
+      ? supabase
+          .from('offices')
+          .select('name, registration_phone, registration_url_direct, registration_url_digital, advisor_names')
+          .eq('id', order.office_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null })
   ])
 
   return (
@@ -48,7 +56,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         </Link>
       </div>
 
-      <OrderCard order={order} proofs={proofs} events={events} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6">
+        <OrderCard order={order} proofs={proofs} events={events} />
+        {client && (
+          <ClientInfoCard
+            client={client}
+            office={officeRes?.data ?? null}
+            admin
+          />
+        )}
+      </div>
     </section>
   )
 }

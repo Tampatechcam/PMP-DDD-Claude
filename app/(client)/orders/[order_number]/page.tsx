@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { OrderCard } from '@/components/orders/OrderCard'
+import { ClientInfoCard } from '@/components/orders/ClientInfoCard'
 import { getOrderByNumber, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
+import { getCurrentClientSelf } from '@/lib/db/clients'
+import { createClient } from '@/lib/supabase/server'
 
 interface Props {
   params: { order_number: string }
@@ -10,8 +13,8 @@ interface Props {
 
 /**
  * Order detail. Route, not modal — deep-linkable, refresh-safe (Part 8).
- * Three queries in parallel; the page is a Server Component so the
- * browser ships zero JS for it. Proof actions are a small Client island.
+ * The page is a Server Component so the browser ships zero JS for it.
+ * Proof actions are a small Client island.
  */
 export default async function OrderDetailPage({ params }: Props) {
   const n = Number(params.order_number)
@@ -20,9 +23,18 @@ export default async function OrderDetailPage({ params }: Props) {
   const order = await getOrderByNumber(n)
   if (!order) notFound()
 
-  const [proofs, events] = await Promise.all([
+  const supabase = createClient()
+  const [proofs, events, client, officeRes] = await Promise.all([
     listProofsForOrder(order.id),
-    listEventsForOrder(order.id)
+    listEventsForOrder(order.id),
+    getCurrentClientSelf(),
+    order.office_id
+      ? supabase
+          .from('offices')
+          .select('name, registration_phone, registration_url_direct, registration_url_digital, advisor_names')
+          .eq('id', order.office_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null })
   ])
 
   return (
@@ -32,7 +44,16 @@ export default async function OrderDetailPage({ params }: Props) {
           ← Orders
         </Link>
       </p>
-      <OrderCard order={order} proofs={proofs} events={events} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-6">
+        <OrderCard order={order} proofs={proofs} events={events} />
+        {client && (
+          <ClientInfoCard
+            client={client}
+            office={officeRes?.data ?? null}
+          />
+        )}
+      </div>
     </div>
   )
 }
