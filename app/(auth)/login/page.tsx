@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { Button } from '@/components/ui/Button'
 import { Brand } from '@/components/layout/Brand'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/db/auth'
 import { signInAsDemoClient, signInAsDemoAdmin } from '@/lib/actions/demo'
 
 interface Props {
@@ -10,8 +10,7 @@ interface Props {
 }
 
 export default async function LoginPage({ searchParams }: Props) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (user) redirect('/orders')
 
   const mode = searchParams.mode === 'magic' ? 'magic' : 'password'

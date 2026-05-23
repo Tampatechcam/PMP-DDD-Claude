@@ -1,27 +1,18 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { AdminSidebar } from '@/components/layout/AdminSidebar'
+import { getMyProfile } from '@/lib/db/auth'
 
 /**
- * Admin shell, mounted at /admin. We deliberately avoid the `(admin)` route
- * group from the plan because it would collide with `(client)/orders/*` —
- * route groups don't add a URL prefix, so the two `orders/page.tsx` files
- * would resolve to the same path. The /admin prefix keeps things distinct.
+ * Admin shell, mounted at /admin. Auth + role check is one query thanks to
+ * getMyProfile (which itself caches getAuthUser within the request).
  *
  * RLS already prevents an authenticated client from reading another client's
  * data, so this guard is for navigation only.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (profile?.role !== 'admin') redirect('/orders')
+  const profile = await getMyProfile()
+  if (!profile) redirect('/login')
+  if (profile.role !== 'admin') redirect('/orders')
 
   return (
     <div className="min-h-screen flex">

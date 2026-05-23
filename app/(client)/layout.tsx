@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { ClientHeader } from '@/components/layout/ClientHeader'
+import { getAuthUser } from '@/lib/db/auth'
 
 /**
  * Client layout guard. Anyone not signed in goes to /login. Admins still see
@@ -8,8 +8,7 @@ import { ClientHeader } from '@/components/layout/ClientHeader'
  * lives under /admin.
  */
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   return (

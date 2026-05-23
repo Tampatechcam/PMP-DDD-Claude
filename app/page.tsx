@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getMyProfile } from '@/lib/db/auth'
 
 /**
  * Root route — bounce based on role:
@@ -9,16 +9,8 @@ import { createClient } from '@/lib/supabase/server'
  *   profile not yet linked)    → /orders
  */
 export default async function Root() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (profile?.role === 'admin') redirect('/admin')
+  const profile = await getMyProfile()
+  if (!profile) redirect('/login')
+  if (profile.role === 'admin') redirect('/admin')
   redirect('/orders')
 }
