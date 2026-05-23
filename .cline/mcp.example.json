@@ -1,0 +1,22 @@
+{
+  "_comment": [
+    "Copy this to .cline/mcp.json and fill in PROJECT_REF + your Supabase PAT.",
+    ".cline/mcp.json is .gitignored — never commit your PAT.",
+    "Start in --read-only. Only remove it temporarily when applying a vetted migration.",
+    "The PAT should be a project-scoped personal access token, not the service-role key."
+  ],
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=<PROJECT_REF>"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "<PAT>"
+      }
+    }
+  }
+}
