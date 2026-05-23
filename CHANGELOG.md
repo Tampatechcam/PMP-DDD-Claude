@@ -48,6 +48,14 @@ every PR that lands a user-visible or operationally relevant change.
   number with a max+1 retry loop (good enough for human-scale
   concurrency; a Postgres sequence is the eventual fix) and
   appends an `Order created` row to `order_events`.
+- **Proofs (Day 6):** admin uploads at `/admin/proofs/[order_id]/upload`
+  via the direct-to-Storage flow from ADR 0005 — the browser PUTs the
+  PDF straight to Supabase Storage with a signed upload URL; the
+  Server Action only mints the URL, then records the `proofs` row
+  and an audit event. Clients see Approve / Request revision /
+  View PDF on every proof, and a typed reason is required before a
+  revision request goes out so the next round has something to act
+  on. `View PDF` opens a 10-minute signed download URL in a new tab.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).

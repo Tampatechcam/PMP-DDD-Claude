@@ -1,4 +1,5 @@
 import { StatusPill } from './StatusPill'
+import { ProofActions } from '@/components/proofs/ProofActions'
 import { formatEventDate, formatMoney, formatQuantity } from '@/lib/utils/format'
 import type { OrderRow, OrderEventRow } from '@/lib/db/orders'
 
@@ -143,25 +144,23 @@ export function OrderCard({
 
       {proofs.length > 0 && (
         <Section title="Proofs">
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-4 text-sm">
             {proofs.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-2">
-                <span>
-                  v{p.version}
-                  <span className="text-muted"> · uploaded {formatEventDate(p.created_at)}</span>
-                </span>
-                <StatusPill status={proofStatusLabel(p.status)} />
-                {p.client_comment && (
-                  <span className="text-xs text-muted block w-full">
-                    “{p.client_comment}”
+              <li key={p.id} className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>
+                    v{p.version}
+                    <span className="text-muted"> · uploaded {formatEventDate(p.created_at)}</span>
                   </span>
+                  <StatusPill status={proofStatusLabel(p.status)} />
+                </div>
+                {p.client_comment && (
+                  <p className="text-xs text-muted">“{p.client_comment}”</p>
                 )}
+                <ProofActions proofId={p.id} status={p.status} />
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted">
-            Approve / request revision lands here (Day 6).
-          </p>
         </Section>
       )}
 
