@@ -56,6 +56,21 @@ every PR that lands a user-visible or operationally relevant change.
   View PDF on every proof, and a typed reason is required before a
   revision request goes out so the next round has something to act
   on. `View PDF` opens a 10-minute signed download URL in a new tab.
+- **Admin views (Day 7):** `/admin` dashboard with three quick tiles
+  (clients, orders, proofs awaiting client). `/admin/clients` and
+  `/admin/clients/[id]` render the static client info panel — all
+  the internal fields (responsibility, mailer rate, discount,
+  tech sequences) that `client_self_view` strips for client UI.
+  `/admin/orders` is the global filter (client × class × type ×
+  free-text search) with state in the URL. `/admin/orders/[order_number]`
+  reuses the OrderCard plus an Upload-proof CTA. `/admin/invoices`
+  lists every invoice with totals.
+
+### Fixed
+- `components/ui/Input.tsx` — replaced an ad-hoc module-level ID
+  counter with `useId()`. The counter generated different sequences
+  on server vs client and tripped React's hydration mismatch warning
+  on the login page.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).

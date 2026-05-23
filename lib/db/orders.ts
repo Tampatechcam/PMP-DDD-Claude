@@ -86,6 +86,42 @@ export type OrderEventRow = {
   created_at: string
 }
 
+/**
+ * Admin-side global orders list. RLS lets admins read every order, and we
+ * lean on the same view so the display_status string is consistent across
+ * client and admin shells. Filters compose: pass any subset.
+ */
+export async function adminListOrders(opts?: {
+  clientId?: string
+  classType?: string
+  needs?: 'direct_mail' | 'digital'
+  search?: string
+  limit?: number
+}) {
+  const supabase = createClient()
+  let q = supabase
+    .from('orders_with_display_status')
+    .select('*')
+    .order('event_1_date', { ascending: false, nullsFirst: false })
+
+  if (opts?.clientId) q = q.eq('client_id', opts.clientId)
+  if (opts?.classType) q = q.eq('class_type', opts.classType)
+  if (opts?.needs === 'direct_mail') q = q.eq('needs_direct_mail', true)
+  if (opts?.needs === 'digital') q = q.eq('needs_digital', true)
+  if (opts?.search) {
+    const term = `%${opts.search}%`
+    // ilike across the most useful free-text columns
+    q = q.or(
+      `job_name.ilike.${term},market.ilike.${term},advisor_name.ilike.${term}`
+    )
+  }
+  if (opts?.limit) q = q.limit(opts.limit)
+
+  const { data, error } = await q
+  if (error) throw error
+  return (data ?? []) as OrderRow[]
+}
+
 export async function listEventsForOrder(orderId: string) {
   const supabase = createClient()
   const { data, error } = await supabase

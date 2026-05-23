@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from 'react'
+import { forwardRef, useId, type InputHTMLAttributes } from 'react'
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -6,16 +6,16 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-let idSeq = 0
-function nextId() {
-  return `in-${++idSeq}`
-}
-
 export const Input = forwardRef<HTMLInputElement, Props>(function Input(
   { label, hint, error, id, className, ...rest },
   ref
 ) {
-  const inputId = id ?? nextId()
+  // useId() is stable across SSR and CSR. A module-level counter (the first
+  // version of this file) gave different sequences on the server vs the
+  // client and React threw a hydration mismatch.
+  const generatedId = useId()
+  const inputId = id ?? generatedId
+
   const base =
     'block w-full rounded border border-border bg-surface px-3 py-2 ' +
     'text-sm text-ink placeholder:text-muted ' +

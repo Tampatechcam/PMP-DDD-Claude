@@ -2,8 +2,9 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * Client-facing reads go through client_self_view, which omits responsibility,
- * mailer rate, discount, and other internal fields. See Part 4.4 of the plan.
+ * Client-facing reads go through client_self_view, which omits internal
+ * fields (responsibility, mailer rate, discount, tech sequences). See
+ * Part 4.4 of the implementation plan.
  */
 export async function getCurrentClientSelf() {
   const supabase = createClient()
@@ -15,7 +16,8 @@ export async function getCurrentClientSelf() {
   return data
 }
 
-// Admin-only — uses the base table, must be gated by is_admin() in the caller.
+// Admin reads — base table. RLS still gates, but the policy lets admins
+// see everything.
 export async function adminListClients() {
   const supabase = createClient()
   const { data, error } = await supabase
@@ -23,5 +25,27 @@ export async function adminListClients() {
     .select('*')
     .order('name')
   if (error) throw error
+  return data ?? []
+}
+
+export async function adminGetClient(id: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
   return data
+}
+
+export async function adminListOfficesForClient(clientId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('offices')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('name')
+  if (error) throw error
+  return data ?? []
 }
