@@ -102,17 +102,18 @@ export async function finalizeProofUpload(
     payload: { version, path }
   })
 
-  // Pull order_number for the redirect target.
+  // Pull the URL slug — digital orders redirect to /admin/orders/DIG-001,
+  // DM orders to /admin/orders/651.
   const { data: order } = await supabase
     .from('orders')
-    .select('order_number')
+    .select('order_number, display_ref')
     .eq('id', orderId)
     .single()
 
   revalidatePath('/orders', 'layout')
   revalidatePath('/admin', 'layout')
   if (order) {
-    redirect(`/admin/orders/${order.order_number}`)
+    redirect(`/admin/orders/${order.display_ref ?? order.order_number}`)
   }
   redirect('/admin')
 }

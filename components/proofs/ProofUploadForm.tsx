@@ -6,7 +6,8 @@ import { issueProofUploadUrl, finalizeProofUpload } from '@/lib/actions/proofs'
 
 interface Props {
   orderId: string
-  orderNumber: number
+  /** Display label like "#651" or "DIG-001" — already formatted upstream. */
+  orderLabel: string
 }
 
 /**
@@ -15,7 +16,7 @@ interface Props {
  * the URL and (after the upload finishes) records the proofs row + audit
  * event. The file itself never traverses a Vercel function.
  */
-export function ProofUploadForm({ orderId, orderNumber }: Props) {
+export function ProofUploadForm({ orderId, orderLabel }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +49,7 @@ export function ProofUploadForm({ orderId, orderNumber }: Props) {
       // 3) Confirm — server records the row, audits the event, and redirects.
       setProgress('Finalizing…')
       await finalizeProofUpload(orderId, slot.version, slot.path)
-      // The action redirects to /admin/orders/<order_number>; if we somehow
+      // The action redirects to /admin/orders/<order_number|display_ref>; if we somehow
       // get here, surface a soft success.
       setProgress('Done.')
     } catch (err) {
@@ -62,7 +63,7 @@ export function ProofUploadForm({ orderId, orderNumber }: Props) {
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <label className="block text-xs font-medium text-ink mb-1">
-          Proof PDF for Order #{orderNumber}
+          Proof PDF for Order {orderLabel}
         </label>
         <input
           type="file"

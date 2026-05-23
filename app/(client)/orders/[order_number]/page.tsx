@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { OrderCard } from '@/components/orders/OrderCard'
 import { ClientInfoCard } from '@/components/orders/ClientInfoCard'
-import { getOrderByNumber, listEventsForOrder } from '@/lib/db/orders'
+import { getOrderByRef, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { getCurrentClientSelf } from '@/lib/db/clients'
 import { createClient } from '@/lib/supabase/server'
@@ -17,10 +17,8 @@ interface Props {
  * Proof actions are a small Client island.
  */
 export default async function OrderDetailPage({ params }: Props) {
-  const n = Number(params.order_number)
-  if (!Number.isInteger(n) || n <= 0) notFound()
-
-  const order = await getOrderByNumber(n)
+  // Accepts an integer (DM orders) or "DIG-NNN" (digital-only).
+  const order = await getOrderByRef(params.order_number)
   if (!order) notFound()
 
   const supabase = createClient()

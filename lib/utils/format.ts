@@ -2,6 +2,27 @@
  * Display formatters. Pure functions only — no React, no IO.
  */
 
+/**
+ * URL slug for an order. Digital-only orders use their DIG-NNN
+ * display_ref; DM orders fall back to the integer order_number.
+ */
+export function orderHref(
+  o: { display_ref?: string | null; order_number: number },
+  basePath = '/orders'
+): string {
+  return `${basePath}/${o.display_ref ?? o.order_number}`
+}
+
+/**
+ * Human label for an order. "DIG-001" or "#651" — the prefix differs
+ * so it's obvious to ops which sheet the row came from.
+ */
+export function orderLabel(
+  o: { display_ref?: string | null; order_number: number }
+): string {
+  return o.display_ref ?? `#${o.order_number}`
+}
+
 export function formatEventDate(d: string | Date | null | undefined): string {
   if (!d) return ''
   const date = typeof d === 'string' ? new Date(d) : d

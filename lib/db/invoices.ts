@@ -15,7 +15,7 @@ export type InvoiceRow = {
   fl_state_tax: number | null
   total_invoice: number | null
   created_at: string
-  orders: { order_number: number; client_id: string } | null
+  orders: { order_number: number; display_ref: string | null; client_id: string } | null
 }
 
 // Admin-only. RLS rejects non-admin callers; the layout's role check is
@@ -24,7 +24,7 @@ export async function adminListInvoices(): Promise<InvoiceRow[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('invoices')
-    .select('*, orders ( order_number, client_id )')
+    .select('*, orders ( order_number, display_ref, client_id )')
     .order('created_at', { ascending: false })
   if (error) throw error
   return (data ?? []) as unknown as InvoiceRow[]

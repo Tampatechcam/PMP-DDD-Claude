@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { adminGetClient, adminListOfficesForClient } from '@/lib/db/clients'
 import { adminListOrders } from '@/lib/db/orders'
-import { formatMoney, formatQuantity, formatEventDate } from '@/lib/utils/format'
+import { formatMoney, formatQuantity, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
 import { StatusPill } from '@/components/orders/StatusPill'
 import Link from 'next/link'
 
@@ -116,12 +116,12 @@ export default async function AdminClientDetailPage({ params }: Props) {
             {orders.map((o) => (
               <li key={o.id}>
                 <Link
-                  href={`/admin/orders/${o.order_number}`}
+                  href={orderHref(o, '/admin/orders')}
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium">
-                      #{o.order_number}
+                      {orderLabel(o)}
                       {o.class_type && <span className="text-muted"> · {o.class_type}</span>}
                     </p>
                     <p className="text-xs text-muted truncate">

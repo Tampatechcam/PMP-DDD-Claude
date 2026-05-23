@@ -5,7 +5,8 @@ import {
   formatMoney,
   formatQuantity,
   formatRelativeDate,
-  formatTimeRange
+  formatTimeRange,
+  orderLabel
 } from '@/lib/utils/format'
 import type { OrderRow, OrderEventRow } from '@/lib/db/orders'
 
@@ -52,7 +53,7 @@ export function OrderCard({
       <header className="space-y-1">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-medium">
-            Order #{order.order_number}
+            Order {orderLabel(order)}
             {order.event_1_date && (
               <span className="text-muted font-normal">
                 {' · '}

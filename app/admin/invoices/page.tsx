@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { adminListInvoices } from '@/lib/db/invoices'
-import { formatMoney, formatEventDate } from '@/lib/utils/format'
+import { formatMoney, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
 
 /**
  * /admin/invoices — admin-only (RLS owns the gate; the layout enforces
@@ -52,10 +52,10 @@ export default async function AdminInvoicesPage() {
                   <td className="px-4 py-2.5">
                     {inv.orders ? (
                       <Link
-                        href={`/admin/orders/${inv.orders.order_number}`}
+                        href={orderHref(inv.orders, '/admin/orders')}
                         className="font-medium underline underline-offset-2"
                       >
-                        #{inv.orders.order_number}
+                        {orderLabel(inv.orders)}
                       </Link>
                     ) : (
                       <span className="text-muted">—</span>

@@ -12,6 +12,13 @@ import { createClient } from '@/lib/supabase/server'
 export type OrderRow = {
   id: string
   order_number: number
+  /**
+   * Public-facing identifier. Null for DM orders (the UI falls back to
+   * '#' || order_number — the real order number from the DM sheet).
+   * `DIG-NNN` for digital-only orders, which don't have a real number
+   * in any source sheet — see migration 012.
+   */
+  display_ref: string | null
   client_id: string
   office_id: string | null
   advisor_name: string | null
@@ -74,6 +81,35 @@ export async function getOrderByNumber(orderNumber: number) {
     .from('orders_with_display_status')
     .select('*')
     .eq('order_number', orderNumber)
+    .maybeSingle()
+  if (error) throw error
+  return data as OrderRow | null
+}
+
+/**
+ * Look up an order by URL slug — accepts either a numeric `order_number`
+ * (DM orders, e.g. "651") or a string `display_ref` (digital-only,
+ * e.g. "DIG-001"). Returns null for either bad input or no-such-order
+ * so the page can call notFound() uniformly.
+ */
+export async function getOrderByRef(ref: string) {
+  const supabase = createClient()
+  if (/^\d+$/.test(ref)) {
+    const n = Number(ref)
+    if (!Number.isInteger(n) || n <= 0) return null
+    const { data, error } = await supabase
+      .from('orders_with_display_status')
+      .select('*')
+      .eq('order_number', n)
+      .maybeSingle()
+    if (error) throw error
+    return data as OrderRow | null
+  }
+  // Display ref — case-sensitive match (we mint them uppercase).
+  const { data, error } = await supabase
+    .from('orders_with_display_status')
+    .select('*')
+    .eq('display_ref', ref)
     .maybeSingle()
   if (error) throw error
   return data as OrderRow | null

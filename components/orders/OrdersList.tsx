@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { StatusPill } from './StatusPill'
 import { Icon } from '@/components/ui/Icon'
-import { formatEventDate, formatRelativeDate } from '@/lib/utils/format'
+import { formatEventDate, formatRelativeDate, orderHref, orderLabel } from '@/lib/utils/format'
 import type { OrderRow } from '@/lib/db/orders'
 
 /**
@@ -265,8 +265,8 @@ function Row({
   return (
     <tr className="hover:bg-bg transition-colors group">
       <td className="px-3 py-2.5 whitespace-nowrap">
-        <Link href={`/orders/${o.order_number}`} className="font-medium">
-          #{o.order_number}
+        <Link href={orderHref(o)} className="font-medium">
+          {orderLabel(o)}
         </Link>
         {o.class_type && (
           <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
@@ -313,9 +313,9 @@ function Row({
       </td>
       <td className="px-3 py-2.5 w-8 text-right">
         <Link
-          href={`/orders/${o.order_number}`}
+          href={orderHref(o)}
           className="inline-flex"
-          aria-label={`Open order #${o.order_number}`}
+          aria-label={`Open order ${orderLabel(o)}`}
         >
           <Icon
             name="arrowRight"
