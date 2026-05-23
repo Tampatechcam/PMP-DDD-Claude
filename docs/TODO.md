@@ -19,3 +19,11 @@ real issue once they're scheduled.
 - [ ] Sentry or similar error reporting.
 - [ ] Per-client custom branding (logo on login, color accent).
 - [ ] Email digest of new orders / proof decisions.
+- [ ] Admin venue management UI under `/admin/clients/[id]/venues` —
+      right now an admin visiting `/venues` sees the client-facing page
+      with venues from *all* clients (RLS doesn't filter by client_id for
+      admins) and the create form will fail because admin profiles have
+      `client_id = null`. Acceptable for v1, but a real admin path is
+      cleaner.
+- [ ] Edit-in-place for venues / buildings / rooms (currently only
+      create + delete-cascade).

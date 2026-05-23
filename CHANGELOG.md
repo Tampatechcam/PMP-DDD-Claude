@@ -20,8 +20,13 @@ every PR that lands a user-visible or operationally relevant change.
   shell layouts, and `lib/actions/auth.ts` for sign-in / sign-out /
   password update. Generic error copy on the login form to avoid
   user-enumeration via auth errors.
-- `components/ui/Button.tsx` and `components/ui/Input.tsx` — small
-  primitives shared by every form going forward.
+- `components/ui/Button.tsx`, `Input.tsx`, and `Card.tsx` — primitives
+  shared by every form and panel going forward.
+- **Venues UI (Day 3):** `/venues` page lists every venue with its
+  buildings and rooms. Inline forms to add a venue, a building under
+  a venue, or a room under a building. Delete cascades through the
+  FK chain. `lib/db/profiles.ts` factors out the current-client lookup
+  that mutating actions need to satisfy the RLS with-check.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).
