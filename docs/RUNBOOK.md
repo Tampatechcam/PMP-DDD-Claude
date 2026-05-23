@@ -44,6 +44,29 @@ This should be impossible — assume it's a bug, not a misconfig.
 2. If not, generate a migration: `supabase db diff -f <name>`.
 3. Never paper over with manual SQL in the dashboard.
 
+## "Migrations have never been applied to this project"
+
+`PGRST205: Could not find the table 'public.clients' in the schema cache`
+on the first hit to the data API means the schema hasn't been pushed.
+
+Three ways to apply, fastest first:
+
+1. **Paste into the SQL Editor.** `supabase/migrations/_combined.sql` is
+   a one-shot concatenation of `001`–`006`. Dashboard → SQL Editor → New
+   query → paste → Run. Done in one click.
+2. **`supabase db push`.** Requires a personal access token:
+   ```
+   npx supabase login                 # opens browser for PAT
+   npx supabase link --project-ref <REF>
+   npx supabase db push
+   ```
+3. **Direct DB URL.** If you have the project's DB password:
+   ```
+   npx supabase db push --db-url 'postgresql://postgres.<REF>:<PWD>@aws-0-<REGION>.pooler.supabase.com:6543/postgres'
+   ```
+
+After the schema lands, `npm run db:types` regenerates `types/db.ts`.
+
 ## "Need to roll back a release"
 
 1. Vercel → Deployments → previous → Promote.
