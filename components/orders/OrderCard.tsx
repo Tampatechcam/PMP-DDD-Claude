@@ -1,6 +1,12 @@
 import { StatusPill } from './StatusPill'
 import { ProofActions } from '@/components/proofs/ProofActions'
-import { formatEventDate, formatMoney, formatQuantity } from '@/lib/utils/format'
+import {
+  formatEventDate,
+  formatMoney,
+  formatQuantity,
+  formatRelativeDate,
+  formatTimeRange
+} from '@/lib/utils/format'
 import type { OrderRow, OrderEventRow } from '@/lib/db/orders'
 
 type Proof = {
@@ -68,20 +74,19 @@ export function OrderCard({
 
       {events_array.length > 0 && (
         <Section title="Events">
-          <ul className="space-y-1 text-sm">
-            {events_array.map((e, i) => (
-              <li key={i}>
-                {formatEventDate(e.date)}
-                {(order.start_time || order.end_time) && (
-                  <span className="text-muted">
-                    {' · '}
-                    {order.start_time}
-                    {order.end_time && ` – ${order.end_time}`}
-                  </span>
-                )}
-                {e.room && <span className="text-muted"> · {e.room}</span>}
-              </li>
-            ))}
+          <ul className="space-y-1.5 text-sm">
+            {events_array.map((e, i) => {
+              const rel = formatRelativeDate(e.date)
+              const range = formatTimeRange(order.start_time, order.end_time)
+              return (
+                <li key={i} className="flex flex-wrap items-baseline gap-x-2">
+                  <span>{formatEventDate(e.date)}</span>
+                  {rel && <span className="text-xs text-muted">({rel})</span>}
+                  {range && <span className="text-muted text-xs">· {range}</span>}
+                  {e.room && <span className="text-muted text-xs">· {e.room}</span>}
+                </li>
+              )
+            })}
           </ul>
           {order.time_notes && (
             <p className="text-xs text-muted">{order.time_notes}</p>
@@ -192,8 +197,8 @@ export function OrderCard({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-1 border-t border-border pt-4">
-      <h2 className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+    <section className="space-y-2 border-t border-border pt-4">
+      <h2 className="text-[11px] font-semibold tracking-wider text-muted uppercase">
         {title}
       </h2>
       {children}

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { OrdersList } from '@/components/orders/OrdersList'
 import { OfficeSwitcher } from '@/components/layout/OfficeSwitcher'
+import { Icon } from '@/components/ui/Icon'
 import { listOrdersForClient } from '@/lib/db/orders'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { getCurrentClientSelf } from '@/lib/db/clients'
@@ -26,19 +27,29 @@ export default async function OrdersListPage({ searchParams }: Props) {
     listOrdersForClient(activeOfficeId ? { officeId: activeOfficeId } : undefined)
   ])
 
+  const activeOffice = offices.find((o) => o.id === activeOfficeId)
+  const summary = `${orders.length} order${orders.length === 1 ? '' : 's'}`
+
   return (
     <section className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-medium">Your orders</h1>
-          {client?.name && <p className="text-sm text-muted">{client.name}</p>}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+          <p className="text-sm text-muted">
+            {client?.name ? `${client.name} · ` : ''}
+            {summary}
+            {activeOffice && (
+              <span className="text-muted/70"> · filtered to {activeOffice.name}</span>
+            )}
+          </p>
         </div>
         <Link
           href={
             activeOfficeId ? `/orders/new?office=${activeOfficeId}` : '/orders/new'
           }
-          className="inline-flex items-center justify-center rounded text-sm font-medium px-3 py-2 bg-accent text-white hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded text-sm font-medium px-3 py-2 bg-accent text-white hover:opacity-90 transition-opacity"
         >
+          <Icon name="plus" className="w-4 h-4" />
           New order
         </Link>
       </header>

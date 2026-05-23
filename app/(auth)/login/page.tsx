@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { Button } from '@/components/ui/Button'
+import { Brand } from '@/components/layout/Brand'
 import { createClient } from '@/lib/supabase/server'
 import { signInAsDemoClient, signInAsDemoAdmin } from '@/lib/actions/demo'
 
@@ -18,11 +19,18 @@ export default async function LoginPage({ searchParams }: Props) {
   const sent = searchParams.sent === '1'
 
   return (
-    <main className="min-h-screen grid place-items-center px-4 py-10">
-      <div className="w-full max-w-sm space-y-4">
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <h1 className="text-lg font-medium mb-1">Sign in</h1>
-          <p className="text-sm text-muted mb-4">
+    <main className="min-h-screen grid place-items-center px-4 py-10 bg-gradient-to-b from-bg to-stone-100">
+      <div className="w-full max-w-sm space-y-5">
+        <div className="text-center space-y-2">
+          <div className="inline-flex"><Brand href="/login" /></div>
+          <p className="text-sm text-muted">
+            Direct mail &amp; digital orders, proofs, and history.
+          </p>
+        </div>
+
+        <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
+          <h1 className="text-base font-semibold mb-1">Sign in</h1>
+          <p className="text-sm text-muted mb-5">
             {mode === 'magic'
               ? 'Enter your email and we’ll send you a sign-in link.'
               : 'Use your email and password.'}
@@ -32,14 +40,14 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* Temporary demo buttons. Remove (and delete lib/actions/demo.ts)
             before production. */}
-        <div className="bg-bg border border-dashed border-border rounded-lg p-4">
-          <p className="text-xs uppercase tracking-wide text-muted mb-2">
+        <div className="bg-surface border border-dashed border-border rounded-lg p-5">
+          <p className="text-[11px] uppercase tracking-wide text-muted font-medium mb-2">
             Demo
           </p>
-          <p className="text-xs text-muted mb-3">
-            Skip auth and look around. Each button provisions a demo
-            account + a seed order in the linked Supabase project.
-            Requires migrations 001–006 applied.
+          <p className="text-xs text-muted mb-4 leading-relaxed">
+            Skip auth and click around with real seed data. Each button
+            provisions / refreshes a demo account in the linked Supabase
+            project.
           </p>
           <div className="flex gap-2">
             <form action={signInAsDemoClient} className="flex-1">
@@ -54,6 +62,10 @@ export default async function LoginPage({ searchParams }: Props) {
             </form>
           </div>
         </div>
+
+        <p className="text-center text-[11px] text-muted">
+          © PMP — internal use only
+        </p>
       </div>
     </main>
   )

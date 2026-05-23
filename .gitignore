@@ -44,3 +44,4 @@ scripts/import-log.jsonl
 .mcp/
 .cursor/mcp.json
 .cline/mcp.json
+scripts/.import-work/

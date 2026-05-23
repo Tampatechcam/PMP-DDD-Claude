@@ -1,7 +1,6 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { SignOutButton } from '@/components/auth/SignOutButton'
+import { AdminSidebar } from '@/components/layout/AdminSidebar'
 
 /**
  * Admin shell, mounted at /admin. We deliberately avoid the `(admin)` route
@@ -25,19 +24,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (profile?.role !== 'admin') redirect('/orders')
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/admin" className="text-sm font-medium">PMP · Admin</Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <Link href="/admin/clients" className="text-muted hover:text-ink">Clients</Link>
-            <Link href="/admin/orders" className="text-muted hover:text-ink">Orders</Link>
-            <Link href="/admin/invoices" className="text-muted hover:text-ink">Invoices</Link>
-            <SignOutButton />
-          </nav>
-        </div>
-      </header>
-      <main className="max-w-5xl mx-auto px-4 py-6">{children}</main>
+    <div className="min-h-screen flex">
+      <AdminSidebar />
+      <main className="flex-1 min-w-0">
+        <div className="max-w-5xl mx-auto px-6 py-8">{children}</div>
+      </main>
     </div>
   )
 }

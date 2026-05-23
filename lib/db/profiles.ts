@@ -28,6 +28,58 @@ export async function getCurrentProfile() {
  * Throws if the profile has no client_id linked — that's a setup problem,
  * not a user-facing condition.
  */
+export type AdminProfileRow = {
+  id: string
+  full_name: string | null
+  role: 'client' | 'admin' | string
+  created_at: string | null
+  email: string | null
+  client_id: string | null
+  client_name: string | null
+}
+
+/**
+ * Admin: every profile in the system with its linked client name. RLS is
+ * permissive for admins (`profiles_select` + `profiles_admin_write`) but
+ * the email lives on auth.users which RLS does NOT govern from the data
+ * API — we use the service-role admin client just for the email join,
+ * then merge in JS. Cheap: this list is small.
+ */
+export async function adminListProfiles(): Promise<AdminProfileRow[]> {
+  const supabase = createClient()
+  const { data: profileRows, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, created_at, client_id, clients ( name )')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+
+  // Pull emails via the service-role admin client (server-only, gated by
+  // the page-level admin check that's already in /admin/layout.tsx).
+  const { supabaseAdmin } = await import('@/lib/supabase/admin')
+  const { data: users } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200
+  })
+  const emailById = new Map<string, string | undefined>(
+    users?.users.map((u) => [u.id, u.email]) ?? []
+  )
+
+  return (profileRows ?? []).map((p) => {
+    // PostgREST single-FK relationship returns object | null; types may be
+    // looser in dev so cope with either shape.
+    const linked = (p as { clients?: { name: string } | null }).clients
+    return {
+      id: p.id,
+      full_name: p.full_name,
+      role: p.role,
+      created_at: p.created_at,
+      email: emailById.get(p.id) ?? null,
+      client_id: p.client_id,
+      client_name: linked?.name ?? null
+    }
+  })
+}
+
 export async function getCurrentClientIdOrThrow(): Promise<string> {
   const profile = await getCurrentProfile()
   if (!profile?.client_id) {
