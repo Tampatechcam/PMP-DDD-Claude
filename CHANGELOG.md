@@ -27,6 +27,16 @@ every PR that lands a user-visible or operationally relevant change.
   a venue, or a room under a building. Delete cascades through the
   FK chain. `lib/db/profiles.ts` factors out the current-client lookup
   that mutating actions need to satisfy the RLS with-check.
+- **Orders list + card (Day 4):** `/orders` sorts by `event_1_date`
+  desc (the SQL view does the sort), with an `OfficeSwitcher` for
+  group clients that hides itself for single-office clients. State
+  lives in `?office=<id>` — server components own the filtering, no
+  client state. `/orders/[order_number]` renders the Part 8 ASCII
+  layout as a Server Component: header + Status pill, Events, Venue,
+  Direct Mail (only if `needs_direct_mail`), Digital (only if
+  `needs_digital`), Proofs, History.
+- `components/orders/StatusPill.tsx` maps the SQL view's display
+  string to one of four tones via `lib/utils/status.ts`.
 
 ### Decided
 - AdvisorMax is a group client (one login, advisors as offices).
