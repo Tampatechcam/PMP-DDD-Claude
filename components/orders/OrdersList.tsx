@@ -26,19 +26,22 @@ function pivotDate(o: OrderRow): string | null {
 }
 
 /**
- * Past tab = the seminar already happened. We classify strictly on
- * `event_1_date` (the actual class date) — `dm_status = "Order Sent"`
- * is NOT a signal to move into past, because plenty of mailers go
- * out weeks before a future event. Orders with no event date are
- * skipped entirely (they're placeholders).
+ * The Orders table tracks direct-mail orders. Digital-only campaigns
+ * (no DM component) fall out of both tabs — they aren't "events" in the
+ * production sense, just standalone campaigns shown elsewhere.
+ *
+ * Past = the DM has been mailed (`dm_status = "Order Sent"`).
+ * Upcoming = anything else still being prepped (Pending Details,
+ * All Details Added, Proof Sent to Client, …). Order Sent never
+ * appears in Upcoming.
  */
 function tabOf(o: OrderRow): OrdersTab | null {
+  if (!o.needs_direct_mail) return null
   if (!o.event_1_date) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const d = new Date(o.event_1_date)
-  d.setHours(0, 0, 0, 0)
-  return d.getTime() < today.getTime() ? 'past' : 'upcoming'
+  if (o.dm_status && o.dm_status.toLowerCase().includes('order sent')) {
+    return 'past'
+  }
+  return 'upcoming'
 }
 
 interface Props {
