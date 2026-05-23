@@ -1,21 +1,31 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Icon, type IconName } from '@/components/ui/Icon'
+import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { createClient } from '@/lib/supabase/server'
+import { adminListOrders } from '@/lib/db/orders'
+import { adminListClients } from '@/lib/db/clients'
+
+interface Props {
+  searchParams: { tab?: string }
+}
 
 /**
- * Admin home. Three count tiles + a "needs your attention" row when
- * there are pending proofs. Deliberately not a reporting dashboard —
- * day-to-day work lives in the sidebar.
+ * Admin Overview. Four count tiles + the tabbed Upcoming/Past Events
+ * orders table. The tab choice lives in ?tab=past so the sidebar's
+ * "Past events" item can deep-link straight to the past view.
  */
-export default async function AdminHome() {
-  const supabase = createClient()
+export default async function AdminHome({ searchParams }: Props) {
+  const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
 
+  const supabase = createClient()
   const [
     { count: clientsCount },
     { count: ordersCount },
     { count: pendingProofsCount },
-    { count: invoicesCount }
+    { count: invoicesCount },
+    orders,
+    clients
   ] = await Promise.all([
     supabase.from('clients').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }),
@@ -23,15 +33,20 @@ export default async function AdminHome() {
       .from('proofs')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
-    supabase.from('invoices').select('id', { count: 'exact', head: true })
+    supabase.from('invoices').select('id', { count: 'exact', head: true }),
+    adminListOrders({ limit: 500 }),
+    adminListClients()
   ])
 
+  const clientNameById = Object.fromEntries(clients.map((c) => [c.id, c.name]))
+
   return (
-    <section className="space-y-8">
+    <section className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
         <p className="text-sm text-muted">
-          Quick counts across every client. Day-to-day work lives in the nav.
+          Tabs below — Upcoming is what ops works on; Past events is the
+          historical archive (also pinned in the sidebar).
         </p>
       </header>
 
@@ -47,6 +62,14 @@ export default async function AdminHome() {
         />
         <Tile href="/admin/invoices" label="Invoices" icon="invoices" value={invoicesCount ?? 0} />
       </div>
+
+      <OrdersList
+        orders={orders}
+        activeTab={activeTab}
+        basePath="/admin"
+        showClient
+        clientNameById={clientNameById}
+      />
     </section>
   )
 }

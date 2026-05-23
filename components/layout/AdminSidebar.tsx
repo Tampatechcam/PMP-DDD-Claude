@@ -1,24 +1,40 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Brand } from './Brand'
 import { Icon, type IconName } from '@/components/ui/Icon'
 import { signOut } from '@/lib/actions/auth'
 
-const nav: { href: string; label: string; icon: IconName }[] = [
-  { href: '/admin',          label: 'Overview', icon: 'orders' },
-  { href: '/admin/clients',  label: 'Clients',  icon: 'clients' },
-  { href: '/admin/orders',   label: 'Orders',   icon: 'orders' },
-  { href: '/admin/invoices', label: 'Invoices', icon: 'invoices' },
-  { href: '/admin/profiles', label: 'Profiles', icon: 'profiles' }
+interface NavItem {
+  href: string
+  label: string
+  icon: IconName
+  /** Match this rule: `pathname` (default) or `pathname-and-tab`. */
+  match?: 'pathname' | 'pathname-and-tab-past' | 'pathname-no-tab'
+}
+
+const nav: NavItem[] = [
+  { href: '/admin',             label: 'Overview',    icon: 'orders',   match: 'pathname-no-tab' },
+  { href: '/admin?tab=past',    label: 'Past events', icon: 'orders',   match: 'pathname-and-tab-past' },
+  { href: '/admin/clients',     label: 'Clients',     icon: 'clients' },
+  { href: '/admin/orders',      label: 'Orders',      icon: 'orders' },
+  { href: '/admin/invoices',    label: 'Invoices',    icon: 'invoices' },
+  { href: '/admin/profiles',    label: 'Profiles',    icon: 'profiles' }
 ]
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const search = useSearchParams()
+  const tab = search.get('tab')
 
-  const isActive = (href: string) => {
-    if (href === '/admin') return pathname === '/admin'
-    return pathname === href || pathname.startsWith(`${href}/`)
+  const isActive = (item: NavItem) => {
+    if (item.match === 'pathname-and-tab-past') {
+      return pathname === '/admin' && tab === 'past'
+    }
+    if (item.match === 'pathname-no-tab') {
+      return pathname === '/admin' && tab !== 'past'
+    }
+    return pathname === item.href || pathname.startsWith(`${item.href}/`)
   }
 
   return (
@@ -32,7 +48,7 @@ export function AdminSidebar() {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${
-              isActive(item.href)
+              isActive(item)
                 ? 'bg-bg text-ink font-medium'
                 : 'text-muted hover:bg-bg hover:text-ink'
             }`}

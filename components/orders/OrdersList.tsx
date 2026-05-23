@@ -22,7 +22,10 @@ import type { OrderRow } from '@/lib/db/orders'
 export type OrdersTab = 'upcoming' | 'past'
 
 function pivotDate(o: OrderRow): string | null {
-  return o.first_class_day ?? o.event_1_date ?? null
+  // Pivot on order_sent_deadline (Monday 4 weeks before event = when
+  // production has to kick off). Digital-only orders have no production
+  // deadline, so fall back to event_1_date.
+  return o.order_sent_deadline ?? o.event_1_date ?? null
 }
 
 function isOrderSent(o: OrderRow): boolean {
@@ -196,8 +199,9 @@ function Table({
         <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
           <tr className="border-b border-border">
             <Th>Order</Th>
-            <Th>First class</Th>
-            <Th>Event</Th>
+            <Th>Order Sent Deadline</Th>
+            <Th>First Event date</Th>
+            <Th>Second Event date</Th>
             {showClient && <Th>Client</Th>}
             <Th>Advisor</Th>
             <Th>Venue</Th>
@@ -233,7 +237,7 @@ function Row({
   showClient?: boolean
   clientName?: string
 }) {
-  const fcRel = formatRelativeDate(o.first_class_day)
+  const osdRel = formatRelativeDate(o.order_sent_deadline)
   return (
     <tr className="hover:bg-bg transition-colors group">
       <td className="px-3 py-2.5 whitespace-nowrap">
@@ -247,20 +251,23 @@ function Row({
         )}
       </td>
       <td className="px-3 py-2.5 whitespace-nowrap">
-        {o.first_class_day ? (
+        {o.order_sent_deadline ? (
           <span>
             <span className="inline-flex items-center gap-1">
               <Icon name="calendar" className="w-3.5 h-3.5 text-muted" />
-              {formatEventDate(o.first_class_day)}
+              {formatEventDate(o.order_sent_deadline)}
             </span>
-            {fcRel && <span className="text-xs text-muted ml-1">· {fcRel}</span>}
+            {osdRel && <span className="text-xs text-muted ml-1">· {osdRel}</span>}
           </span>
         ) : (
           <span className="italic text-muted/70">—</span>
         )}
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap text-muted">
+      <td className="px-3 py-2.5 whitespace-nowrap">
         {o.event_1_date ? formatEventDate(o.event_1_date) : <span className="italic text-muted/70">pending</span>}
+      </td>
+      <td className="px-3 py-2.5 whitespace-nowrap text-muted">
+        {o.event_2_date ? formatEventDate(o.event_2_date) : <span className="italic text-muted/70">—</span>}
       </td>
       {showClient && (
         <td className="px-3 py-2.5 truncate max-w-[14rem]">
