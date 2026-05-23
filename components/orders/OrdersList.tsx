@@ -22,29 +22,23 @@ import type { OrderRow } from '@/lib/db/orders'
 export type OrdersTab = 'upcoming' | 'past'
 
 function pivotDate(o: OrderRow): string | null {
-  // Pivot on order_sent_deadline (Monday 4 weeks before event = when
-  // production has to kick off). Digital-only orders have no production
-  // deadline, so fall back to event_1_date.
   return o.order_sent_deadline ?? o.event_1_date ?? null
 }
 
-function isOrderSent(o: OrderRow): boolean {
-  return typeof o.dm_status === 'string' && o.dm_status.toLowerCase().includes('order sent')
-}
-
-function isPast(o: OrderRow): boolean {
-  const d = pivotDate(o)
-  if (!d) return false
+/**
+ * Past tab = the seminar already happened. We classify strictly on
+ * `event_1_date` (the actual class date) — `dm_status = "Order Sent"`
+ * is NOT a signal to move into past, because plenty of mailers go
+ * out weeks before a future event. Orders with no event date are
+ * skipped entirely (they're placeholders).
+ */
+function tabOf(o: OrderRow): OrdersTab | null {
+  if (!o.event_1_date) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const dd = new Date(d)
-  dd.setHours(0, 0, 0, 0)
-  return dd.getTime() < today.getTime()
-}
-
-function tabOf(o: OrderRow): OrdersTab {
-  if (isOrderSent(o) || isPast(o)) return 'past'
-  return 'upcoming'
+  const d = new Date(o.event_1_date)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime() < today.getTime() ? 'past' : 'upcoming'
 }
 
 interface Props {
