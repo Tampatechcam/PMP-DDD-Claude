@@ -32,5 +32,8 @@ export async function listVenuesForCurrentClient(): Promise<VenueWithChildren[]>
     )
     .order('name')
   if (error) throw error
-  return (data ?? []) as VenueWithChildren[]
+  // Supabase's embedded-relation type doesn't structurally match our
+  // hand-typed shape (relationship inference returns broader unions).
+  // Cast through unknown — the DB FK chain guarantees the structure.
+  return (data ?? []) as unknown as VenueWithChildren[]
 }

@@ -1,5 +1,5 @@
 import 'server-only'
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 /**
@@ -14,7 +14,7 @@ export function createClient() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (toSet) =>
+        setAll: (toSet: { name: string; value: string; options: CookieOptions }[]) =>
           toSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           )
