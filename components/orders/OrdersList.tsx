@@ -87,6 +87,7 @@ export function OrdersList({
           orders={visible}
           showClient={showClient}
           clientNameById={clientNameById}
+          isPast={activeTab === 'past'}
         />
       )}
     </div>
@@ -184,11 +185,13 @@ function EmptyState({ tab }: { tab: OrdersTab }) {
 function Table({
   orders,
   showClient,
-  clientNameById
+  clientNameById,
+  isPast
 }: {
   orders: OrderRow[]
   showClient?: boolean
   clientNameById?: Record<string, string>
+  isPast: boolean
 }) {
   return (
     <div className="border border-border rounded-lg bg-surface overflow-x-auto">
@@ -196,7 +199,7 @@ function Table({
         <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
           <tr className="border-b border-border">
             <Th>Order</Th>
-            <Th>Order Sent Deadline</Th>
+            {!isPast && <Th>Order Sent Deadline</Th>}
             <Th>First Event date</Th>
             <Th>Second Event date</Th>
             {showClient && <Th>Client</Th>}
@@ -213,6 +216,7 @@ function Table({
               order={o}
               showClient={showClient}
               clientName={clientNameById?.[o.client_id]}
+              isPast={isPast}
             />
           ))}
         </tbody>
@@ -228,11 +232,13 @@ function Th({ children }: { children?: React.ReactNode }) {
 function Row({
   order: o,
   showClient,
-  clientName
+  clientName,
+  isPast
 }: {
   order: OrderRow
   showClient?: boolean
   clientName?: string
+  isPast: boolean
 }) {
   const osdRel = formatRelativeDate(o.order_sent_deadline)
   return (
@@ -247,19 +253,21 @@ function Row({
           </span>
         )}
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap">
-        {o.order_sent_deadline ? (
-          <span>
-            <span className="inline-flex items-center gap-1">
-              <Icon name="calendar" className="w-3.5 h-3.5 text-muted" />
-              {formatEventDate(o.order_sent_deadline)}
+      {!isPast && (
+        <td className="px-3 py-2.5 whitespace-nowrap">
+          {o.order_sent_deadline ? (
+            <span>
+              <span className="inline-flex items-center gap-1">
+                <Icon name="calendar" className="w-3.5 h-3.5 text-muted" />
+                {formatEventDate(o.order_sent_deadline)}
+              </span>
+              {osdRel && <span className="text-xs text-muted ml-1">· {osdRel}</span>}
             </span>
-            {osdRel && <span className="text-xs text-muted ml-1">· {osdRel}</span>}
-          </span>
-        ) : (
-          <span className="italic text-muted/70">—</span>
-        )}
-      </td>
+          ) : (
+            <span className="italic text-muted/70">—</span>
+          )}
+        </td>
+      )}
       <td className="px-3 py-2.5 whitespace-nowrap">
         {o.event_1_date ? formatEventDate(o.event_1_date) : <span className="italic text-muted/70">pending</span>}
       </td>
