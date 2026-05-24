@@ -83,26 +83,62 @@ export default async function AdminClientDetailPage({ params }: Props) {
           <p className="text-sm text-muted">No offices linked.</p>
         ) : (
           <ul className="space-y-2">
-            {offices.map((o) => (
-              <li key={o.id}>
-                <Card>
-                  <p className="text-sm font-medium">
-                    {o.name}
-                    {o.is_primary && <span className="text-muted"> · primary</span>}
-                  </p>
-                  {o.advisor_names && o.advisor_names.length > 0 && (
-                    <p className="text-xs text-muted mt-1">
-                      Advisors: {o.advisor_names.join(', ')}
-                    </p>
-                  )}
-                  {o.registration_phone && (
-                    <p className="text-xs text-muted">
-                      Reg phone: {o.registration_phone}
-                    </p>
-                  )}
-                </Card>
-              </li>
-            ))}
+            {offices.map((o) => {
+              const returnAddr = readFreeform(o.mailer_return_address)
+              return (
+                <li key={o.id}>
+                  <Card>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-sm font-medium">
+                        {o.name}
+                        {o.is_primary && <span className="text-muted"> · primary</span>}
+                      </p>
+                      {o.state && (
+                        <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
+                          {o.state}
+                        </span>
+                      )}
+                    </div>
+                    {o.advisor_names && o.advisor_names.length > 0 && (
+                      <p className="text-xs text-muted mt-1">
+                        Advisors: {o.advisor_names.join(', ')}
+                      </p>
+                    )}
+                    {(o.registration_phone || o.registration_url_direct || returnAddr) && (
+                      <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-0.5 text-xs">
+                        {o.registration_phone && (
+                          <>
+                            <dt className="text-muted">Reg phone</dt>
+                            <dd>{o.registration_phone}</dd>
+                          </>
+                        )}
+                        {o.registration_url_direct && (
+                          <>
+                            <dt className="text-muted">Landing URL</dt>
+                            <dd className="truncate">
+                              <a
+                                href={o.registration_url_direct}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline underline-offset-2"
+                              >
+                                {o.registration_url_direct}
+                              </a>
+                            </dd>
+                          </>
+                        )}
+                        {returnAddr && (
+                          <>
+                            <dt className="text-muted">Return addr</dt>
+                            <dd className="whitespace-pre-line">{returnAddr}</dd>
+                          </>
+                        )}
+                      </dl>
+                    )}
+                  </Card>
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>
@@ -138,6 +174,18 @@ export default async function AdminClientDetailPage({ params }: Props) {
       </section>
     </section>
   )
+}
+
+/**
+ * `mailer_return_address` is jsonb; the importer stored the raw CSV
+ * cell under a `freeform` key. Returns null if absent so the row hides.
+ */
+function readFreeform(addr: unknown): string | null {
+  if (addr && typeof addr === 'object' && 'freeform' in addr) {
+    const v = (addr as { freeform?: unknown }).freeform
+    if (typeof v === 'string' && v.trim()) return v
+  }
+  return null
 }
 
 function Dl({ children }: { children: React.ReactNode }) {
