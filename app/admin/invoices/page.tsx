@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { adminListInvoices } from '@/lib/db/invoices'
 import { formatMoney, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
+import { Pill, type PillTone } from '@/components/ui/Pill'
 
 /**
  * /admin/invoices — admin-only (RLS owns the gate; the layout enforces
@@ -95,15 +96,16 @@ export default async function AdminInvoicesPage() {
   )
 }
 
+/**
+ * Invoice-status pill. paid wins over the raw status string, then "sent"
+ * gets the warning tone, then everything else is neutral. Tones come
+ * from the shared <Pill> primitive.
+ */
 function InvoiceStatus({ status, paid }: { status: string; paid: boolean }) {
-  const cls = paid
-    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+  const tone: PillTone = paid
+    ? 'success'
     : status.toLowerCase().includes('sent')
-      ? 'bg-amber-50 text-amber-900 border-amber-200'
-      : 'bg-stone-100 text-stone-700 border-stone-200'
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded-full ${cls}`}>
-      {status}
-    </span>
-  )
+      ? 'warning'
+      : 'neutral'
+  return <Pill tone={tone}>{status}</Pill>
 }

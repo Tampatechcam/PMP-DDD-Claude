@@ -40,7 +40,7 @@ findings each task addresses.
 | TASK-R001 | Hoist 6 raw `supabase.from('…')` calls into `lib/db/*` (Operating principle #3) | complete | claude | [R001-hoist-raw-from-calls.md](R001-hoist-raw-from-calls.md) |
 | TASK-R002 | Tiny cleanup batch (delete dead Sidebar, drop login gradient, use memoized `getAuthUser` in `account/page.tsx`) | complete | claude | [R002-cleanup-batch.md](R002-cleanup-batch.md) |
 | TASK-R003 | Refactor `<Button>` to accept an `href` (or add `<ButtonLink>`), replace 3 inline-styled link buttons | open | — | _unassigned_ |
-| TASK-R004 | Extract shared `<Pill>` primitive; rewrite `InvoiceStatus` on top of it | open | — | _unassigned_ |
+| TASK-R004 | Extract shared `<Pill>` primitive; rewrite `InvoiceStatus` on top of it | complete | claude | [R004-pill-primitive.md](R004-pill-primitive.md) |
 | TASK-R005 | Sync docs to actually-shipped `/callback` URL (4 doc files still say `/auth/callback`) | complete | claude | [R005-doc-callback-url-sync.md](R005-doc-callback-url-sync.md) |
 | TASK-R006 | Security/RLS verify — run existing `scripts/verify-rls.ts`, capture results, scope coverage gaps | complete | claude (orchestrator) | [R006-security-rls-verify.md](R006-security-rls-verify.md) |
 | TASK-R007 | Extend `scripts/verify-rls.ts` for 5 coverage gaps: `security_invoker` regression guard, storage RLS, read-via-view, cross-tenant clients/offices/venues, profile-self-promotion + proof-status enum guards | open | — | _unassigned_ |
