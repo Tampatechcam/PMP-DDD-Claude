@@ -41,9 +41,9 @@ export default async function AdminProfilesPage() {
       {profiles.length === 0 ? (
         <p className="text-sm text-muted">No profiles yet.</p>
       ) : (
-        <div className="border border-border rounded-lg bg-surface overflow-x-auto">
+        <div className="border border-border rounded-lg bg-surface">
           <table className="w-full text-sm">
-            <thead className="text-xs uppercase tracking-wide text-muted">
+            <thead className="label bg-bg">
               <tr className="border-b border-border">
                 <th className="text-left px-4 py-2 font-medium">Email</th>
                 <th className="text-left px-4 py-2 font-medium">Name</th>

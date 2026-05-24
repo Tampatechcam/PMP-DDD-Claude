@@ -34,7 +34,7 @@ export default async function AdminInvoicesPage() {
           </p>
         </div>
       ) : (
-        <div className="border border-border rounded-lg bg-surface overflow-x-auto">
+        <div className="border border-border rounded-lg bg-surface">
           <table className="w-full text-sm">
             <thead className="label bg-bg">
               <tr className="border-b border-border">

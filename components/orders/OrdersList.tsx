@@ -215,18 +215,18 @@ function Table({
   ordersBasePath?: string
 }) {
   return (
-    <div className="border border-border rounded-lg bg-surface overflow-x-auto">
-      <table className="w-full text-sm table-fixed">
+    <div className="border border-border rounded-lg bg-surface">
+      <table className="w-full text-sm">
         <thead className="label bg-bg">
           <tr className="border-b border-border">
-            <Th className="w-[7rem]">Order</Th>
-            {!isPast && <Th className="w-[14rem]">Order Sent Deadline</Th>}
-            <Th className="w-[12rem]">First Event date</Th>
-            <Th className="w-[12rem]">Second Event date</Th>
-            {showClient && <Th className="w-[10rem]">Client</Th>}
-            <Th className="w-[9rem]">Advisor</Th>
+            <Th className="w-[7%]">Order</Th>
+            {!isPast && <Th className="w-[17%]">Order Sent Deadline</Th>}
+            <Th className="w-[13%]">First Event date</Th>
+            <Th className="w-[13%]">Second Event date</Th>
+            {showClient && <Th className="w-[10%]">Client</Th>}
+            <Th className="w-[9%]">Advisor</Th>
             <Th>Venue</Th>
-            <Th className="w-[10rem]">Status</Th>
+            <Th className="w-[11%]">Status</Th>
             <Th className="w-8" />
           </tr>
         </thead>
@@ -279,15 +279,17 @@ function Row({
         )}
       </td>
       {!isPast && (
-        <td className="px-3 py-2.5 whitespace-nowrap">
+        <td className="px-3 py-2.5">
           {o.order_sent_deadline ? (
-            <span>
-              <span className="inline-flex items-center gap-1">
+            <>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
                 <Icon name="calendar" className="w-3.5 h-3.5 text-muted" />
                 {formatEventDate(o.order_sent_deadline)}
               </span>
-              {osdRel && <span className="text-xs text-muted ml-1">· {osdRel}</span>}
-            </span>
+              {osdRel && (
+                <p className="text-xs text-muted mt-0.5">{osdRel}</p>
+              )}
+            </>
           ) : (
             <span className="italic text-muted/70">—</span>
           )}
