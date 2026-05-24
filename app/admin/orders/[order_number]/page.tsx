@@ -30,7 +30,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     order.office_id
       ? supabase
           .from('offices')
-          .select('name, registration_phone, registration_url_direct, registration_url_digital, advisor_names')
+          .select('name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, mailer_return_address')
           .eq('id', order.office_id)
           .maybeSingle()
       : Promise.resolve({ data: null })

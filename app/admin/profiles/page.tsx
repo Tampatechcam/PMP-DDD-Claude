@@ -7,7 +7,7 @@ import { InviteUserForm } from '@/components/admin/InviteUserForm'
 /**
  * /admin/profiles — every signed-up user with their role + linked client,
  * plus an invite form so admins can add new users (the Supabase invite
- * email lands them on /auth/callback for a passwordless first sign-in).
+ * email lands them on /callback for a passwordless first sign-in).
  */
 export default async function AdminProfilesPage() {
   const [profiles, clients] = await Promise.all([

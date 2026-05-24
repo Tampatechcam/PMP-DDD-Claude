@@ -192,6 +192,7 @@ export type Database = {
           registration_url_digital: string | null
           registration_url_direct: string | null
           secondary_contact: Json | null
+          state: string | null
         }
         Insert: {
           advisor_names?: string[] | null
@@ -209,6 +210,7 @@ export type Database = {
           registration_url_digital?: string | null
           registration_url_direct?: string | null
           secondary_contact?: Json | null
+          state?: string | null
         }
         Update: {
           advisor_names?: string[] | null
@@ -226,6 +228,7 @@ export type Database = {
           registration_url_digital?: string | null
           registration_url_direct?: string | null
           secondary_contact?: Json | null
+          state?: string | null
         }
         Relationships: [
           {
@@ -299,6 +302,7 @@ export type Database = {
           digital_budget: number | null
           digital_disclaimer: string | null
           digital_status: string | null
+          display_ref: string | null
           dm_status: string | null
           end_time: string | null
           ethnicity_avoid: string | null
@@ -358,6 +362,7 @@ export type Database = {
           digital_budget?: number | null
           digital_disclaimer?: string | null
           digital_status?: string | null
+          display_ref?: string | null
           dm_status?: string | null
           end_time?: string | null
           ethnicity_avoid?: string | null
@@ -417,6 +422,7 @@ export type Database = {
           digital_budget?: number | null
           digital_disclaimer?: string | null
           digital_status?: string | null
+          display_ref?: string | null
           dm_status?: string | null
           end_time?: string | null
           ethnicity_avoid?: string | null
@@ -733,6 +739,7 @@ export type Database = {
           digital_budget: number | null
           digital_disclaimer: string | null
           digital_status: string | null
+          display_ref: string | null
           display_status: string | null
           dm_status: string | null
           end_time: string | null
@@ -793,6 +800,7 @@ export type Database = {
           digital_budget?: number | null
           digital_disclaimer?: string | null
           digital_status?: string | null
+          display_ref?: string | null
           display_status?: never
           dm_status?: string | null
           end_time?: string | null
@@ -853,6 +861,7 @@ export type Database = {
           digital_budget?: number | null
           digital_disclaimer?: string | null
           digital_status?: string | null
+          display_ref?: string | null
           display_status?: never
           dm_status?: string | null
           end_time?: string | null

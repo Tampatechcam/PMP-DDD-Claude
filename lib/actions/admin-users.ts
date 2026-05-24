@@ -31,7 +31,7 @@ async function requireAdmin() {
 
 /**
  * Where the invite email's "Accept" link should land. The auth callback at
- * /auth/callback exchanges the ?code= for a session and redirects to ?next=.
+ * /callback exchanges the ?code= for a session and redirects to ?next=.
  *
  * Pulls the site origin from NEXT_PUBLIC_SITE_URL if set, otherwise from the
  * Supabase URL's own host (works fine for the cloud project's `Site URL`
@@ -82,7 +82,7 @@ export async function inviteUser(input: InviteUserInput): Promise<ActionResult> 
     }
 
     const next = input.role === 'admin' ? '/admin' : '/orders'
-    const redirectTo = `${siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}`
+    const redirectTo = `${siteOrigin()}/callback?next=${encodeURIComponent(next)}`
 
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
@@ -145,7 +145,7 @@ export async function resendInvite(userId: string): Promise<ActionResult> {
       .eq('id', userId)
       .maybeSingle()
     const next = prof?.role === 'admin' ? '/admin' : '/orders'
-    const redirectTo = `${siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}`
+    const redirectTo = `${siteOrigin()}/callback?next=${encodeURIComponent(next)}`
 
     const { error: reInvErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       u.email,

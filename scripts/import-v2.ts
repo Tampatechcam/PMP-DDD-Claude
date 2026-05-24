@@ -981,6 +981,21 @@ async function main(): Promise<void> {
   }
   console.log(`  inserted ${eventRows.length} order_events`)
 
+  // STEP 7: derive office contact + client business fields from the data
+  // we just inserted. Both scripts are idempotent — they read the freshly
+  // inserted rows and aggregate per-office / per-client. Pulling them in
+  // here means a single `npx tsx import-v2.ts` produces a fully populated
+  // database (instead of requiring the operator to remember to run two
+  // follow-up backfills).
+  console.log('\nStep 7: backfill derived fields...')
+  const { execSync } = await import('child_process')
+  execSync('npx tsx --env-file=.env.local scripts/backfill-office-fields.ts', {
+    stdio: 'inherit'
+  })
+  execSync('npx tsx --env-file=.env.local scripts/backfill-client-business.ts', {
+    stdio: 'inherit'
+  })
+
   // Final breakdown
   const dmOnly = insertedDm.length - dmDigitalMerged
   const dmAndDigital = dmDigitalMerged

@@ -35,10 +35,13 @@ type ClientLite = {
 
 type OfficeLite = {
   name: string
+  state?: string | null
   registration_phone?: string | null
   registration_url_direct?: string | null
   registration_url_digital?: string | null
   advisor_names?: string[] | null
+  // jsonb in DB — the importer stores the freeform string under `freeform`.
+  mailer_return_address?: { freeform?: string } | Record<string, unknown> | null
 } | null
 
 export function ClientInfoCard({
@@ -143,7 +146,14 @@ export function ClientInfoCard({
           <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
             Office
           </p>
-          <p className="text-sm font-medium">{office.name}</p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-sm font-medium">{office.name}</p>
+            {office.state && (
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
+                {office.state}
+              </span>
+            )}
+          </div>
           {office.advisor_names && office.advisor_names.length > 0 && (
             <p className="text-xs text-muted mt-0.5">
               Advisors: {office.advisor_names.join(', ')}
@@ -155,6 +165,11 @@ export function ClientInfoCard({
           {office.registration_url_direct && (
             <p className="text-xs text-muted truncate">
               Reg URL: {office.registration_url_direct}
+            </p>
+          )}
+          {officeReturnAddress(office) && (
+            <p className="text-xs text-muted whitespace-pre-line mt-0.5">
+              Return: {officeReturnAddress(office)}
             </p>
           )}
         </div>
@@ -171,6 +186,19 @@ export function ClientInfoCard({
       )}
     </Card>
   )
+}
+
+/**
+ * `mailer_return_address` is jsonb; the importer stored the raw CSV
+ * cell under a `freeform` key. Returns null when absent so the row hides.
+ */
+function officeReturnAddress(office: NonNullable<OfficeLite>): string | null {
+  const a = office.mailer_return_address
+  if (a && typeof a === 'object' && 'freeform' in a) {
+    const v = (a as { freeform?: unknown }).freeform
+    if (typeof v === 'string' && v.trim()) return v
+  }
+  return null
 }
 
 function Dl({ children }: { children: React.ReactNode }) {
