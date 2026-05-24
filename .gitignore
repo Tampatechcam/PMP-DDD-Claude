@@ -45,3 +45,6 @@ scripts/import-log.jsonl
 .cursor/mcp.json
 .cline/mcp.json
 scripts/.import-work/
+
+# Claude Code per-user overrides (the shared .claude/settings.json is fine)
+.claude/settings.local.json
