@@ -19,7 +19,7 @@ export function OfficeSwitcher({
   if (offices.length < 2) return null
 
   return (
-    <nav aria-label="Office filter" className="flex flex-wrap gap-2">
+    <nav aria-label="Office filter" className="flex gap-2 overflow-x-auto pb-0.5">
       <Pill href={basePath} active={!activeOfficeId}>
         All offices
       </Pill>
@@ -46,7 +46,7 @@ function Pill({
   children: React.ReactNode
 }) {
   const base =
-    'inline-flex items-center px-3 py-1 text-xs font-medium rounded border transition-colors'
+    'inline-flex shrink-0 items-center px-3 py-1 text-xs font-medium rounded border transition-colors whitespace-nowrap'
   const tone = active
     ? 'bg-ink text-bg border-ink'
     : 'bg-surface text-ink border-border hover:bg-bg'

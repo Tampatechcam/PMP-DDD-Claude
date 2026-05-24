@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { ClientHeader } from '@/components/layout/ClientHeader'
+import { ClientSidebar } from '@/components/layout/ClientSidebar'
 import { getAuthUser } from '@/lib/db/auth'
 
 /**
@@ -12,9 +12,11 @@ export default async function ClientLayout({ children }: { children: React.React
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen">
-      <ClientHeader />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">{children}</main>
+    <div className="min-h-screen flex">
+      <ClientSidebar />
+      <main className="flex-1 min-w-0">
+        <div className="max-w-[1400px] mx-auto px-6 py-8">{children}</div>
+      </main>
     </div>
   )
 }
