@@ -2,12 +2,13 @@ import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { adminGetClient, adminListOfficesForClient } from '@/lib/db/clients'
 import { adminListOrders } from '@/lib/db/orders'
-import { formatMoney, formatQuantity, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
-import { StatusPill } from '@/components/orders/StatusPill'
-import Link from 'next/link'
+import { formatMoney, formatQuantity } from '@/lib/utils/format'
+import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 
 interface Props {
   params: { id: string }
+  // ?tab=past lands directly on the past-events table for this client.
+  searchParams: { tab?: string }
 }
 
 /**
@@ -16,11 +17,15 @@ interface Props {
  * strips out — responsibility, mailer rate, discount, tech sequences —
  * are visible here.
  */
-export default async function AdminClientDetailPage({ params }: Props) {
+export default async function AdminClientDetailPage({ params, searchParams }: Props) {
+  // FTA already pushes ~170 orders, so bump the limit comfortably above
+  // any one client's expected DM workload. OrdersList does its own
+  // Upcoming/Past bucketing client-side after the fetch.
+  const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
   const [client, offices, orders] = await Promise.all([
     adminGetClient(params.id),
     adminListOfficesForClient(params.id),
-    adminListOrders({ clientId: params.id, limit: 25 })
+    adminListOrders({ clientId: params.id, limit: 500 })
   ])
   if (!client) notFound()
 
@@ -153,33 +158,15 @@ export default async function AdminClientDetailPage({ params }: Props) {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-medium">Recent orders</h2>
-        {orders.length === 0 ? (
-          <p className="text-sm text-muted">No orders yet.</p>
-        ) : (
-          <ul className="divide-y divide-border border border-border rounded-lg bg-surface">
-            {orders.map((o) => (
-              <li key={o.id}>
-                <Link
-                  href={orderHref(o, '/admin/orders')}
-                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">
-                      {orderLabel(o)}
-                      {o.class_type && <span className="text-muted"> · {o.class_type}</span>}
-                    </p>
-                    <p className="text-xs text-muted truncate">
-                      {formatEventDate(o.event_1_date)}
-                      {o.market && ` · ${o.market}`}
-                    </p>
-                  </div>
-                  <StatusPill status={o.display_status} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h2 className="text-sm font-medium">Orders</h2>
+        <OrdersList
+          orders={orders}
+          activeTab={activeTab}
+          basePath={`/admin/clients/${client.id}`}
+          // We're already on this client's page — hide the redundant
+          // Client column so the table can breathe.
+          showClient={false}
+        />
       </section>
     </section>
   )
