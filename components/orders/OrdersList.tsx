@@ -218,15 +218,15 @@ function Table({
     <div className="border border-border rounded-lg bg-surface overflow-x-auto">
       <table className="w-full text-sm table-fixed">
         <colgroup>
-          <col className="w-[7rem]" /> {/* Order */}
-          {!isPast && <col className="w-[14rem]" />} {/* Order Sent Deadline */}
-          <col className="w-[12rem]" /> {/* First Event */}
-          <col className="w-[12rem]" /> {/* Second Event */}
-          {showClient && <col className="w-[10rem]" />} {/* Client */}
-          <col className="w-[9rem]" /> {/* Advisor */}
-          <col /> {/* Venue — takes the slack */}
-          <col className="w-[10rem]" /> {/* Status */}
-          <col className="w-8" /> {/* arrow */}
+          <col className="w-[7rem]" />
+          {!isPast && <col className="w-[14rem]" />}
+          <col className="w-[12rem]" />
+          <col className="w-[12rem]" />
+          {showClient && <col className="w-[10rem]" />}
+          <col className="w-[9rem]" />
+          <col />
+          <col className="w-[10rem]" />
+          <col className="w-8" />
         </colgroup>
         <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
           <tr className="border-b border-border">

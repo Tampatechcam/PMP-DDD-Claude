@@ -29,3 +29,15 @@ export async function adminListInvoices(): Promise<InvoiceRow[]> {
   if (error) throw error
   return (data ?? []) as unknown as InvoiceRow[]
 }
+
+/** Single invoice by uuid for the detail page. */
+export async function adminGetInvoice(id: string): Promise<InvoiceRow | null> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*, orders ( order_number, display_ref, client_id )')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return (data ?? null) as unknown as InvoiceRow | null
+}

@@ -45,6 +45,8 @@ findings each task addresses.
 | TASK-R006 | Security/RLS verify — run existing `scripts/verify-rls.ts`, capture results, scope coverage gaps | complete | claude (orchestrator) | [R006-security-rls-verify.md](R006-security-rls-verify.md) |
 | TASK-R007 | Extend `scripts/verify-rls.ts` for 5 coverage gaps: `security_invoker` regression guard, storage RLS, read-via-view, cross-tenant clients/offices/venues, profile-self-promotion + proof-status enum guards | open | — | _unassigned_ |
 | TASK-R008 | Add date-range + `display_status` filters to `/admin/orders` (closes agent-c Gap #2 + #3) | complete | claude | [R008-admin-orders-date-status-filters.md](R008-admin-orders-date-status-filters.md) |
+| TASK-R009 | Add `SUPABASE_PROJECT_REF` to `.env.example` + README env step (closes agent-c Gap #6) | superseded | claude | _verified already present in .env.example + README:20_ |
+| TASK-R010 | Per-invoice detail page at `/admin/invoices/[id]` (closes agent-c Gap #4) | complete | claude | [R010-per-invoice-detail-page.md](R010-per-invoice-detail-page.md) |
 
 ---
 

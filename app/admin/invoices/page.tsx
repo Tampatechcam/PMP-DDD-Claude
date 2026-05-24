@@ -82,9 +82,14 @@ export default async function AdminInvoicesPage() {
                       : '—'}
                   </td>
                   <td className="px-4 py-2.5 text-right tabular-nums font-medium">
-                    {inv.total_invoice != null
-                      ? formatMoney(Number(inv.total_invoice))
-                      : '—'}
+                    <Link
+                      href={`/admin/invoices/${inv.id}`}
+                      className="underline underline-offset-2"
+                    >
+                      {inv.total_invoice != null
+                        ? formatMoney(Number(inv.total_invoice))
+                        : '—'}
+                    </Link>
                   </td>
                 </tr>
               ))}
