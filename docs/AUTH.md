@@ -24,7 +24,8 @@ Two paths, both available on the login page (see ADR 0006).
 **Magic-link path** (one click away, also the "forgot password" path):
 1. User clicks "Email me a sign-in link instead" and submits their email.
 2. `supabase.auth.signInWithOtp({ email })` emails a link.
-3. Link points to `/auth/callback?code=...&next=/orders`.
+3. Link points to `/callback?code=...&next=/orders` (the Route Handler
+   lives under the `(auth)` group, so the public URL has no `/auth/` prefix).
 4. The callback Route Handler exchanges the code for a session and sets the
    auth cookies on the response.
 5. From `/account`, the user can then set a password if they want one.

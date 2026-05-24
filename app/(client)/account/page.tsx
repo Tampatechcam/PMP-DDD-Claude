@@ -1,19 +1,20 @@
 import { Card } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
-import { createClient } from '@/lib/supabase/server'
 import { PasswordForm } from '@/components/auth/PasswordForm'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { getCurrentClientSelf } from '@/lib/db/clients'
+import { getAuthUser } from '@/lib/db/auth'
 
 interface Props {
   searchParams: { error?: string; updated?: string }
 }
 
 export default async function AccountPage({ searchParams }: Props) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  // The (client) layout already redirects to /login if user is null, but
-  // narrowing here keeps TypeScript happy and is a free defense-in-depth.
+  // The (client) layout already gated for a signed-in user via getAuthUser
+  // (in lib/db/auth.ts) — it's wrapped in React `cache()` so this second
+  // call is a free per-request hit instead of another /auth/v1/user round
+  // trip. The null narrow keeps TypeScript happy and is defense-in-depth.
+  const user = await getAuthUser()
   if (!user) return null
 
   const client = await getCurrentClientSelf().catch(() => null)

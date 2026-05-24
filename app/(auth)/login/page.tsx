@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: Props) {
   const sent = searchParams.sent === '1'
 
   return (
-    <main className="min-h-screen grid place-items-center px-4 py-10 bg-gradient-to-b from-bg to-stone-100">
+    <main className="min-h-screen grid place-items-center px-4 py-10 bg-bg">
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center space-y-2">
           <div className="inline-flex"><Brand href="/login" /></div>

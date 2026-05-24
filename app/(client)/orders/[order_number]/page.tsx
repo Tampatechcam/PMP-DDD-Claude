@@ -5,7 +5,7 @@ import { ClientInfoCard } from '@/components/orders/ClientInfoCard'
 import { getOrderByRef, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { getCurrentClientSelf } from '@/lib/db/clients'
-import { createClient } from '@/lib/supabase/server'
+import { getOfficeForOrderCard } from '@/lib/db/offices'
 
 interface Props {
   params: { order_number: string }
@@ -21,18 +21,11 @@ export default async function OrderDetailPage({ params }: Props) {
   const order = await getOrderByRef(params.order_number)
   if (!order) notFound()
 
-  const supabase = createClient()
-  const [proofs, events, client, officeRes] = await Promise.all([
+  const [proofs, events, client, office] = await Promise.all([
     listProofsForOrder(order.id),
     listEventsForOrder(order.id),
     getCurrentClientSelf(),
-    order.office_id
-      ? supabase
-          .from('offices')
-          .select('name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, mailer_return_address')
-          .eq('id', order.office_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null })
+    order.office_id ? getOfficeForOrderCard(order.office_id) : null
   ])
 
   return (
@@ -48,7 +41,7 @@ export default async function OrderDetailPage({ params }: Props) {
         {client && (
           <ClientInfoCard
             client={client}
-            office={officeRes?.data ?? null}
+            office={office ?? null}
           />
         )}
       </div>

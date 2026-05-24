@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Icon, type IconName } from '@/components/ui/Icon'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
-import { createClient } from '@/lib/supabase/server'
 import { adminListOrders } from '@/lib/db/orders'
 import { adminListClients } from '@/lib/db/clients'
+import { adminCounts } from '@/lib/db/dashboards'
 
 interface Props {
   searchParams: { tab?: string }
@@ -18,27 +18,8 @@ interface Props {
 export default async function AdminHome({ searchParams }: Props) {
   const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
 
-  const supabase = createClient()
-  const [
-    { count: clientsCount },
-    { count: ordersCount },
-    { count: pendingProofsCount },
-    { count: invoicesCount },
-    orders,
-    clients
-  ] = await Promise.all([
-    supabase.from('clients').select('id', { count: 'exact', head: true }),
-    // Only DM orders — matches what shows up in the table tabs. Digital
-    // campaigns are tracked separately and don't bucket into Upcoming/Past.
-    supabase
-      .from('orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('needs_direct_mail', true),
-    supabase
-      .from('proofs')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending'),
-    supabase.from('invoices').select('id', { count: 'exact', head: true }),
+  const [counts, orders, clients] = await Promise.all([
+    adminCounts(),
     adminListOrders({ limit: 500 }),
     adminListClients()
   ])
@@ -56,16 +37,16 @@ export default async function AdminHome({ searchParams }: Props) {
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Tile href="/admin/clients" label="Clients" icon="clients" value={clientsCount ?? 0} />
-        <Tile href="/admin/orders" label="Orders" icon="orders" value={ordersCount ?? 0} />
+        <Tile href="/admin/clients" label="Clients" icon="clients" value={counts.clients} />
+        <Tile href="/admin/orders" label="Orders" icon="orders" value={counts.orders} />
         <Tile
           href="/admin/orders"
           label="Proofs awaiting client"
           icon="document"
-          value={pendingProofsCount ?? 0}
-          tone={pendingProofsCount && pendingProofsCount > 0 ? 'warning' : 'neutral'}
+          value={counts.pendingProofs}
+          tone={counts.pendingProofs > 0 ? 'warning' : 'neutral'}
         />
-        <Tile href="/admin/invoices" label="Invoices" icon="invoices" value={invoicesCount ?? 0} />
+        <Tile href="/admin/invoices" label="Invoices" icon="invoices" value={counts.invoices} />
       </div>
 
       <OrdersList

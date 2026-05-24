@@ -40,7 +40,9 @@ If a Route Handler grows past ~30 lines, move the logic into `lib/db` or
 ## How auth works
 
 1. Sign-in: password or magic-link (see ADR 0006).
-2. The `/auth/callback` Route Handler trades the magic-link `code` for a
+2. The `/callback` Route Handler (defined under the `(auth)` route group
+   so its public URL is `/callback`, not `/auth/callback`) trades the
+   magic-link `code` for a
    session cookie.
 3. `middleware.ts` refreshes the cookie on every request — it doesn't gate.
 4. Layouts gate navigation with `supabase.auth.getUser()` + a role check.

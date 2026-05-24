@@ -75,6 +75,26 @@ export async function listOrdersForClient(opts?: { officeId?: string }) {
   return (data ?? []) as OrderRow[]
 }
 
+/**
+ * Order by primary-key uuid. Used by the proof-upload page (which routes
+ * by id, not number, on purpose — see the page comment) and anywhere
+ * else that's already holding a row id rather than the number/ref slug.
+ *
+ * Pulls a narrow column set rather than the full view so callers that
+ * just need order_number/advisor_name/event_1_date don't pay for the
+ * display_status case-when.
+ */
+export async function getOrderById(id: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('orders')
+    .select('id, order_number, display_ref, client_id, class_type, advisor_name, event_1_date')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function getOrderByNumber(orderNumber: number) {
   const supabase = createClient()
   const { data, error } = await supabase

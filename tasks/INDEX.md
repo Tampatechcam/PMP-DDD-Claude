@@ -19,13 +19,31 @@ Tracks every multi-agent task on the PMP Client Dashboard implementation. Each t
 
 | ID | Title | Status | Owner | File |
 |----|-------|--------|-------|------|
-| TASK-001 | Schema + RLS audit (Parts 4–5) | dispatched | agent-a (general-purpose) | [001-schema-rls-audit.md](001-schema-rls-audit.md) |
-| TASK-002 | App structure + data layer audit (Parts 6, 11, 18) | dispatched | agent-b (general-purpose) | [002-app-structure-audit.md](002-app-structure-audit.md) |
-| TASK-003 | Day 7 status — `feature/admin-views` (Part 15) | dispatched | agent-c (general-purpose) | [003-day-7-status.md](003-day-7-status.md) |
+| TASK-001 | Schema + RLS audit (Parts 4–5) | complete | agent-a (general-purpose) | [001-schema-rls-audit.md](001-schema-rls-audit.md) |
+| TASK-002 | App structure + data layer audit (Parts 6, 11, 18) | complete | agent-b (general-purpose) | [002-app-structure-audit.md](002-app-structure-audit.md) |
+| TASK-003 | Day 7 status — `feature/admin-views` (Part 15) | complete | agent-c (general-purpose) | [003-day-7-status.md](003-day-7-status.md) |
+
+### Round 1 cross-check notes (orchestrator)
+
+- **Agent-a's Gap #1 ("No automated RLS verification") is incorrect.** `scripts/verify-rls.ts` exists on disk (confirmed via Glob; also cited by agent-b at `:24,36,146` and by agent-c with `npm run verify:rls` in `package.json:18`). Treat agent-a's Gap #1 as superseded — the remaining schema/RLS gaps stand.
+- Agent-a's Gap #2 (display-status view drifted) and Gap #4 (no `security_invoker` regression guard) are real and unaddressed in Round 2 — flagging for a future round.
 
 ## Round 2 — Build + review
 
-_Populated after Round 1 synthesis._
+Dispatched from the Round-1 audits — see
+[001-schema-rls-audit.md](001-schema-rls-audit.md) and
+[002-app-structure-audit.md](002-app-structure-audit.md) for the
+findings each task addresses.
+
+| ID | Title | Status | Owner | File |
+|----|-------|--------|-------|------|
+| TASK-R001 | Hoist 6 raw `supabase.from('…')` calls into `lib/db/*` (Operating principle #3) | complete | claude | [R001-hoist-raw-from-calls.md](R001-hoist-raw-from-calls.md) |
+| TASK-R002 | Tiny cleanup batch (delete dead Sidebar, drop login gradient, use memoized `getAuthUser` in `account/page.tsx`) | complete | claude | [R002-cleanup-batch.md](R002-cleanup-batch.md) |
+| TASK-R003 | Refactor `<Button>` to accept an `href` (or add `<ButtonLink>`), replace 3 inline-styled link buttons | open | — | _unassigned_ |
+| TASK-R004 | Extract shared `<Pill>` primitive; rewrite `InvoiceStatus` on top of it | open | — | _unassigned_ |
+| TASK-R005 | Sync docs to actually-shipped `/callback` URL (4 doc files still say `/auth/callback`) | complete | claude | [R005-doc-callback-url-sync.md](R005-doc-callback-url-sync.md) |
+| TASK-R006 | Security/RLS verify — run existing `scripts/verify-rls.ts`, capture results, scope coverage gaps | complete | claude (orchestrator) | [R006-security-rls-verify.md](R006-security-rls-verify.md) |
+| TASK-R007 | Extend `scripts/verify-rls.ts` for 5 coverage gaps: `security_invoker` regression guard, storage RLS, read-via-view, cross-tenant clients/offices/venues, profile-self-promotion + proof-status enum guards | open | — | _unassigned_ |
 
 ---
 

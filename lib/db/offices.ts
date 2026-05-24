@@ -10,3 +10,37 @@ export async function listOfficesForCurrentClient() {
   if (error) throw error
   return data
 }
+
+/**
+ * Subset of office columns used by ClientInfoCard on the order detail
+ * pages. Kept narrow on purpose so callers don't accidentally pull in
+ * the jsonb contact blobs they don't render.
+ */
+export type OfficeForOrderCard = {
+  name: string
+  state: string | null
+  registration_phone: string | null
+  registration_url_direct: string | null
+  registration_url_digital: string | null
+  advisor_names: string[] | null
+  mailer_return_address: { freeform?: string } | Record<string, unknown> | null
+}
+
+/**
+ * Single office by uuid. Returns null when the order has no office_id
+ * (digital-only orders sometimes do) or when the row was removed.
+ */
+export async function getOfficeForOrderCard(
+  officeId: string
+): Promise<OfficeForOrderCard | null> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('offices')
+    .select(
+      'name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, mailer_return_address'
+    )
+    .eq('id', officeId)
+    .maybeSingle()
+  if (error) throw error
+  return (data ?? null) as OfficeForOrderCard | null
+}

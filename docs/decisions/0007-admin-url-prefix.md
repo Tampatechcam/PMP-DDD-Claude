@@ -34,7 +34,7 @@ URLs gain an explicit `/admin` prefix:
 
 ```
 app/
-  (auth)/login, callback        →  /login, /auth/callback
+  (auth)/login, callback        →  /login, /callback
   (client)/                      →  /, /orders, /venues, /account, …
     layout.tsx                   (signed-in clients, no URL prefix)
   admin/                         →  /admin, /admin/clients, /admin/orders, …

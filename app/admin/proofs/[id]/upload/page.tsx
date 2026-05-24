@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { ProofUploadForm } from '@/components/proofs/ProofUploadForm'
-import { createClient } from '@/lib/supabase/server'
+import { getOrderById } from '@/lib/db/orders'
 import { orderHref, orderLabel } from '@/lib/utils/format'
 
 interface Props {
@@ -13,13 +13,7 @@ interface Props {
 }
 
 export default async function AdminProofUploadPage({ params }: Props) {
-  const supabase = createClient()
-  const { data: order, error } = await supabase
-    .from('orders')
-    .select('id, order_number, display_ref, client_id, class_type, advisor_name, event_1_date')
-    .eq('id', params.id)
-    .maybeSingle()
-  if (error) throw error
+  const order = await getOrderById(params.id)
   if (!order) notFound()
 
   return (

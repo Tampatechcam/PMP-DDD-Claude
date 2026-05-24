@@ -29,7 +29,9 @@ a one-click toggle:
   from a Client Component. Wrong-credential error stays generic ("email
   or password is incorrect") — no user-enumeration via the error message.
 - **Magic-link sign-in:** `supabase.auth.signInWithOtp({ email })`. Same
-  `/auth/callback` Route Handler closes the loop as before.
+  `/callback` Route Handler closes the loop as before. (The handler
+  lives in `app/(auth)/callback/route.ts`; the `(auth)` group is path-free
+  so the public URL is `/callback`, not `/auth/callback`.)
 - **First sign-in:** admin sends a magic link. After the user is in, they
   can set a password from `/account` if they want one.
 - **Forgot password:** "Email me a sign-in link" *is* the reset path. After

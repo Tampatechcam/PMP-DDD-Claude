@@ -29,6 +29,9 @@ the active TaskList — once it lands, drop a permanent doc here.
 | [T010](T010-admin-shell-order-links.md) | `d36ef6b` | Order links from admin pages stay in the admin shell |
 | [T011](T011-gitignore-claude-local.md) | `4ef9ef2` | Gitignore `.claude/settings.local.json` |
 | [T012](T012-auth-callback-url-fix.md) | _pending_ | Fix auth callback URL (`/auth/callback` → `/callback`) |
+| [T013](T013-hoist-raw-from-calls.md) | _pending_ | Hoist raw `supabase.from('…')` calls into `lib/db/*` |
+| [T014](T014-cleanup-batch.md) | _pending_ | Cleanup batch (dead Sidebar, login gradient, account auth) |
+| [T015](T015-doc-callback-url-sync.md) | _pending_ | Sync prose docs to `/callback` |
 
 ## Conventions
 

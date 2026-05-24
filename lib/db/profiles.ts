@@ -82,6 +82,54 @@ export async function adminListProfiles(): Promise<AdminProfileRow[]> {
   })
 }
 
+export type TeamMember = {
+  id: string
+  full_name: string | null
+  role: string
+  created_at: string | null
+  email: string | null
+  email_confirmed_at: string | null
+  last_sign_in_at: string | null
+}
+
+/**
+ * Admin-only: every profile linked to one client, joined with the
+ * `auth.users` email/confirmed/last-sign-in fields. Mirrors the email
+ * join pattern in {@link adminListProfiles}; service-role import is
+ * dynamic so module load doesn't pay the cost when the function isn't
+ * called.
+ */
+export async function adminListTeamForClient(clientId: string): Promise<TeamMember[]> {
+  const supabase = createClient()
+  const { data: profileRows, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, created_at')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  if (!profileRows || profileRows.length === 0) return []
+
+  const { supabaseAdmin } = await import('@/lib/supabase/admin')
+  const { data: users } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200
+  })
+  const userById = new Map(users?.users.map((u) => [u.id, u]) ?? [])
+
+  return profileRows.map((p) => {
+    const u = userById.get(p.id)
+    return {
+      id: p.id,
+      full_name: p.full_name,
+      role: p.role,
+      created_at: p.created_at,
+      email: u?.email ?? null,
+      email_confirmed_at: u?.email_confirmed_at ?? null,
+      last_sign_in_at: u?.last_sign_in_at ?? null
+    }
+  })
+}
+
 export async function getCurrentClientIdOrThrow(): Promise<string> {
   const profile = await getCurrentProfile()
   if (!profile?.client_id) {

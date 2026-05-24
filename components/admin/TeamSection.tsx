@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminListTeamForClient } from '@/lib/db/profiles'
 import { InviteUserForm } from './InviteUserForm'
 import { ResendInviteButton } from './ResendInviteButton'
 import { formatEventDate } from '@/lib/utils/format'
@@ -13,35 +12,20 @@ interface Props {
  * an invite form scoped to it. The "Resend invite" button only shows for
  * users who haven't accepted yet (email_confirmed_at is null).
  *
- * Renders on the admin client detail page. The admin layout has already
- * gated for role=admin, so we can use the service-role client safely for
- * the email join (same pattern as lib/db/profiles.ts:adminListProfiles).
+ * Data layer (profile + auth.users email join) lives in
+ * lib/db/profiles.ts so this component stays presentational.
  */
 export async function TeamSection({ client }: Props) {
-  const supabase = createClient()
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, role, created_at')
-    .eq('client_id', client.id)
-    .order('created_at', { ascending: false })
-
-  const { data: users } = await supabaseAdmin.auth.admin.listUsers({
-    page: 1, perPage: 200
-  })
-  const userById = new Map(users?.users.map((u) => [u.id, u]) ?? [])
-
-  const team = (profiles ?? []).map((p) => {
-    const u = userById.get(p.id)
-    return {
-      id: p.id,
-      full_name: p.full_name,
-      role: p.role as string,
-      email: u?.email ?? null,
-      confirmed: !!u?.email_confirmed_at,
-      last_sign_in_at: u?.last_sign_in_at ?? null,
-      created_at: p.created_at
-    }
-  })
+  const members = await adminListTeamForClient(client.id)
+  const team = members.map((m) => ({
+    id: m.id,
+    full_name: m.full_name,
+    role: m.role,
+    email: m.email,
+    confirmed: !!m.email_confirmed_at,
+    last_sign_in_at: m.last_sign_in_at,
+    created_at: m.created_at
+  }))
 
   return (
     <section className="space-y-3">
