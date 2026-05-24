@@ -1,13 +1,19 @@
 import Link from 'next/link'
 import { adminListProfiles } from '@/lib/db/profiles'
+import { adminListClients } from '@/lib/db/clients'
 import { formatEventDate } from '@/lib/utils/format'
+import { InviteUserForm } from '@/components/admin/InviteUserForm'
 
 /**
- * /admin/profiles — every signed-up user with their role + linked client.
- * Read-only for v1; assignment/role-flip UI is a fast follow.
+ * /admin/profiles — every signed-up user with their role + linked client,
+ * plus an invite form so admins can add new users (the Supabase invite
+ * email lands them on /auth/callback for a passwordless first sign-in).
  */
 export default async function AdminProfilesPage() {
-  const profiles = await adminListProfiles()
+  const [profiles, clients] = await Promise.all([
+    adminListProfiles(),
+    adminListClients()
+  ])
 
   const clientCount = profiles.filter((p) => p.role === 'client').length
   const adminCount = profiles.filter((p) => p.role === 'admin').length
@@ -29,6 +35,8 @@ export default async function AdminProfilesPage() {
           )}
         </p>
       </header>
+
+      <InviteUserForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} />
 
       {profiles.length === 0 ? (
         <p className="text-sm text-muted">No profiles yet.</p>

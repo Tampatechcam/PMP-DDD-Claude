@@ -4,6 +4,7 @@ import { adminGetClient, adminListOfficesForClient } from '@/lib/db/clients'
 import { adminListOrders } from '@/lib/db/orders'
 import { formatMoney, formatQuantity } from '@/lib/utils/format'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
+import { TeamSection } from '@/components/admin/TeamSection'
 
 interface Props {
   params: { id: string }
@@ -156,6 +157,8 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
           </ul>
         )}
       </section>
+
+      <TeamSection client={{ id: client.id, name: client.name }} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium">Orders</h2>

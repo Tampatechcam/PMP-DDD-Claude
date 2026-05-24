@@ -19,7 +19,7 @@ const nav: NavItem[] = [
   { href: '/admin/clients',     label: 'Clients',     icon: 'clients' },
   { href: '/admin/orders',      label: 'Orders',      icon: 'orders' },
   { href: '/admin/invoices',    label: 'Invoices',    icon: 'invoices' },
-  { href: '/admin/profiles',    label: 'Profiles',    icon: 'profiles' }
+  { href: '/admin/profiles',    label: 'Users',       icon: 'profiles' }
 ]
 
 export function AdminSidebar() {
