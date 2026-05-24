@@ -6,6 +6,7 @@ import { getOrderByRef, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { adminGetClient } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
+import { Button } from '@/components/ui/Button'
 
 interface Props {
   params: { order_number: string }
@@ -40,12 +41,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             {client?.name ?? 'Client'}
           </Link>
         </p>
-        <Link
-          href={`/admin/proofs/${order.id}/upload`}
-          className="inline-flex items-center justify-center rounded text-sm font-medium px-3 py-2 bg-accent text-white hover:opacity-90"
-        >
-          Upload proof
-        </Link>
+        <Button href={`/admin/proofs/${order.id}/upload`}>Upload proof</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6">

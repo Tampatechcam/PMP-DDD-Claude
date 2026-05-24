@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { OfficeSwitcher } from '@/components/layout/OfficeSwitcher'
 import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/Button'
 import { listOrdersForClient } from '@/lib/db/orders'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { getCurrentClientSelf } from '@/lib/db/clients'
@@ -35,15 +36,15 @@ export default async function OrdersListPage({ searchParams }: Props) {
             )}
           </p>
         </div>
-        <Link
+        <Button
           href={
             activeOfficeId ? `/orders/new?office=${activeOfficeId}` : '/orders/new'
           }
-          className="inline-flex items-center gap-1.5 rounded text-sm font-medium px-3 py-2 bg-accent text-white hover:opacity-90 transition-opacity"
+          className="gap-1.5"
         >
           <Icon name="plus" className="w-4 h-4" />
           New order
-        </Link>
+        </Button>
       </header>
 
       <OfficeSwitcher

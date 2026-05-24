@@ -33,6 +33,7 @@ the active TaskList — once it lands, drop a permanent doc here.
 | [T014](T014-cleanup-batch.md) | _pending_ | Cleanup batch (dead Sidebar, login gradient, account auth) |
 | [T015](T015-doc-callback-url-sync.md) | _pending_ | Sync prose docs to `/callback` |
 | [T016](T016-pill-primitive.md) | _pending_ | Extract shared `<Pill>` primitive (R004) |
+| [T017](T017-button-href.md) | _pending_ | `<Button>` accepts `href` (R003) |
 
 ## Conventions
 
