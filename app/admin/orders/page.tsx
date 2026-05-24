@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { Button } from '@/components/ui/Button'
-import { adminListOrders } from '@/lib/db/orders'
+import { adminListOrders, adminDistinctOrderStatuses } from '@/lib/db/orders'
 import { adminListClients } from '@/lib/db/clients'
 
 interface Props {
@@ -10,6 +10,12 @@ interface Props {
     class?: string
     needs?: string
     q?: string
+    /** Inclusive YYYY-MM-DD event_1_date floor. */
+    from?: string
+    /** Inclusive YYYY-MM-DD event_1_date ceiling. */
+    to?: string
+    /** Exact match against `display_status` from the view. */
+    status?: string
     tab?: string
   }
 }
@@ -17,7 +23,7 @@ interface Props {
 export default async function AdminOrdersPage({ searchParams }: Props) {
   const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
 
-  const [orders, clients] = await Promise.all([
+  const [orders, clients, statuses] = await Promise.all([
     adminListOrders({
       clientId: searchParams.client || undefined,
       classType: searchParams.class || undefined,
@@ -26,21 +32,34 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           ? searchParams.needs
           : undefined,
       search: searchParams.q || undefined,
+      from: searchParams.from || undefined,
+      to: searchParams.to || undefined,
+      displayStatus: searchParams.status || undefined,
       limit: 500
     }),
-    adminListClients()
+    adminListClients(),
+    adminDistinctOrderStatuses()
   ])
 
   const clientNameById = Object.fromEntries(clients.map((c) => [c.id, c.name]))
   const activeClient = clients.find((c) => c.id === searchParams.client)
   const filtersActive =
-    searchParams.client || searchParams.class || searchParams.needs || searchParams.q
+    searchParams.client ||
+    searchParams.class ||
+    searchParams.needs ||
+    searchParams.q ||
+    searchParams.from ||
+    searchParams.to ||
+    searchParams.status
 
   const preserve = {
     client: searchParams.client,
     class: searchParams.class,
     needs: searchParams.needs,
-    q: searchParams.q
+    q: searchParams.q,
+    from: searchParams.from,
+    to: searchParams.to,
+    status: searchParams.status
   }
 
   return (
@@ -99,6 +118,17 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             { value: 'digital', label: 'Digital' }
           ]}
         />
+        <SelectFilter
+          name="status"
+          label="Status"
+          value={searchParams.status ?? ''}
+          options={[
+            { value: '', label: 'All' },
+            ...statuses.map((s) => ({ value: s, label: s }))
+          ]}
+        />
+        <DateFilter name="from" label="From" value={searchParams.from ?? ''} />
+        <DateFilter name="to" label="To" value={searchParams.to ?? ''} />
         <div className="flex-1 min-w-[180px]">
           <label className="block text-xs font-medium text-ink mb-1">Search</label>
           <input
@@ -147,6 +177,28 @@ function SelectFilter({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
+    </div>
+  )
+}
+
+function DateFilter({
+  name,
+  label,
+  value
+}: {
+  name: string
+  label: string
+  value: string
+}) {
+  return (
+    <div className="min-w-[140px]">
+      <label className="block text-xs font-medium text-ink mb-1">{label}</label>
+      <input
+        type="date"
+        name={name}
+        defaultValue={value}
+        className="block w-full rounded border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+      />
     </div>
   )
 }

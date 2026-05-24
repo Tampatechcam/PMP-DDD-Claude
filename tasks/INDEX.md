@@ -44,6 +44,7 @@ findings each task addresses.
 | TASK-R005 | Sync docs to actually-shipped `/callback` URL (4 doc files still say `/auth/callback`) | complete | claude | [R005-doc-callback-url-sync.md](R005-doc-callback-url-sync.md) |
 | TASK-R006 | Security/RLS verify — run existing `scripts/verify-rls.ts`, capture results, scope coverage gaps | complete | claude (orchestrator) | [R006-security-rls-verify.md](R006-security-rls-verify.md) |
 | TASK-R007 | Extend `scripts/verify-rls.ts` for 5 coverage gaps: `security_invoker` regression guard, storage RLS, read-via-view, cross-tenant clients/offices/venues, profile-self-promotion + proof-status enum guards | open | — | _unassigned_ |
+| TASK-R008 | Add date-range + `display_status` filters to `/admin/orders` (closes agent-c Gap #2 + #3) | complete | claude | [R008-admin-orders-date-status-filters.md](R008-admin-orders-date-status-filters.md) |
 
 ---
 

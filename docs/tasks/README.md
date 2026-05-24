@@ -34,6 +34,7 @@ the active TaskList — once it lands, drop a permanent doc here.
 | [T015](T015-doc-callback-url-sync.md) | _pending_ | Sync prose docs to `/callback` |
 | [T016](T016-pill-primitive.md) | _pending_ | Extract shared `<Pill>` primitive (R004) |
 | [T017](T017-button-href.md) | _pending_ | `<Button>` accepts `href` (R003) |
+| [T018](T018-admin-orders-date-status-filters.md) | _pending_ | Date-range + `display_status` filters on `/admin/orders` (R008) |
 
 ## Conventions
 

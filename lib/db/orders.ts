@@ -147,12 +147,22 @@ export type OrderEventRow = {
  * Admin-side global orders list. RLS lets admins read every order, and we
  * lean on the same view so the display_status string is consistent across
  * client and admin shells. Filters compose: pass any subset.
+ *
+ * Date range filters on `event_1_date` (the seminar date) — that's what
+ * ops typically asks about ("show me Jan 2026 events"). `from` / `to`
+ * are inclusive ISO dates (`YYYY-MM-DD`).
+ *
+ * `displayStatus` filters on the view's computed `display_status` text
+ * (e.g. "Order Sent", "Awaiting Your Approval"). Exact match.
  */
 export async function adminListOrders(opts?: {
   clientId?: string
   classType?: string
   needs?: 'direct_mail' | 'digital'
   search?: string
+  from?: string
+  to?: string
+  displayStatus?: string
   limit?: number
 }) {
   const supabase = createClient()
@@ -165,6 +175,9 @@ export async function adminListOrders(opts?: {
   if (opts?.classType) q = q.eq('class_type', opts.classType)
   if (opts?.needs === 'direct_mail') q = q.eq('needs_direct_mail', true)
   if (opts?.needs === 'digital') q = q.eq('needs_digital', true)
+  if (opts?.from) q = q.gte('event_1_date', opts.from)
+  if (opts?.to) q = q.lte('event_1_date', opts.to)
+  if (opts?.displayStatus) q = q.eq('display_status', opts.displayStatus)
   if (opts?.search) {
     const term = `%${opts.search}%`
     // ilike across the most useful free-text columns
@@ -177,6 +190,26 @@ export async function adminListOrders(opts?: {
   const { data, error } = await q
   if (error) throw error
   return (data ?? []) as OrderRow[]
+}
+
+/**
+ * Distinct `display_status` values seen across all orders. Drives the
+ * status dropdown on /admin/orders so it stays accurate as new ops
+ * statuses appear in the DM / Digital sheets.
+ */
+export async function adminDistinctOrderStatuses(): Promise<string[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('orders_with_display_status')
+    .select('display_status')
+    .not('display_status', 'is', null)
+  if (error) throw error
+  const set = new Set<string>()
+  for (const r of data ?? []) {
+    const s = (r as { display_status?: string | null }).display_status
+    if (s) set.add(s)
+  }
+  return [...set].sort()
 }
 
 export async function listEventsForOrder(orderId: string) {
