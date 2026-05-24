@@ -166,6 +166,7 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
           orders={orders}
           activeTab={activeTab}
           basePath={`/admin/clients/${client.id}`}
+          ordersBasePath="/admin/orders"
           // We're already on this client's page — hide the redundant
           // Client column so the table can breathe.
           showClient={false}

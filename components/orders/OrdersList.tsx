@@ -57,7 +57,14 @@ function tabOf(o: OrderRow): OrdersTab | null {
 interface Props {
   orders: OrderRow[]
   activeTab: OrdersTab
+  /** Where the Upcoming / Past tab links live (e.g. '/admin' or '/admin/clients/<id>'). */
   basePath: string
+  /**
+   * Where each order row links to. Admin pages should pass '/admin/orders'
+   * so the order detail opens inside the admin shell (sidebar visible);
+   * client pages leave this null and fall back to '/orders'.
+   */
+  ordersBasePath?: string
   showClient?: boolean
   clientNameById?: Record<string, string>
   preserveParams?: Record<string, string | undefined>
@@ -67,6 +74,7 @@ export function OrdersList({
   orders,
   activeTab,
   basePath,
+  ordersBasePath,
   showClient,
   clientNameById,
   preserveParams
@@ -98,6 +106,7 @@ export function OrdersList({
           showClient={showClient}
           clientNameById={clientNameById}
           isPast={activeTab === 'past'}
+          ordersBasePath={ordersBasePath}
         />
       )}
     </div>
@@ -196,12 +205,14 @@ function Table({
   orders,
   showClient,
   clientNameById,
-  isPast
+  isPast,
+  ordersBasePath
 }: {
   orders: OrderRow[]
   showClient?: boolean
   clientNameById?: Record<string, string>
   isPast: boolean
+  ordersBasePath?: string
 }) {
   return (
     <div className="border border-border rounded-lg bg-surface overflow-x-auto">
@@ -238,6 +249,7 @@ function Table({
               showClient={showClient}
               clientName={clientNameById?.[o.client_id]}
               isPast={isPast}
+              ordersBasePath={ordersBasePath}
             />
           ))}
         </tbody>
@@ -254,18 +266,21 @@ function Row({
   order: o,
   showClient,
   clientName,
-  isPast
+  isPast,
+  ordersBasePath
 }: {
   order: OrderRow
   showClient?: boolean
   clientName?: string
   isPast: boolean
+  ordersBasePath?: string
 }) {
   const osdRel = formatRelativeDate(o.order_sent_deadline)
+  const href = orderHref(o, ordersBasePath)
   return (
     <tr className="hover:bg-bg transition-colors group">
       <td className="px-3 py-2.5 whitespace-nowrap">
-        <Link href={orderHref(o)} className="font-medium">
+        <Link href={href} className="font-medium">
           {orderLabel(o)}
         </Link>
         {o.class_type && (
@@ -313,7 +328,7 @@ function Row({
       </td>
       <td className="px-3 py-2.5 w-8 text-right">
         <Link
-          href={orderHref(o)}
+          href={href}
           className="inline-flex"
           aria-label={`Open order ${orderLabel(o)}`}
         >

@@ -119,6 +119,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         orders={orders}
         activeTab={activeTab}
         basePath="/admin/orders"
+        ordersBasePath="/admin/orders"
         showClient
         clientNameById={clientNameById}
         preserveParams={preserve}

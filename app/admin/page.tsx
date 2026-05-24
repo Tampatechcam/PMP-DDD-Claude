@@ -72,6 +72,7 @@ export default async function AdminHome({ searchParams }: Props) {
         orders={orders}
         activeTab={activeTab}
         basePath="/admin"
+        ordersBasePath="/admin/orders"
         showClient
         clientNameById={clientNameById}
       />
