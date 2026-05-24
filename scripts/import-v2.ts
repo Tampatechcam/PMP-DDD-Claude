@@ -262,10 +262,10 @@ const INDEPENDENT_FIRM_ALIASES: Record<string, string> = {
   'taylor essential life partners llc': 'Taylor Essential Life Partners LLC'
 }
 
-// Group_name = an advisor's actual name (e.g. "Andy Urso") that lives inside a known group.
-const ADVISOR_TO_GROUP_OVERRIDE: Record<string, string> = {
-  'andy urso': 'AdvisorMax'
-}
+// Group_name = an advisor's actual name that lives inside a known group.
+// (Empty — per user direction, AdvisorMax was dissolved and every member
+// is an independent client. Andy Urso used to be the lone holdout here.)
+const ADVISOR_TO_GROUP_OVERRIDE: Record<string, string> = {}
 
 function classifyClient(rawGroup: string | null, advisorName: string | null): ClientBucket {
   const g = (rawGroup || '').trim()
@@ -302,10 +302,9 @@ function classifyClient(rawGroup: string | null, advisorName: string | null): Cl
     return { kind: 'group', name: 'Sentinel/SAM RIA' }
   }
 
-  // AdvisorMax aliases
-  if (gLower === 'advisormax' || gLower === 'advisor max' || gLower === 'advisormax, llc') {
-    return { kind: 'group', name: 'AdvisorMax' }
-  }
+  // AdvisorMax used to be a group client — dissolved per user direction.
+  // When a row arrives with group="AdvisorMax", fall through to the firm
+  // fallback so the advisor's own name (or aliased firm) becomes the client.
 
   // Arrive Financial Services
   if (gLower.startsWith('arrive ') || gLower === 'arrive') {
@@ -336,7 +335,7 @@ function classifyClient(rawGroup: string | null, advisorName: string | null): Cl
 const GROUP_CLIENT_NAMES = new Set([
   'FTA',
   'Sentinel/SAM RIA',
-  'AdvisorMax',
+  // AdvisorMax dissolved per user direction — each member is independent.
   'Arrive Financial Services'
 ])
 

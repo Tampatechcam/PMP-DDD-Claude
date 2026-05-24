@@ -40,6 +40,8 @@ const INDEPENDENT_FIRM_ALIASES: Record<string, string> = {
   'scout financial group': 'Scout Financial Group',
   'bone asset management': 'Bone Asset Management',
   'the otoole group': "The O'Toole Group",
+  "sean o'toole": "The O'Toole Group",
+  'sean otoole': "The O'Toole Group",
   "the o'toole group": "The O'Toole Group",
   'eagle financial solutions': 'Eagle Financial Solutions',
   'eagle': 'Eagle Financial Solutions',
@@ -71,8 +73,14 @@ function classifyClient(rawGroup: string | null, advisor: string | null): string
     gLower === 'sentinel' || gLower.includes('sam ria') ||
     gLower.includes('sentinel asset management')
   ) return 'Sentinel/SAM RIA'
+  // AdvisorMax dissolved per user direction — each dictionary row under
+  // AdvisorMax belongs to that member's own independent client. Fall
+  // through and resolve by advisor name (or its firm alias).
   if (gLower === 'advisormax' || gLower === 'advisor max' || gLower === 'advisormax, llc') {
-    return 'AdvisorMax'
+    if (advisor) {
+      const aLower = advisor.toLowerCase()
+      return INDEPENDENT_FIRM_ALIASES[aLower] ?? advisor.trim()
+    }
   }
   if (gLower.startsWith('arrive ') || gLower === 'arrive') return 'Arrive Financial Services'
   if (g) return INDEPENDENT_FIRM_ALIASES[gLower] ?? g
@@ -267,7 +275,12 @@ async function main(): Promise<void> {
     // Identity fields require unanimity — leaving them null on groups
     // whose members disagree (AdvisorMax has different business names
     // per advisor; picking one would mislead).
-    sn('business_name',       unanimous(list.map(r => r.business_name)))
+    //
+    // Fallback for business_name: if the dictionary row leaves it blank
+    // (some solo advisors, like Andy Urso) use the client's own name as
+    // the company. Otherwise the Business card stays empty even though
+    // we know it's a one-advisor shop.
+    sn('business_name',       unanimous(list.map(r => r.business_name)) ?? canonical)
     sn('business_website',    unanimous(list.map(r => r.business_website)))
     sn('ein',                 unanimous(list.map(r => r.ein)))
     sn('ein_match_name',      unanimous(list.map(r => r.ein_match_name)))
