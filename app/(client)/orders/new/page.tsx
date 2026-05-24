@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { OrderForm } from '@/components/orders/OrderForm'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
-import { listVenuesForCurrentClient } from '@/lib/db/venues'
+import { listDistinctVenuesFromOrders } from '@/lib/db/orders'
 import { getCurrentClientSelf } from '@/lib/db/clients'
 
 interface Props {
@@ -17,10 +17,10 @@ interface Props {
  * client component stays focused on UI state.
  */
 export default async function NewOrderPage({ searchParams }: Props) {
-  const [client, offices, venues] = await Promise.all([
+  const [client, offices, pastVenues] = await Promise.all([
     getCurrentClientSelf(),
     listOfficesForCurrentClient(),
-    listVenuesForCurrentClient()
+    listDistinctVenuesFromOrders()
   ])
 
   const isGroup = offices.length > 1
@@ -55,19 +55,7 @@ export default async function NewOrderPage({ searchParams }: Props) {
           name: o.name,
           advisor_names: o.advisor_names ?? null
         }))}
-        venues={venues.map((v) => ({
-          id: v.id,
-          name: v.name,
-          buildings: v.buildings.map((b) => ({
-            id: b.id,
-            name: b.name,
-            rooms: b.rooms.map((r) => ({
-              id: r.id,
-              name: r.name,
-              capacity: r.capacity
-            }))
-          }))
-        }))}
+        pastVenues={pastVenues}
       />
     </section>
   )

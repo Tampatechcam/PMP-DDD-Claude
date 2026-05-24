@@ -98,6 +98,8 @@ export async function createOrder(form: FormData) {
     market: s(form, 'market'),
     charity: s(form, 'charity'),
     venue_id: s(form, 'venue_id'),
+    venue_text: s(form, 'venue_text'),
+    venue_address_text: s(form, 'venue_address_text'),
     building_id: s(form, 'building_id'),
     room_id: s(form, 'room_id'),
     event_1_date: dateStr(form, 'event_1_date'),

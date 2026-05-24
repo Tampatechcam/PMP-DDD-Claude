@@ -7,14 +7,9 @@ import { createOrder } from '@/lib/actions/orders'
 
 const CLASS_TYPES = ['R101', 'W101', 'SS101', 'WAT', 'R90', 'Taxes', 'Other']
 
-export type VenueOption = {
-  id: string
-  name: string
-  buildings: {
-    id: string
-    name: string
-    rooms: { id: string; name: string; capacity: number | null }[]
-  }[]
+export type PastVenue = {
+  venue_text: string
+  venue_address_text: string | null
 }
 
 export type OfficeOption = {
@@ -27,7 +22,7 @@ interface Props {
   isGroup: boolean
   defaultOfficeId: string | null
   offices: OfficeOption[]
-  venues: VenueOption[]
+  pastVenues: PastVenue[]
 }
 
 /**
@@ -40,7 +35,7 @@ interface Props {
  * phone, default mailer return address, internal pricing, responsibility.
  * Those are filled server-side from the client/office profile or by admin.
  */
-export function OrderForm({ isGroup, defaultOfficeId, offices, venues }: Props) {
+export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Props) {
   const [needsDM, setNeedsDM] = useState(true)
   const [needsDigital, setNeedsDigital] = useState(false)
   const [needsSheet, setNeedsSheet] = useState(false)
@@ -48,11 +43,8 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, venues }: Props) 
   const [officeId, setOfficeId] = useState<string>(defaultOfficeId ?? '')
   const office = offices.find((o) => o.id === officeId)
 
-  const [venueId, setVenueId] = useState<string>('')
-  const venue = venues.find((v) => v.id === venueId)
-
-  const [buildingId, setBuildingId] = useState<string>('')
-  const building = venue?.buildings.find((b) => b.id === buildingId)
+  const [venueText, setVenueText] = useState('')
+  const [venueAddress, setVenueAddress] = useState('')
 
   // Up to 4 events (Part 7). Start with one; users add more as needed.
   const [eventCount, setEventCount] = useState(1)
@@ -131,54 +123,40 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, venues }: Props) 
       <Card className="space-y-4">
         <h2 className="text-sm font-medium">Venue</h2>
 
-        <Select
-          label="Venue"
-          name="venue_id"
-          value={venueId}
-          onChange={(e) => {
-            setVenueId(e.target.value)
-            setBuildingId('')
-          }}
-        >
-          <option value="">Free-text (no saved venue)</option>
-          {venues.map((v) => (
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </Select>
-
-        {venue && (
+        {pastVenues.length > 0 && (
           <Select
-            label="Building"
-            name="building_id"
-            value={buildingId}
-            onChange={(e) => setBuildingId(e.target.value)}
+            label="Fill from past order"
+            value=""
+            onChange={(e) => {
+              const v = pastVenues.find((p) => p.venue_text === e.target.value)
+              if (!v) return
+              setVenueText(v.venue_text)
+              setVenueAddress(v.venue_address_text ?? '')
+            }}
           >
-            <option value="">(none)</option>
-            {venue.buildings.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </Select>
-        )}
-
-        {building && building.rooms.length > 0 && (
-          <Select label="Room" name="room_id">
-            <option value="">(none)</option>
-            {building.rooms.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-                {r.capacity != null && ` · cap ${r.capacity}`}
+            <option value="">— select a past venue —</option>
+            {pastVenues.map((v) => (
+              <option key={v.venue_text} value={v.venue_text}>
+                {v.venue_text}
               </option>
             ))}
           </Select>
         )}
 
-        <p className="text-xs text-muted">
-          New venue?{' '}
-          <a href="/venues" className="underline underline-offset-2">
-            Add it here
-          </a>
-          , then come back.
-        </p>
+        <Input
+          name="venue_text"
+          label="Venue name"
+          value={venueText}
+          onChange={(e) => setVenueText(e.target.value)}
+          placeholder="e.g. DoubleTree by Hilton St. Louis Airport"
+        />
+        <Input
+          name="venue_address_text"
+          label="Venue address"
+          value={venueAddress}
+          onChange={(e) => setVenueAddress(e.target.value)}
+          placeholder="123 Main St, St. Louis, MO 63101"
+        />
       </Card>
 
       <Card className="space-y-4">

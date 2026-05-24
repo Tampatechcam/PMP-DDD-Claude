@@ -222,3 +222,39 @@ export async function listEventsForOrder(orderId: string) {
   if (error) throw error
   return (data ?? []) as OrderEventRow[]
 }
+
+export type PastVenue = {
+  venue_text: string
+  venue_address_text: string | null
+}
+
+/**
+ * Distinct venues seen across the client's order history (imported from the
+ * DM sheet). Used to pre-fill the venue name + address on the new-order form
+ * so the user doesn't have to retype a location they've used before.
+ *
+ * Deduplicates by venue_text (case-sensitive, first address wins). RLS
+ * restricts the query to the caller's client.
+ */
+export async function listDistinctVenuesFromOrders(): Promise<PastVenue[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('orders')
+    .select('venue_text, venue_address_text')
+    .not('venue_text', 'is', null)
+    .order('venue_text')
+  if (error) throw error
+
+  const seen = new Set<string>()
+  const result: PastVenue[] = []
+  for (const row of data ?? []) {
+    const name = (row as { venue_text?: string | null }).venue_text
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    result.push({
+      venue_text: name,
+      venue_address_text: (row as { venue_address_text?: string | null }).venue_address_text ?? null,
+    })
+  }
+  return result
+}
