@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: Props) {
         {/* Temporary demo buttons. Remove (and delete lib/actions/demo.ts)
             before production. */}
         <div className="bg-surface border border-dashed border-border rounded-lg p-5">
-          <p className="text-[11px] uppercase tracking-wide text-muted font-medium mb-2">
+          <p className="label mb-2">
             Demo
           </p>
           <p className="text-xs text-muted mb-4 leading-relaxed">

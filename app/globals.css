@@ -10,3 +10,13 @@ body {
   font-size: 15px;
   line-height: 1.5;
 }
+
+@layer components {
+  /* Eyebrow / section-label utility — replaces 13 instances of the
+     raw "text-[11px] uppercase tracking-wide text-muted font-medium"
+     string across ClientInfoCard, OrderCard, table heads, and the
+     login page. Add mb-* or bg-* on the element for context overrides. */
+  .label {
+    @apply text-[11px] uppercase tracking-wide text-muted font-medium;
+  }
+}

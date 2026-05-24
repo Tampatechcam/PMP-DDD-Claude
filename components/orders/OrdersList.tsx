@@ -217,7 +217,7 @@ function Table({
   return (
     <div className="border border-border rounded-lg bg-surface overflow-x-auto">
       <table className="w-full text-sm table-fixed">
-        <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
+        <thead className="label bg-bg">
           <tr className="border-b border-border">
             <Th className="w-[7rem]">Order</Th>
             {!isPast && <Th className="w-[14rem]">Order Sent Deadline</Th>}

@@ -36,7 +36,7 @@ export default async function AdminInvoicesPage() {
       ) : (
         <div className="border border-border rounded-lg bg-surface overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
+            <thead className="label bg-bg">
               <tr className="border-b border-border">
                 <th className="text-left px-4 py-2.5 font-semibold">Order</th>
                 <th className="text-left px-4 py-2.5 font-semibold">Status</th>

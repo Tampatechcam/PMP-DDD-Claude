@@ -199,7 +199,7 @@ export function OrderCard({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2 border-t border-border pt-4">
-      <h2 className="text-[11px] font-semibold tracking-wider text-muted uppercase">
+      <h2 className="label">
         {title}
       </h2>
       {children}

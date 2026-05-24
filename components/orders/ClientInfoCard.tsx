@@ -89,7 +89,7 @@ export function ClientInfoCard({
 
       {client.disclaimer && (
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
+          <p className="label mb-1">
             Disclaimer
           </p>
           <p className="text-xs leading-relaxed">{client.disclaimer}</p>
@@ -101,7 +101,7 @@ export function ClientInfoCard({
         client.default_mailing_quantity ||
         client.default_digital_budget) && (
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
+          <p className="label mb-1">
             Defaults
           </p>
           <Dl>
@@ -123,7 +123,7 @@ export function ClientInfoCard({
         client.direct_mail_discount ||
         client.tech_sequences) && (
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
+          <p className="label mb-1">
             Pricing &amp; ops (internal)
           </p>
           <Dl>
@@ -143,7 +143,7 @@ export function ClientInfoCard({
 
       {office && (
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
+          <p className="label mb-1">
             Office
           </p>
           <div className="flex items-baseline justify-between gap-2">
@@ -177,7 +177,7 @@ export function ClientInfoCard({
 
       {(client.description || (admin && client.notes)) && (
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1">
+          <p className="label mb-1">
             Notes
           </p>
           {client.description && <p className="text-xs">{client.description}</p>}
