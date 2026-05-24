@@ -82,7 +82,16 @@ export default async function AdminClientDetailPage({ params }: Props) {
         {offices.length === 0 ? (
           <p className="text-sm text-muted">No offices linked.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul
+            className={
+              // Group clients (FTA, Sentinel/SAM RIA, AdvisorMax, Arrive) tend
+              // to have many offices — a 2-col grid halves the vertical space
+              // without losing any data. Independents (1 office) stay single-col.
+              client.is_group
+                ? 'grid grid-cols-1 md:grid-cols-2 gap-2'
+                : 'space-y-2'
+            }
+          >
             {offices.map((o) => {
               const returnAddr = readFreeform(o.mailer_return_address)
               return (
