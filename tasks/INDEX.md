@@ -47,6 +47,9 @@ findings each task addresses.
 | TASK-R008 | Add date-range + `display_status` filters to `/admin/orders` (closes agent-c Gap #2 + #3) | complete | claude | [R008-admin-orders-date-status-filters.md](R008-admin-orders-date-status-filters.md) |
 | TASK-R009 | Add `SUPABASE_PROJECT_REF` to `.env.example` + README env step (closes agent-c Gap #6) | superseded | claude | _verified already present in .env.example + README:20_ |
 | TASK-R010 | Per-invoice detail page at `/admin/invoices/[id]` (closes agent-c Gap #4) | complete | claude | [R010-per-invoice-detail-page.md](R010-per-invoice-detail-page.md) |
+| TASK-DS001 | Full design system audit — 8 issues, score 76/100 | complete | claude (design:design-system) | [DS001-design-system-audit.md](DS001-design-system-audit.md) |
+| TASK-V001 | Verify R003+R004; fix colgroup hydration warning in OrdersList | complete | claude (verify) | [V001-verify-r003-r004.md](V001-verify-r003-r004.md) |
+| TASK-V002 | Full branch verify feature/admin-views; fix shadow-sm on login card | complete | claude (verify) | [V002-verify-feature-admin-views.md](V002-verify-feature-admin-views.md) |
 
 ---
 

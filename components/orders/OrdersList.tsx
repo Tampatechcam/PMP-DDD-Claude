@@ -217,28 +217,17 @@ function Table({
   return (
     <div className="border border-border rounded-lg bg-surface overflow-x-auto">
       <table className="w-full text-sm table-fixed">
-        <colgroup>
-          <col className="w-[7rem]" />
-          {!isPast && <col className="w-[14rem]" />}
-          <col className="w-[12rem]" />
-          <col className="w-[12rem]" />
-          {showClient && <col className="w-[10rem]" />}
-          <col className="w-[9rem]" />
-          <col />
-          <col className="w-[10rem]" />
-          <col className="w-8" />
-        </colgroup>
         <thead className="text-[11px] uppercase tracking-wider text-muted bg-bg">
           <tr className="border-b border-border">
-            <Th>Order</Th>
-            {!isPast && <Th>Order Sent Deadline</Th>}
-            <Th>First Event date</Th>
-            <Th>Second Event date</Th>
-            {showClient && <Th>Client</Th>}
-            <Th>Advisor</Th>
+            <Th className="w-[7rem]">Order</Th>
+            {!isPast && <Th className="w-[14rem]">Order Sent Deadline</Th>}
+            <Th className="w-[12rem]">First Event date</Th>
+            <Th className="w-[12rem]">Second Event date</Th>
+            {showClient && <Th className="w-[10rem]">Client</Th>}
+            <Th className="w-[9rem]">Advisor</Th>
             <Th>Venue</Th>
-            <Th>Status</Th>
-            <Th />
+            <Th className="w-[10rem]">Status</Th>
+            <Th className="w-8" />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -258,8 +247,8 @@ function Table({
   )
 }
 
-function Th({ children }: { children?: React.ReactNode }) {
-  return <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap">{children}</th>
+function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
+  return <th className={`text-left px-3 py-2.5 font-semibold whitespace-nowrap${className ? ` ${className}` : ''}`}>{children}</th>
 }
 
 function Row({

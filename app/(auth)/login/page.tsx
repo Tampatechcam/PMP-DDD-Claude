@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
+        <div className="bg-surface border border-border rounded-lg p-6">
           <h1 className="text-base font-semibold mb-1">Sign in</h1>
           <p className="text-sm text-muted mb-5">
             {mode === 'magic'

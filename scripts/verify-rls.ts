@@ -33,7 +33,25 @@ if (!url || !anon || !service) {
   process.exit(1)
 }
 
-const admin = createClient(url, service, { auth: { persistSession: false } })
+// Node 20 has no global `WebSocket`; supabase-js's RealtimeClient still
+// requires one to construct. This script never calls .channel().subscribe(),
+// so a no-op transport is enough to satisfy initialization without adding a
+// `ws` dependency.
+class NoopWebSocket {
+  constructor(_url: string, _protocols?: string | string[]) {}
+  send() {}
+  close() {}
+  addEventListener() {}
+  removeEventListener() {}
+}
+const realtimeShim = {
+  transport: NoopWebSocket as unknown as typeof WebSocket
+}
+
+const admin = createClient(url, service, {
+  auth: { persistSession: false },
+  realtime: realtimeShim
+})
 
 interface Provisioned {
   clientAId: string
@@ -143,7 +161,10 @@ async function main() {
   let failed = false
   try {
     // Sign in as user A on a fresh anon client.
-    const aClient = createClient(url!, anon!, { auth: { persistSession: false } })
+    const aClient = createClient(url!, anon!, {
+      auth: { persistSession: false },
+      realtime: realtimeShim
+    })
     const { error: signInErr } = await aClient.auth.signInWithPassword({
       email: p.userAEmail,
       password: p.password
