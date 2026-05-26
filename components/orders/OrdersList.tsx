@@ -21,10 +21,6 @@ import type { OrderRow } from '@/lib/db/orders'
 
 export type OrdersTab = 'upcoming' | 'past'
 
-function pivotDate(o: OrderRow): string | null {
-  return o.order_sent_deadline ?? o.event_1_date ?? null
-}
-
 /**
  * The Orders table tracks direct-mail orders. Digital-only campaigns
  * (no DM component) fall out of both tabs — they aren't "events" in
