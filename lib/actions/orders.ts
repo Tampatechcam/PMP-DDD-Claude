@@ -194,3 +194,135 @@ export async function createOrder(form: FormData) {
   revalidatePath('/orders')
   redirect(`/orders/${inserted.order_number}`)
 }
+
+/**
+ * Admin-side order creation. Differs from createOrder in three ways:
+ *  1. client_id comes from the form (admin picks any client), not the
+ *     current user's profile.
+ *  2. Optional initial dm_status / digital_status so ops can record an
+ *     order that's already in motion.
+ *  3. Redirects into the admin shell (/admin/orders/…).
+ */
+export async function createOrderAsAdmin(form: FormData) {
+  const supabase = createClient()
+
+  const client_id = s(form, 'client_id')
+  if (!client_id) throw new Error('Client is required.')
+
+  const needs_direct_mail = bool(form, 'needs_direct_mail')
+  const needs_digital = bool(form, 'needs_digital')
+  const needs_google_sheet = bool(form, 'needs_google_sheet')
+
+  if (!needs_direct_mail && !needs_digital && !needs_google_sheet) {
+    throw new Error('Pick at least one of Direct Mail, Digital, or Sheet.')
+  }
+
+  const maxRow = await supabase
+    .from('orders')
+    .select('order_number')
+    .order('order_number', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+    .then((r) => {
+      if (r.error) throw r.error
+      return r.data
+    })
+  let nextNumber = (maxRow?.order_number ?? 0) + 1
+
+  const payload = {
+    client_id,
+    office_id: s(form, 'office_id') || null,
+    advisor_name: s(form, 'advisor_name'),
+    needs_direct_mail,
+    needs_digital,
+    needs_google_sheet,
+    class_type: s(form, 'class_type'),
+    job_name: s(form, 'job_name'),
+    market: s(form, 'market'),
+    charity: s(form, 'charity'),
+    venue_text: s(form, 'venue_text'),
+    venue_address_text: s(form, 'venue_address_text'),
+    event_1_date: dateStr(form, 'event_1_date'),
+    event_1_room: s(form, 'event_1_room'),
+    event_2_date: dateStr(form, 'event_2_date'),
+    event_2_room: s(form, 'event_2_room'),
+    event_3_date: dateStr(form, 'event_3_date'),
+    event_3_room: s(form, 'event_3_room'),
+    event_4_date: dateStr(form, 'event_4_date'),
+    event_4_room: s(form, 'event_4_room'),
+    start_time: timeStr(form, 'start_time'),
+    end_time: timeStr(form, 'end_time'),
+    time_notes: s(form, 'time_notes'),
+    mailing_quantity: needs_direct_mail ? num(form, 'mailing_quantity') : null,
+    mailer_type: needs_direct_mail ? s(form, 'mailer_type') : null,
+    mailer_return_address_override: needs_direct_mail
+      ? jsonAddress(form, 'return_address')
+      : null,
+    qr_code_link: needs_direct_mail ? s(form, 'qr_code_link') : null,
+    sending_list_folder_url: needs_direct_mail
+      ? s(form, 'sending_list_folder_url')
+      : null,
+    client_approval_deadline: needs_direct_mail
+      ? dateStr(form, 'client_approval_deadline')
+      : null,
+    order_sent_deadline: needs_direct_mail
+      ? dateStr(form, 'order_sent_deadline')
+      : null,
+    dm_status: needs_direct_mail
+      ? (s(form, 'dm_status') || 'Pending Details')
+      : null,
+    digital_budget: needs_digital ? num(form, 'digital_budget') : null,
+    landing_page_url_direct: needs_digital
+      ? s(form, 'landing_page_url_direct')
+      : null,
+    landing_page_url_digital: needs_digital
+      ? s(form, 'landing_page_url_digital')
+      : null,
+    privacy_company_name: needs_digital ? s(form, 'privacy_company_name') : null,
+    privacy_company_website: needs_digital
+      ? s(form, 'privacy_company_website')
+      : null,
+    digital_status: needs_digital
+      ? (s(form, 'digital_status') || 'Pending Details')
+      : null,
+    order_instructions: s(form, 'order_instructions'),
+    notes: s(form, 'notes'),
+  } as const
+
+  let inserted: { id: string; order_number: number; display_ref: string | null } | null = null
+  let lastError: unknown = null
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({ ...payload, order_number: nextNumber })
+      .select('id, order_number, display_ref')
+      .single()
+
+    if (!error && data) {
+      inserted = data as typeof inserted
+      break
+    }
+    const pgError = error as { code?: string } | null
+    if (pgError?.code !== '23505') throw error
+    lastError = error
+    nextNumber++
+  }
+
+  if (!inserted) {
+    throw new Error(
+      `Could not pick a unique order number after ${MAX_RETRIES} tries — ${String(lastError)}`
+    )
+  }
+
+  await supabase.from('order_events').insert({
+    order_id: inserted.id,
+    event: 'Order created (admin)',
+    payload: { needs_direct_mail, needs_digital, needs_google_sheet, class_type: payload.class_type }
+  })
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  const ref = inserted.display_ref ?? String(inserted.order_number)
+  redirect(`/admin/orders/${ref}`)
+}

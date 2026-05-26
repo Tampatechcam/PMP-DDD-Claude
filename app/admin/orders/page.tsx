@@ -64,7 +64,8 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
   return (
     <section className="space-y-5">
-      <header className="space-y-1">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">All orders</h1>
         <p className="text-sm text-muted">
           {orders.length}
@@ -79,6 +80,8 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             </>
           )}
         </p>
+        </div>
+        <Button href="/admin/orders/new">+ New order</Button>
       </header>
 
       <form

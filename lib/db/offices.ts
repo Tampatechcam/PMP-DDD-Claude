@@ -26,6 +26,22 @@ export type OfficeForOrderCard = {
   mailer_return_address: { freeform?: string } | Record<string, unknown> | null
 }
 
+/** All offices across all clients — for admin forms that need a flat list. */
+export async function adminListAllOffices() {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('offices')
+    .select('id, name, client_id, advisor_names')
+    .order('name')
+  if (error) throw error
+  return (data ?? []) as {
+    id: string
+    name: string
+    client_id: string
+    advisor_names: string[] | null
+  }[]
+}
+
 /**
  * Single office by uuid. Returns null when the order has no office_id
  * (digital-only orders sometimes do) or when the row was removed.
