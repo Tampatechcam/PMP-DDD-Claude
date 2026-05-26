@@ -82,10 +82,9 @@ export function OrdersList({
   const upcoming = orders.filter((o) => tabOf(o) === 'upcoming')
   const past = orders.filter((o) => tabOf(o) === 'past')
 
-  // Both tabs sort newest-first per user direction: most recent past at
-  // the top of Past, furthest-out future at the top of Upcoming.
-  upcoming.sort(byPivotDesc)
-  past.sort(byPivotDesc)
+  // Both tabs: soonest event_1_date first (ascending).
+  upcoming.sort(byEventDateAsc)
+  past.sort(byEventDateAsc)
 
   const visible = activeTab === 'past' ? past : upcoming
 
@@ -113,15 +112,10 @@ export function OrdersList({
   )
 }
 
-function byPivotAsc(a: OrderRow, b: OrderRow) {
-  const da = pivotDate(a) ?? '9999-12-31'
-  const db = pivotDate(b) ?? '9999-12-31'
+function byEventDateAsc(a: OrderRow, b: OrderRow) {
+  const da = a.event_1_date ?? '9999-12-31'
+  const db = b.event_1_date ?? '9999-12-31'
   return da.localeCompare(db)
-}
-function byPivotDesc(a: OrderRow, b: OrderRow) {
-  const da = pivotDate(a) ?? '0000-01-01'
-  const db = pivotDate(b) ?? '0000-01-01'
-  return db.localeCompare(da)
 }
 
 function Tabs({

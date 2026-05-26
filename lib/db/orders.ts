@@ -67,7 +67,7 @@ export async function listOrdersForClient(opts?: { officeId?: string }) {
   let q = supabase
     .from('orders_with_display_status')
     .select('*')
-    .order('event_1_date', { ascending: false, nullsFirst: false })
+    .order('event_1_date', { ascending: true, nullsFirst: false })
 
   if (opts?.officeId) q = q.eq('office_id', opts.officeId)
   const { data, error } = await q
@@ -169,7 +169,7 @@ export async function adminListOrders(opts?: {
   let q = supabase
     .from('orders_with_display_status')
     .select('*')
-    .order('event_1_date', { ascending: false, nullsFirst: false })
+    .order('event_1_date', { ascending: true, nullsFirst: false })
 
   if (opts?.clientId) q = q.eq('client_id', opts.clientId)
   if (opts?.classType) q = q.eq('class_type', opts.classType)
