@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 /**
  * Order reads. UI never calls supabase.from directly — see .cline/rules.md
@@ -64,12 +65,19 @@ export type OrderRow = {
 
 export async function listOrdersForClient(opts?: { officeId?: string }) {
   const supabase = createClient()
+  const impersonatedId = await getImpersonatedClientId()
+
   let q = supabase
     .from('orders_with_display_status')
     .select('*')
     .order('event_1_date', { ascending: true, nullsFirst: false })
 
+  // Normal clients rely on RLS to scope to their own orders. An admin who is
+  // "viewing as" a client must scope explicitly — admin RLS would otherwise
+  // return every client's orders.
+  if (impersonatedId) q = q.eq('client_id', impersonatedId)
   if (opts?.officeId) q = q.eq('office_id', opts.officeId)
+
   const { data, error } = await q
   if (error) throw error
   return (data ?? []) as OrderRow[]
@@ -133,6 +141,25 @@ export async function getOrderByRef(ref: string) {
     .maybeSingle()
   if (error) throw error
   return data as OrderRow | null
+}
+
+/**
+ * Client-shell variant of getOrderByRef. Same lookup, but when an admin is
+ * "viewing as" a client, an order belonging to any *other* client is treated
+ * as not-found — so the impersonation sandbox can't be escaped by typing a
+ * different order's number/ref into the URL.
+ *
+ * Real clients are already RLS-scoped (orders_select restricts non-admins to
+ * their own client_id), so the extra check is a no-op for them and only the
+ * impersonating-admin case actually narrows. The plain getOrderByRef stays
+ * unscoped for the admin order shell, which is meant to read any order.
+ */
+export async function getOrderByRefForClient(ref: string) {
+  const order = await getOrderByRef(ref)
+  if (!order) return null
+  const impersonatedId = await getImpersonatedClientId()
+  if (impersonatedId && order.client_id !== impersonatedId) return null
+  return order
 }
 
 export type OrderEventRow = {
@@ -238,11 +265,19 @@ export type PastVenue = {
  */
 export async function listDistinctVenuesFromOrders(): Promise<PastVenue[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  const impersonatedId = await getImpersonatedClientId()
+
+  let q = supabase
     .from('orders')
     .select('venue_text, venue_address_text')
     .not('venue_text', 'is', null)
     .order('venue_text')
+  // Same as the order list: scope an impersonating admin to the viewed client
+  // so the new-order venue quick-fill doesn't surface other clients' venues.
+  // Real clients stay RLS-scoped.
+  if (impersonatedId) q = q.eq('client_id', impersonatedId)
+
+  const { data, error } = await q
   if (error) throw error
 
   const seen = new Set<string>()

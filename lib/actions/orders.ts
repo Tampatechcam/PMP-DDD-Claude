@@ -289,7 +289,8 @@ export async function createOrderAsAdmin(form: FormData) {
     notes: s(form, 'notes'),
   } as const
 
-  let inserted: { id: string; order_number: number; display_ref: string | null } | null = null
+  type InsertedAdminRow = { id: string; order_number: number; display_ref: string | null }
+  let inserted: InsertedAdminRow | null = null
   let lastError: unknown = null
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -300,7 +301,9 @@ export async function createOrderAsAdmin(form: FormData) {
       .single()
 
     if (!error && data) {
-      inserted = data as typeof inserted
+      // supabase's inferred row type is broader than InsertedAdminRow but
+      // structurally matches — cast via unknown so tsc accepts it.
+      inserted = data as unknown as InsertedAdminRow
       break
     }
     const pgError = error as { code?: string } | null

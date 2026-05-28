@@ -5,6 +5,8 @@ import { adminListOrders } from '@/lib/db/orders'
 import { formatMoney, formatQuantity } from '@/lib/utils/format'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { TeamSection } from '@/components/admin/TeamSection'
+import { Button } from '@/components/ui/Button'
+import { startViewingAs } from '@/lib/actions/impersonation'
 
 interface Props {
   params: { id: string }
@@ -32,12 +34,20 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
 
   return (
     <section className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-medium">{client.name}</h1>
-        <p className="text-sm text-muted">
-          {client.is_group ? 'Group client' : 'Independent client'}
-          {client.responsibility && ` · ${client.responsibility}`}
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-medium">{client.name}</h1>
+          <p className="text-sm text-muted">
+            {client.is_group ? 'Group client' : 'Independent client'}
+            {client.responsibility && ` · ${client.responsibility}`}
+          </p>
+        </div>
+        {/* "View as" — sets the impersonation cookie and drops into the client
+            shell scoped to this client. The banner there exits back to admin. */}
+        <form action={startViewingAs}>
+          <input type="hidden" name="client_id" value={client.id} />
+          <Button type="submit" variant="secondary">View portal as client</Button>
+        </form>
       </header>
 
       <Card>

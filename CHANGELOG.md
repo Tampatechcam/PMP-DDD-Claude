@@ -6,6 +6,24 @@ every PR that lands a user-visible or operationally relevant change.
 ## Unreleased
 
 ### Added
+- **Admin "view portal as client" (impersonation):** a "View portal as
+  client" button on `/admin/clients/[id]` sets a server-only,
+  httpOnly cookie (`pmp_view_client`) and drops the admin into the
+  client shell scoped to that client. A persistent warning banner at
+  the top of the client shell shows whose portal is being viewed and
+  carries an "Exit to admin" button. The client-shell readers
+  (`listOrdersForClient`, `listVenuesForCurrentClient`,
+  `listOfficesForCurrentClient`, `getCurrentClientSelf`, the venue
+  quick-fill from past orders, `getOrderByRefForClient`) explicitly
+  filter by the impersonated client_id so admin RLS — which would
+  otherwise return every client's rows — narrows to the one being
+  viewed. `getCurrentClientIdOrThrow` returns the impersonated id too,
+  so orders / venues created while viewing-as get attributed to the
+  viewed client. The client layout fails closed: an admin who reaches
+  `/orders` without setting the cookie is bounced to `/admin`.
+  Non-admins who forge the cookie are ignored
+  (`getImpersonatedClientId` re-checks `role === 'admin'` server-side
+  on every request); RLS remains the hard boundary.
 - Initial repo scaffold: Next.js App Router, Tailwind, Supabase client trio,
   middleware, route-group layouts for `(auth)`, `(client)`, and `app/admin/`.
 - Schema migrations 001–006: tables, triggers, RLS helpers, RLS policies,
@@ -77,6 +95,12 @@ every PR that lands a user-visible or operationally relevant change.
   production.
 
 ### Fixed
+- `lib/actions/orders.ts` — `createOrderAsAdmin` was casting the insert
+  result with `data as typeof inserted`, which `tsc` (post-`as const`
+  payload narrowing) treated as a `never`-overlap conversion and
+  flagged across 4 lines. Replaced with a named `InsertedAdminRow`
+  type alias + `as unknown as InsertedAdminRow`. Repo back to clean
+  `tsc --noEmit`.
 - `components/ui/Input.tsx` — replaced an ad-hoc module-level ID
   counter with `useId()`. The counter generated different sequences
   on server vs client and tripped React's hydration mismatch warning

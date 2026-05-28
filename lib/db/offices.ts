@@ -1,12 +1,16 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 export async function listOfficesForCurrentClient() {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('offices')
-    .select('*')
-    .order('name')
+  const impersonatedId = await getImpersonatedClientId()
+
+  let q = supabase.from('offices').select('*').order('name')
+  // Admin "view as" must scope explicitly; normal clients are RLS-scoped.
+  if (impersonatedId) q = q.eq('client_id', impersonatedId)
+
+  const { data, error } = await q
   if (error) throw error
   return data
 }

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 /**
  * Venues + their buildings + each building's rooms, in one query.
@@ -24,13 +25,21 @@ export type VenueWithChildren = {
 
 export async function listVenuesForCurrentClient(): Promise<VenueWithChildren[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  const impersonatedId = await getImpersonatedClientId()
+
+  let q = supabase
     .from('venues')
     .select(
       'id, name, notes, asset_availability, applicable_class_types, address, ' +
       'buildings ( id, name, rooms ( id, name, capacity ) )'
     )
     .order('name')
+  // Normal clients are RLS-scoped to their own venues; an admin "viewing as"
+  // a client must scope explicitly — admin RLS would otherwise return every
+  // client's venues (and leak them into the new-order venue picker).
+  if (impersonatedId) q = q.eq('client_id', impersonatedId)
+
+  const { data, error } = await q
   if (error) throw error
   // Supabase's embedded-relation type doesn't structurally match our
   // hand-typed shape (relationship inference returns broader unions).

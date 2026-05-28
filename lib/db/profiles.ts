@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 /**
  * The session's profile row. Used by mutating actions that need to know the
@@ -131,6 +132,12 @@ export async function adminListTeamForClient(clientId: string): Promise<TeamMemb
 }
 
 export async function getCurrentClientIdOrThrow(): Promise<string> {
+  // An admin "viewing as" a client acts on that client's behalf (RLS allows
+  // is_admin() to insert any client_id), so order/venue creation works while
+  // impersonating instead of throwing on the admin's null client_id.
+  const impersonatedId = await getImpersonatedClientId()
+  if (impersonatedId) return impersonatedId
+
   const profile = await getCurrentProfile()
   if (!profile?.client_id) {
     throw new Error(
