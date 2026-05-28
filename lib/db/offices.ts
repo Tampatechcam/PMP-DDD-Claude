@@ -26,18 +26,23 @@ export type OfficeForOrderCard = {
   mailer_return_address: { freeform?: string } | Record<string, unknown> | null
 }
 
-/** All offices across all clients — for admin forms that need a flat list. */
+/**
+ * All offices across all clients — for admin pages that need a flat list.
+ * Returns both `state` (used by /admin/clients group tables) and
+ * `advisor_names` (used by the admin order-create form's advisor datalist).
+ */
 export async function adminListAllOffices() {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('offices')
-    .select('id, name, client_id, advisor_names')
+    .select('id, name, client_id, state, advisor_names')
     .order('name')
   if (error) throw error
   return (data ?? []) as {
     id: string
     name: string
     client_id: string
+    state: string | null
     advisor_names: string[] | null
   }[]
 }
