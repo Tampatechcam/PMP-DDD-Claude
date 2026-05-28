@@ -5,9 +5,30 @@ every PR that lands a user-visible or operationally relevant change.
 
 ## Unreleased
 
+### Changed
+- **Importer writes derived office + client business fields inline now.**
+  `scripts/import-v2.ts` previously inserted bare client/office rows then
+  shelled out to `backfill-office-fields.ts` and
+  `backfill-client-business.ts` to compute four office contact fields
+  (state, registration phone, direct-mail landing URL, mailer return
+  address) and ~17 client business fields (business name, EIN,
+  disclaimer, defaults, pricing, ops flags) by re-querying the rows it
+  had just inserted. Both aggregations are folded into the importer:
+  office contact fields are modal-picked per office key during the same
+  pass that builds the office advisor list, and client business fields
+  are read from `scripts/.import-work/client-dict.md` (when present) at
+  the start of the run, aggregated per canonical client with
+  `unanimous()` for identity fields and `modal()` for everything else,
+  then merged into the `clients` insert payload. Dictionary file is
+  optional — when absent the importer logs a note and continues. The two
+  `backfill-*.ts` scripts remain as idempotent fallbacks for ad-hoc
+  correction (fix one office without a full re-import). One
+  `npx tsx import-v2.ts` invocation now produces a fully populated DB.
+
 ### Added
 - **Admin "view portal as client" (impersonation):** a "View portal as
   client" button on `/admin/clients/[id]` sets a server-only,
+
   httpOnly cookie (`pmp_view_client`) and drops the admin into the
   client shell scoped to that client. A persistent warning banner at
   the top of the client shell shows whose portal is being viewed and

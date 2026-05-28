@@ -192,6 +192,184 @@ function getTime(v: string | null | undefined): string | null {
   return `${String(hh).padStart(2, '0')}:${mm}:${ss}`
 }
 
+// ---------- aggregation helpers (used by inlined backfills) ----------
+// Modal across an array of (possibly null) values. Returns the value seen
+// most often, or null if every entry is null. Ties broken by first seen.
+function modal<T>(values: (T | null | undefined)[]): T | null {
+  const counts = new Map<string, { value: T; count: number }>()
+  for (const v of values) {
+    if (v == null) continue
+    const key = String(v)
+    const e = counts.get(key)
+    if (e) e.count++
+    else counts.set(key, { value: v, count: 1 })
+  }
+  let best: T | null = null
+  let bestN = 0
+  for (const e of counts.values()) {
+    if (e.count > bestN) { best = e.value; bestN = e.count }
+  }
+  return best
+}
+
+// For identity fields (business_name, EIN, website) — return the value only
+// if every non-null row agrees. Avoids misleading rollups on group clients
+// whose members have different EINs etc.
+function unanimous<T>(values: (T | null | undefined)[]): T | null {
+  let pick: T | null = null
+  for (const v of values) {
+    if (v == null) continue
+    if (pick == null) pick = v
+    else if (String(pick) !== String(v)) return null
+  }
+  return pick
+}
+
+// US-state regex over a free-text address: matches ", IL 60103" → "IL".
+function extractState(addr: string | null | undefined): string | null {
+  if (!addr) return null
+  const m = addr.match(/,\s*([A-Z]{2})\s+\d{5}/)
+  return m ? m[1]! : null
+}
+
+// blank() above intentionally lets "FALSE"/"TRUE" through as text for status
+// columns. The Client Dictionary uses them as actual booleans for non-profit
+// / start-before-paid, so we need a stricter version here.
+function blankDict(v: string | undefined | null): string | null {
+  if (v == null) return null
+  const s = String(v).trim()
+  if (!s || s === '-' || s === 'N/A' || s === 'n/a' || s === 'TBD') return null
+  return s
+}
+function parseBoolDict(s: string | null | undefined): boolean | null {
+  const v = blankDict(s)
+  if (!v) return null
+  if (/^yes$/i.test(v)) return true
+  if (/^no$/i.test(v)) return false
+  return null
+}
+function parseMoneyDict(s: string | null | undefined): number | null {
+  const v = blankDict(s)
+  if (!v) return null
+  // Match ".077" before plain integers so "$.077" survives as 0.077.
+  const m = v.replace(/[,$\s]/g, '').match(/-?\d*\.\d+|-?\d+/)
+  return m ? Number(m[0]) : null
+}
+function parseIntDict(s: string | null | undefined): number | null {
+  const v = blankDict(s)
+  if (!v) return null
+  if (/variable/i.test(v)) return null
+  const m = v.replace(/[,\s]/g, '').match(/\d+/)
+  return m ? Number(m[0]) : null
+}
+
+// ---------- Client Dictionary ingestion ----------
+// The dictionary exports as one or more concatenated markdown tables, each
+// with its own header line — the second table reorders columns. Detect each
+// header and parse its rows against its own column map.
+type DictRow = Record<string, string>
+function parseClientDictMarkdown(md: string): DictRow[] {
+  const lines = md.split('\n').filter(l => l.trim().startsWith('|'))
+  const cells = (line: string): string[] =>
+    line.split('|').slice(1, -1).map(s => s.trim())
+  const isSeparator = (c: string[]) => c.every(x => /^[-: ]*$/.test(x))
+  const isHeader = (line: string) => /^\|\s*Advisor Name\b/.test(line)
+  const out: DictRow[] = []
+  let header: string[] | null = null
+  for (const line of lines) {
+    if (isHeader(line)) {
+      header = cells(line)
+      continue
+    }
+    const c = cells(line)
+    if (isSeparator(c)) continue
+    if (!header) continue
+    const row: DictRow = {}
+    for (let j = 0; j < header.length; j++) row[header[j]!] = c[j] ?? ''
+    out.push(row)
+  }
+  return out
+}
+
+// Per-canonical-client business fields rolled up from the dictionary's
+// office-grain rows. Identity fields use unanimous(); everything else uses
+// modal(). business_name falls back to the client's own name when blank.
+type ClientBusinessFields = {
+  business_name: string | null
+  business_website: string | null
+  ein: string | null
+  ein_match_name: string | null
+  is_non_profit: boolean | null
+  responsibility: string | null
+  disclaimer: string | null
+  description: string | null
+  notes: string | null
+  default_mailer_type: string | null
+  default_class_type: string | null
+  default_mailer_rate: number | null
+  default_mailing_quantity: number | null
+  default_digital_budget: number | null
+  tech_sequences: string | null
+  direct_mail_discount: string | null
+  start_before_paid: boolean | null
+}
+
+function aggregateClientBusinessFromDict(rows: DictRow[]): Map<string, ClientBusinessFields> {
+  type Raw = ClientBusinessFields
+  const byClient = new Map<string, Raw[]>()
+  for (const r of rows) {
+    const group = blankDict(r['FMO/Group Name (Optional)'])
+    const advisor = blankDict(r['Advisor Name'])
+    const canonical = classifyClient(group, advisor).name
+    if (!canonical || canonical === 'Unknown') continue
+    const rec: Raw = {
+      business_name:            blankDict(r['Business Name']),
+      business_website:         blankDict(r['Business Website']),
+      ein:                      blankDict(r['EIN']),
+      ein_match_name:           blankDict(r['Company Name (EIN Match)']),
+      is_non_profit:            parseBoolDict(r['Non-Profit Status']),
+      responsibility:           blankDict(r['Responsibility']),
+      disclaimer:               blankDict(r['Disclaimer']),
+      description:              blankDict(r['Description of Client']),
+      notes:                    blankDict(r['Client Notes to Lookout for']),
+      default_mailer_type:      blankDict(r['Mailer Type Used']),
+      default_class_type:       blankDict(r['Perferred Mailer Topics']),
+      default_mailer_rate:      parseMoneyDict(r['Direct Mailer Rate (per, QA Always)']),
+      default_mailing_quantity: parseIntDict(r['Usual Mailing Quanity (QA Always)']),
+      default_digital_budget:   parseMoneyDict(r['Default Digital Marketing Budget (QA Always)']),
+      tech_sequences:           blankDict(r['Tech/Sequences']),
+      direct_mail_discount:     blankDict(r['Any Direct Mail Discounts']),
+      start_before_paid:        parseBoolDict(r['Start Orders Before Being Paid'])
+    }
+    const list = byClient.get(canonical) ?? []
+    list.push(rec)
+    byClient.set(canonical, list)
+  }
+  const out = new Map<string, ClientBusinessFields>()
+  for (const [name, list] of byClient) {
+    out.set(name, {
+      business_name:            unanimous(list.map(r => r.business_name)) ?? name,
+      business_website:         unanimous(list.map(r => r.business_website)),
+      ein:                      unanimous(list.map(r => r.ein)),
+      ein_match_name:           unanimous(list.map(r => r.ein_match_name)),
+      is_non_profit:            modal(list.map(r => r.is_non_profit)),
+      responsibility:           modal(list.map(r => r.responsibility)),
+      disclaimer:               modal(list.map(r => r.disclaimer)),
+      description:              modal(list.map(r => r.description)),
+      notes:                    modal(list.map(r => r.notes)),
+      default_mailer_type:      modal(list.map(r => r.default_mailer_type)),
+      default_class_type:       modal(list.map(r => r.default_class_type)),
+      default_mailer_rate:      modal(list.map(r => r.default_mailer_rate)),
+      default_mailing_quantity: modal(list.map(r => r.default_mailing_quantity)),
+      default_digital_budget:   modal(list.map(r => r.default_digital_budget)),
+      tech_sequences:           modal(list.map(r => r.tech_sequences)),
+      direct_mail_discount:     modal(list.map(r => r.direct_mail_discount)),
+      start_before_paid:        modal(list.map(r => r.start_before_paid))
+    })
+  }
+  return out
+}
+
 // ---------- grouping (ADR 0004, scoped to two sources) ----------
 type ClientKind = 'group' | 'firm'
 interface ClientBucket {
@@ -613,6 +791,21 @@ async function main(): Promise<void> {
   console.log(`  DM rows (with Order Number): ${dmRows.length}`)
   console.log(`  Digital rows (after dropping empty placeholders): ${digRows.length}`)
 
+  // Client Dictionary is optional — if absent, business fields stay null and
+  // can be filled in later via the admin UI or backfill-client-business.ts.
+  let businessByClient = new Map<string, ClientBusinessFields>()
+  const dictPath = join(W, 'client-dict.md')
+  if (existsSync(dictPath)) {
+    const dictRows = parseClientDictMarkdown(readFileSync(dictPath, 'utf8'))
+    businessByClient = aggregateClientBusinessFromDict(dictRows)
+    console.log(
+      `  Client Dictionary: ${dictRows.length} rows → ${businessByClient.size} client buckets`
+    )
+  } else {
+    console.log('  Client Dictionary not found at scripts/.import-work/client-dict.md (ok, skipping business fields)')
+  }
+
+
   // STEP 3: build clients + offices from union of (group, advisor, office_location)
   type OfficeKey = { clientName: string; officeName: string; advisorName: string }
   const triples: OfficeKey[] = []
@@ -633,11 +826,21 @@ async function main(): Promise<void> {
   const clientNames = [...clientNameSet]
   console.log(`\nStep 3: inserting ${clientNames.length} clients...`)
 
-  type ClientInsert = { name: string; is_group: boolean }
-  const clientRows: ClientInsert[] = clientNames.map(n => ({
-    name: n,
-    is_group: GROUP_CLIENT_NAMES.has(n)
-  }))
+  // Merge in business fields from the Client Dictionary when we have them.
+  // PostgREST tolerates extra columns on insert as long as they exist on the
+  // table — these all do (clients table has business_name / EIN / disclaimer /
+  // defaults / pricing). When the dictionary is absent the spread is just
+  // `is_group + name`, identical to the old shape.
+  type ClientInsert = { name: string; is_group: boolean } & Partial<ClientBusinessFields>
+  const clientRows: ClientInsert[] = clientNames.map(n => {
+    const base: ClientInsert = { name: n, is_group: GROUP_CLIENT_NAMES.has(n) }
+    const biz = businessByClient.get(n)
+    return biz ? { ...base, ...biz } : base
+  })
+  let bizFilled = 0
+  for (const n of clientNames) if (businessByClient.has(n)) bizFilled++
+  console.log(`  business fields attached for ${bizFilled}/${clientNames.length} clients`)
+
   const insertedClients = (await pgInsert('clients', clientRows, [
     'id',
     'name'
@@ -647,8 +850,33 @@ async function main(): Promise<void> {
   const ftaClientId = clientIdByName.get('FTA')
   console.log(`  inserted ${insertedClients.length} clients (FTA = ${ftaClientId})`)
 
-  // distinct offices (clientName::officeName), aggregating advisor list
+  // distinct offices (clientName::officeName), aggregating advisor list +
+  // contact fields. For each office we modal-pick the state extracted from
+  // venue addresses, the registration phone seen on its DM orders, its
+  // direct-mail landing URL, and its return-address blob. Same logic
+  // backfill-office-fields.ts ran against post-insert orders rows — folded
+  // in here so the importer is the single source of truth.
   const officeAdvisors = new Map<string, Set<string>>() // key = client::office
+  type OfficeAgg = {
+    states: Map<string, number>
+    phones: Map<string, number>
+    urls:   Map<string, number>
+    addrs:  Map<string, { count: number; value: any }>
+  }
+  const officeAgg = new Map<string, OfficeAgg>()
+  const aggFor = (key: string): OfficeAgg => {
+    let a = officeAgg.get(key)
+    if (!a) {
+      a = { states: new Map(), phones: new Map(), urls: new Map(), addrs: new Map() }
+      officeAgg.set(key, a)
+    }
+    return a
+  }
+  const tally = <T,>(m: Map<T, number>, v: T | null | undefined): void => {
+    if (v == null) return
+    m.set(v, (m.get(v) ?? 0) + 1)
+  }
+
   for (const t of triples) {
     const key = `${t.clientName}::${t.officeName}`
     let s = officeAdvisors.get(key)
@@ -659,29 +887,97 @@ async function main(): Promise<void> {
     if (t.advisorName) s.add(t.advisorName)
   }
 
+  // DM rows: full contact field aggregation. The values come from the same
+  // source rows that backfill-office-fields.ts re-queried from orders.
+  for (const r of dmRows) {
+    const bucket = classifyClient(r.group_name, r.advisor_name)
+    const officeName = buildOfficeName(bucket.name, r.advisor_name, r.office_location)
+    const key = `${bucket.name}::${officeName}`
+    const a = aggFor(key)
+    tally(a.states, extractState(r.venue_address_text))
+    tally(a.phones, r.registration_phone)
+    tally(a.urls,   r.landing_page_url)
+    if (r.mailer_return_address) {
+      const blob = { freeform: r.mailer_return_address }
+      const k = JSON.stringify(blob)
+      const prev = a.addrs.get(k)
+      if (prev) prev.count++
+      else a.addrs.set(k, { count: 1, value: blob })
+    }
+  }
+  // Digital rows only contribute state (no DM-side contact info).
+  for (const r of digRows) {
+    const bucket = classifyClient(r.group_name, r.advisor_name)
+    const officeName = buildOfficeName(bucket.name, r.advisor_name, null)
+    const key = `${bucket.name}::${officeName}`
+    tally(aggFor(key).states, extractState(r.venue_address_text))
+  }
+
   type OfficeInsert = {
     client_id: string
     name: string
     advisor_names: string[] | null
     is_primary: boolean
+    state: string | null
+    registration_phone: string | null
+    registration_url_direct: string | null
+    mailer_return_address: any
   }
   const officeRows: OfficeInsert[] = []
   const seenForClient = new Set<string>() // mark first office per client primary
   // Sort so we get a deterministic primary
   const officeKeys = [...officeAdvisors.keys()].sort()
+  let officeStateN = 0, officePhoneN = 0, officeUrlN = 0, officeAddrN = 0
   for (const key of officeKeys) {
     const [clientName, officeName] = key.split('::') as [string, string]
     const clientId = clientIdByName.get(clientName)!
     const advisors = [...(officeAdvisors.get(key) || new Set<string>())]
     const isPrimary = !seenForClient.has(clientName)
     if (isPrimary) seenForClient.add(clientName)
+    const a = officeAgg.get(key)
+    // modal() above takes an array; office aggregates are pre-counted Maps.
+    // Inline pick: walk the map and keep the highest-count entry.
+    const pickFromCounts = <T,>(m: Map<T, number> | undefined): T | null => {
+      if (!m) return null
+      let best: T | null = null
+      let bestN = 0
+      for (const [k, n] of m) {
+        if (n > bestN) { best = k; bestN = n }
+      }
+      return best
+    }
+    const state = pickFromCounts(a?.states)
+    const phone = pickFromCounts(a?.phones)
+    const url   = pickFromCounts(a?.urls)
+
+    let addrJson: any = null
+    if (a) {
+      let bestN = 0
+      for (const { count, value } of a.addrs.values()) {
+        if (count > bestN) { addrJson = value; bestN = count }
+      }
+    }
+    if (state) officeStateN++
+    if (phone) officePhoneN++
+    if (url) officeUrlN++
+    if (addrJson) officeAddrN++
     officeRows.push({
       client_id: clientId,
       name: officeName || 'Main',
       advisor_names: advisors.length ? advisors : null,
-      is_primary: isPrimary
+      is_primary: isPrimary,
+      state,
+      registration_phone: phone,
+      registration_url_direct: url,
+      mailer_return_address: addrJson
     })
   }
+  console.log(`  derived office fields:`)
+  console.log(`    state:                  ${officeStateN}/${officeRows.length}`)
+  console.log(`    registration_phone:     ${officePhoneN}/${officeRows.length}`)
+  console.log(`    registration_url_direct:${officeUrlN}/${officeRows.length}`)
+  console.log(`    mailer_return_address:  ${officeAddrN}/${officeRows.length}`)
+
   console.log(`\nInserting ${officeRows.length} offices...`)
   const insertedOffices = (await pgInsert('offices', officeRows, [
     'id',
@@ -981,22 +1277,14 @@ async function main(): Promise<void> {
   }
   console.log(`  inserted ${eventRows.length} order_events`)
 
-  // STEP 7: derive office contact + client business fields from the data
-  // we just inserted. Both scripts are idempotent — they read the freshly
-  // inserted rows and aggregate per-office / per-client. Pulling them in
-  // here means a single `npx tsx import-v2.ts` produces a fully populated
-  // database (instead of requiring the operator to remember to run two
-  // follow-up backfills).
-  console.log('\nStep 7: backfill derived fields...')
-  const { execSync } = await import('child_process')
-  execSync('npx tsx --env-file=.env.local scripts/backfill-office-fields.ts', {
-    stdio: 'inherit'
-  })
-  execSync('npx tsx --env-file=.env.local scripts/backfill-client-business.ts', {
-    stdio: 'inherit'
-  })
+  // Derived office contact + client business fields are written inline now —
+  // see the office aggregation in Step 3 (state / phone / URL / return addr)
+  // and the Client Dictionary merge into clientRows. The backfill-*.ts
+  // scripts remain in /scripts as idempotent fallbacks for ad-hoc correction
+  // (e.g. fixing one office without a full re-import).
 
   // Final breakdown
+
   const dmOnly = insertedDm.length - dmDigitalMerged
   const dmAndDigital = dmDigitalMerged
   const digitalOnly = insertedDig.length

@@ -16,8 +16,9 @@ shipped work lives in [docs/tasks/](tasks/README.md).
 ## Active (tracked in the TaskList)
 
 - Regenerate `types/db.ts` after migrations 012 + 013
-- Patch `import-v2.ts` so re-imports populate office contact + client business fields inline (avoid relying on the two backfill scripts)
+- ~~Patch `import-v2.ts` so re-imports populate office contact + client business fields inline (avoid relying on the two backfill scripts)~~ — done; both aggregations inlined, Step 7 dropped, backfill scripts retained as idempotent fallbacks.
 - Mirror office region/contact fields onto `ClientInfoCard` for order detail pages
+
 
 ## Later (not yet tracked)
 
