@@ -326,3 +326,45 @@ export async function createOrderAsAdmin(form: FormData) {
   const ref = inserted.display_ref ?? String(inserted.order_number)
   redirect(`/admin/orders/${ref}`)
 }
+
+/**
+ * Admin status update. Lets an admin set dm_status / digital_status / main_status
+ * directly from the order detail page — the workflow state that otherwise only
+ * ever arrived via the sheet import. Writes an audit row and revalidates the
+ * relevant paths so the change shows immediately.
+ *
+ * NOTE: a future run of scripts/import-v2.ts can overwrite these — the DM/Digital
+ * sheets remain the source of truth for the import. Manual edits here are for
+ * keeping the dashboard accurate between imports.
+ */
+export async function updateOrderStatus(form: FormData) {
+  const supabase = createClient()
+
+  const orderId = s(form, 'order_id')
+  if (!orderId) throw new Error('order_id is required.')
+  const ref = s(form, 'ref')
+
+  // Only patch the status fields actually present in the submitted form.
+  // (A DM-only order's form won't carry digital_status, etc.)
+  const patch: Record<string, string | null> = {}
+  if (form.has('dm_status')) patch.dm_status = s(form, 'dm_status')
+  if (form.has('digital_status')) patch.digital_status = s(form, 'digital_status')
+  if (form.has('main_status')) patch.main_status = s(form, 'main_status')
+
+  if (Object.keys(patch).length === 0) {
+    throw new Error('No status field submitted.')
+  }
+
+  const { error } = await supabase.from('orders').update(patch).eq('id', orderId)
+  if (error) throw error
+
+  await supabase.from('order_events').insert({
+    order_id: orderId,
+    event: 'Status updated (admin)',
+    payload: patch
+  })
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  if (ref) revalidatePath(`/admin/orders/${ref}`)
+}

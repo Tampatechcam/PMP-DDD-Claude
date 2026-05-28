@@ -7,6 +7,7 @@ import { listProofsForOrder } from '@/lib/db/proofs'
 import { adminGetClient } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
 import { Button } from '@/components/ui/Button'
+import { OrderStatusEditor } from '@/components/admin/OrderStatusEditor'
 
 interface Props {
   params: { order_number: string }
@@ -46,13 +47,23 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6">
         <OrderCard order={order} proofs={proofs} events={events} />
-        {client && (
-          <ClientInfoCard
-            client={client}
-            office={office ?? null}
-            admin
+        <div className="space-y-6">
+          <OrderStatusEditor
+            orderId={order.id}
+            refSlug={order.display_ref ?? String(order.order_number)}
+            needsDM={order.needs_direct_mail}
+            needsDigital={order.needs_digital}
+            dmStatus={order.dm_status}
+            digitalStatus={order.digital_status}
           />
-        )}
+          {client && (
+            <ClientInfoCard
+              client={client}
+              office={office ?? null}
+              admin
+            />
+          )}
+        </div>
       </div>
     </section>
   )
