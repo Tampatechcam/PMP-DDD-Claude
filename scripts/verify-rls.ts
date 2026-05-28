@@ -11,14 +11,27 @@
  *   npm run verify:rls
  *
  * The script provisions two throw-away clients and two users (one per
- * client), inserts an order under each, then signs in as user A and asserts:
- *   1. Listing orders only returns A's row.
- *   2. Reading B's order by its UUID returns nothing.
- *   3. Reading B's invoice / order_events / proofs returns nothing.
- *   4. Updating B's order is rejected.
+ * client), plus an order each, a B-office, an A-proof, and a storage object
+ * under B's prefix. It then signs in as user A and asserts, across 14 checks:
  *
- * Exit code is 0 on pass, 1 on any failure. The provisioned rows are torn
- * down at the end whether the assertions pass or fail.
+ *   Cross-tenant table reads/writes (orders, order_events, proofs, invoices):
+ *     1. Listing orders only returns A's row.
+ *     2. Reading B's order by its UUID returns nothing.
+ *     3. Updating B's order is rejected.
+ *     4. Reading B's order_events / proofs returns nothing.
+ *     5. Invoices are hidden from clients.
+ *
+ *   R007 extensions:
+ *     6. security_invoker regression guard — reading orders_with_display_status
+ *        returns only A (a dropped `security_invoker = true` would leak all rows).
+ *     7. Reading B's order *through the view* returns nothing.
+ *     8. Cross-tenant reads of clients + offices return nothing.
+ *     9. profiles self-promotion to admin is rejected (role stays 'client').
+ *    10. proofs status-enum guard — A cannot revert a proof to 'pending'.
+ *    11. Storage RLS — A cannot list or download objects under B's prefix.
+ *
+ * Exit code is 0 on pass, 1 on any failure. The provisioned rows + storage
+ * object are torn down at the end whether the assertions pass or fail.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -60,10 +73,15 @@ interface Provisioned {
   userBId: string
   orderAId: string
   orderBId: string
+  officeBId: string
+  proofAId: string
+  storageBPath: string
   userAEmail: string
   userBEmail: string
   password: string
 }
+
+const PROOFS_BUCKET = 'proofs'
 
 async function provision(): Promise<Provisioned> {
   const stamp = Date.now()
@@ -118,6 +136,38 @@ async function provision(): Promise<Provisioned> {
     .single()
   if (!orderA || !orderB) throw new Error('Could not insert verify orders')
 
+  // An office under B — for the cross-tenant offices read test.
+  const { data: officeB } = await admin
+    .from('offices')
+    .insert({ client_id: clientBId, name: `RLS Verify Office B ${stamp}`, state: 'XX' })
+    .select('id')
+    .single()
+  if (!officeB) throw new Error('Could not insert verify office')
+
+  // A proof under A's order, pre-decided as 'approved' — for the proof
+  // status-enum guard test (A must not be able to revert it to 'pending').
+  const { data: proofA } = await admin
+    .from('proofs')
+    .insert({
+      order_id: orderA.id,
+      version: 1,
+      storage_path: `${clientAId}/rls-verify.pdf`,
+      status: 'approved'
+    })
+    .select('id')
+    .single()
+  if (!proofA) throw new Error('Could not insert verify proof')
+
+  // An object under B's storage prefix — for the storage RLS test. The
+  // service-role admin client bypasses storage RLS, so this always lands.
+  const storageBPath = `${clientBId}/rls-verify-${stamp}.txt`
+  await admin.storage
+    .from(PROOFS_BUCKET)
+    .upload(storageBPath, Buffer.from('rls-verify secret'), {
+      contentType: 'text/plain',
+      upsert: true
+    })
+
   return {
     clientAId,
     clientBId,
@@ -125,6 +175,9 @@ async function provision(): Promise<Provisioned> {
     userBId: userB.user.id,
     orderAId: orderA.id,
     orderBId: orderB.id,
+    officeBId: officeB.id,
+    proofAId: proofA.id,
+    storageBPath,
     userAEmail,
     userBEmail,
     password
@@ -132,7 +185,11 @@ async function provision(): Promise<Provisioned> {
 }
 
 async function teardown(p: Provisioned) {
-  // Order matters: orders → profiles → clients → auth users.
+  // Order matters: storage object + proofs + offices first (FK children),
+  // then orders → clients → auth users.
+  await admin.storage.from(PROOFS_BUCKET).remove([p.storageBPath]).catch(() => {})
+  await admin.from('proofs').delete().eq('id', p.proofAId)
+  await admin.from('offices').delete().eq('id', p.officeBId)
   await admin.from('orders').delete().in('id', [p.orderAId, p.orderBId])
   await admin.from('clients').delete().in('id', [p.clientAId, p.clientBId])
   await admin.auth.admin.deleteUser(p.userAId)
@@ -229,6 +286,99 @@ async function main() {
       // Clients have no SELECT policy on invoices, so RLS returns [].
       if (!data) throw new Error('null data')
       if (data.length !== 0) throw new Error('A saw an invoice')
+    })
+
+    // ── R007 extensions ──────────────────────────────────────────────
+
+    // Gap #1 + #3: read-via-view + security_invoker regression guard.
+    // orders_with_display_status has no WHERE clause of its own — it relies
+    // on the underlying orders RLS, which only applies when the view keeps
+    // `security_invoker = true`. If a future `create or replace view` drops
+    // that option, the view runs as its (superuser) owner and A would see
+    // every order. These two asserts catch that regression behaviorally.
+    await assert('orders view returns only A (security_invoker guard)', async () => {
+      const { data } = await aClient
+        .from('orders_with_display_status')
+        .select('id, client_id')
+      if (!data) throw new Error('null data')
+      if (data.length !== 1 || data[0]!.client_id !== p.clientAId) {
+        throw new Error(
+          `view leaked ${data.length} row(s) — security_invoker may be OFF on orders_with_display_status`
+        )
+      }
+    })
+
+    await assert("reading B's order via the view returns nothing", async () => {
+      const { data } = await aClient
+        .from('orders_with_display_status')
+        .select('id')
+        .eq('id', p.orderBId)
+      if (!data) throw new Error('null data')
+      if (data.length !== 0) throw new Error("A saw B's order through the view")
+    })
+
+    // Gap #4: cross-tenant reads of clients + offices.
+    await assert("reading B's client row returns nothing", async () => {
+      const { data } = await aClient.from('clients').select('id').eq('id', p.clientBId)
+      if (!data) throw new Error('null data')
+      if (data.length !== 0) throw new Error("A saw B's client")
+    })
+
+    await assert("reading B's office returns nothing", async () => {
+      const { data } = await aClient.from('offices').select('id').eq('id', p.officeBId)
+      if (!data) throw new Error('null data')
+      if (data.length !== 0) throw new Error("A saw B's office")
+    })
+
+    // Gap #5a: profiles self-promotion guard. The profiles_update_self policy
+    // has a WITH CHECK that freezes `role`. A's attempt to set role='admin'
+    // must leave the stored role unchanged. We read the truth back via admin.
+    await assert('A cannot promote self to admin', async () => {
+      await aClient.from('profiles').update({ role: 'admin' }).eq('id', p.userAId)
+      const { data } = await admin
+        .from('profiles')
+        .select('role')
+        .eq('id', p.userAId)
+        .single()
+      if (data?.role === 'admin') throw new Error('A escalated their own role to admin')
+    })
+
+    // Gap #5b: proofs status-enum guard. proofs_client_decide restricts the
+    // client to status in ('approved','revision_requested'). Proof A was
+    // provisioned 'approved'; A must not be able to revert it to 'pending'.
+    await assert("A cannot revert a proof to 'pending'", async () => {
+      await aClient.from('proofs').update({ status: 'pending' }).eq('id', p.proofAId)
+      const { data } = await admin
+        .from('proofs')
+        .select('status')
+        .eq('id', p.proofAId)
+        .single()
+      if (data?.status === 'pending') {
+        throw new Error("A set a proof status outside the allowed client enum")
+      }
+    })
+
+    // Gap #2: storage RLS on the private proofs bucket. A must not be able to
+    // list or download objects under B's client-id prefix.
+    await assert("A cannot list B's storage folder", async () => {
+      const { data, error } = await aClient.storage.from(PROOFS_BUCKET).list(p.clientBId)
+      // Either an explicit error or an empty listing is acceptable; a
+      // non-empty listing means A can see B's objects.
+      if (!error && data && data.length > 0) {
+        throw new Error(`A listed ${data.length} object(s) under B's prefix`)
+      }
+    })
+
+    await assert("A cannot download B's proof object", async () => {
+      const { data, error } = await aClient.storage
+        .from(PROOFS_BUCKET)
+        .download(p.storageBPath)
+      // RLS should deny: expect an error and/or no blob. Getting bytes back
+      // means the object leaked.
+      if (!error && data) {
+        const size = (data as Blob).size ?? 0
+        if (size > 0) throw new Error("A downloaded B's proof object")
+      }
     })
   } catch {
     failed = true
