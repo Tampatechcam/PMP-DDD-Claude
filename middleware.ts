@@ -1,7 +1,10 @@
+import { logMiddlewareRequest } from '@/lib/axiom/middleware'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
+  event.waitUntil(logMiddlewareRequest(req))
+
   const res = NextResponse.next({ request: req })
 
   const supabase = createServerClient(
