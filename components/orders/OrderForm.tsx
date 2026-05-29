@@ -60,6 +60,7 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
               name="needs_direct_mail"
               checked={needsDM}
               onChange={(e) => setNeedsDM(e.target.checked)}
+              className="accent-accent"
             />
             Direct mail
           </label>

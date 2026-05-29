@@ -139,7 +139,7 @@ export function ProofActions({ proofId, status }: Props) {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            className="block w-full rounded border border-border bg-surface px-3 py-2 text-sm"
+            className="block w-full rounded border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
             placeholder="Specific changes help us turn this around faster."
           />
           <div className="flex gap-2">
