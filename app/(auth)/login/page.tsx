@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Brand } from '@/components/layout/Brand'
 import { getAuthUser } from '@/lib/db/auth'
 import { signInAsDemoClient, signInAsDemoAdmin } from '@/lib/actions/demo'
+import { isDemoAuthEnabled } from '@/lib/env'
 
 interface Props {
   searchParams: { mode?: string; error?: string; sent?: string }
@@ -16,19 +17,20 @@ export default async function LoginPage({ searchParams }: Props) {
   const mode = searchParams.mode === 'magic' ? 'magic' : 'password'
   const error = searchParams.error
   const sent = searchParams.sent === '1'
+  const demoEnabled = isDemoAuthEnabled()
 
   return (
-    <main className="min-h-screen grid place-items-center px-4 py-10 bg-bg">
-      <div className="w-full max-w-sm space-y-5">
-        <div className="text-center space-y-2">
-          <div className="inline-flex"><Brand href="/login" /></div>
+    <main className="min-h-screen grid place-items-center px-4 py-10 bg-bg auth-backdrop">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-3">
+          <div className="inline-flex scale-110 origin-center"><Brand href="/login" /></div>
           <p className="text-sm text-muted">
             Direct mail &amp; digital orders, proofs, and history.
           </p>
         </div>
 
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <h1 className="text-base font-semibold mb-1">Sign in</h1>
+        <div className="bg-surface border border-border rounded-xl p-6 shadow-popover">
+          <h1 className="text-lg font-semibold tracking-tight mb-1">Sign in</h1>
           <p className="text-sm text-muted mb-5">
             {mode === 'magic'
               ? 'Enter your email and we’ll send you a sign-in link.'
@@ -39,7 +41,8 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* Temporary demo buttons. Remove (and delete lib/actions/demo.ts)
             before production. */}
-        <div className="bg-surface border border-dashed border-border rounded-lg p-5">
+        {demoEnabled && (
+        <div className="bg-surface/80 border border-dashed border-border rounded-xl p-5 shadow-card">
           <p className="label mb-2">
             Demo
           </p>
@@ -61,6 +64,7 @@ export default async function LoginPage({ searchParams }: Props) {
             </form>
           </div>
         </div>
+        )}
 
         <p className="text-center text-[11px] text-muted">
           © PMP — internal use only

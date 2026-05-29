@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 
 /**
  * Static client info card — pulled from the Client Dictionary. Rendered
@@ -33,6 +34,13 @@ type ClientLite = {
   start_before_paid?: boolean | null
 }
 
+type OfficeContact = {
+  name?: string | null
+  email?: string | null
+  phone?: string | null
+  position?: string | null
+}
+
 type OfficeLite = {
   name: string
   state?: string | null
@@ -40,6 +48,8 @@ type OfficeLite = {
   registration_url_direct?: string | null
   registration_url_digital?: string | null
   advisor_names?: string[] | null
+  main_contact?: OfficeContact | null
+  secondary_contact?: OfficeContact | null
   // jsonb in DB — the importer stores the freeform string under `freeform`.
   mailer_return_address?: { freeform?: string } | Record<string, unknown> | null
 } | null
@@ -148,11 +158,7 @@ export function ClientInfoCard({
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-sm font-medium">{office.name}</p>
-            {office.state && (
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
-                {office.state}
-              </span>
-            )}
+            {office.state && <Badge>{office.state}</Badge>}
           </div>
           {office.advisor_names && office.advisor_names.length > 0 && (
             <p className="text-xs text-muted mt-0.5">
@@ -164,7 +170,38 @@ export function ClientInfoCard({
           )}
           {office.registration_url_direct && (
             <p className="text-xs text-muted truncate">
-              Reg URL: {office.registration_url_direct}
+              Reg URL (direct):{' '}
+              <a
+                href={office.registration_url_direct}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                {office.registration_url_direct}
+              </a>
+            </p>
+          )}
+          {office.registration_url_digital && (
+            <p className="text-xs text-muted truncate">
+              Reg URL (digital):{' '}
+              <a
+                href={office.registration_url_digital}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                {office.registration_url_digital}
+              </a>
+            </p>
+          )}
+          {formatOfficeContact('Main contact', office.main_contact) && (
+            <p className="text-xs text-muted mt-0.5">
+              {formatOfficeContact('Main contact', office.main_contact)}
+            </p>
+          )}
+          {formatOfficeContact('Secondary contact', office.secondary_contact) && (
+            <p className="text-xs text-muted mt-0.5">
+              {formatOfficeContact('Secondary contact', office.secondary_contact)}
             </p>
           )}
           {officeReturnAddress(office) && (
@@ -186,6 +223,18 @@ export function ClientInfoCard({
       )}
     </Card>
   )
+}
+
+function formatOfficeContact(
+  label: string,
+  contact: OfficeContact | null | undefined
+): string | null {
+  if (!contact) return null
+  const parts = [contact.name, contact.position, contact.email, contact.phone].filter(
+    (v) => typeof v === 'string' && v.trim()
+  ) as string[]
+  if (parts.length === 0) return null
+  return `${label}: ${parts.join(' · ')}`
 }
 
 /**

@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/db/auth'
 import { getCurrentClientIdOrThrow } from '@/lib/db/profiles'
 
 /**
@@ -204,6 +205,7 @@ export async function createOrder(form: FormData) {
  *  3. Redirects into the admin shell (/admin/orders/…).
  */
 export async function createOrderAsAdmin(form: FormData) {
+  await requireAdmin()
   const supabase = createClient()
 
   const client_id = s(form, 'client_id')
@@ -341,6 +343,7 @@ export async function createOrderAsAdmin(form: FormData) {
  * keeping the dashboard accurate between imports.
  */
 export async function updateOrderStatus(form: FormData) {
+  await requireAdmin()
   const supabase = createClient()
 
   const orderId = s(form, 'order_id')

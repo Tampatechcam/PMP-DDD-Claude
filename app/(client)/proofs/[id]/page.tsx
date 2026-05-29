@@ -1,9 +1,9 @@
-/** Day 6 — proof viewer + approve/revise actions. */
-export default function ProofPage({ params }: { params: { id: string } }) {
-  return (
-    <section>
-      <h1 className="text-xl font-medium mb-4">Proof</h1>
-      <p className="text-muted text-sm">Proof {params.id} viewer lands here (Day 6).</p>
-    </section>
-  )
+import { notFound, redirect } from 'next/navigation'
+import { getProofOrderRef } from '@/lib/db/proofs'
+
+/** Deep-link shim: `/proofs/[id]` → parent order's proof section. */
+export default async function ProofPage({ params }: { params: { id: string } }) {
+  const target = await getProofOrderRef(params.id)
+  if (!target) notFound()
+  redirect(`/orders/${target.orderRef}#proof-${params.id}`)
 }

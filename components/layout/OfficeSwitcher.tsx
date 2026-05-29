@@ -46,7 +46,7 @@ function Pill({
   children: React.ReactNode
 }) {
   const base =
-    'inline-flex shrink-0 items-center px-3 py-1 text-xs font-medium rounded border transition-colors whitespace-nowrap'
+    'inline-flex shrink-0 items-center px-3 py-1 text-xs font-medium rounded border transition-colors whitespace-nowrap focus-ring'
   const tone = active
     ? 'bg-ink text-bg border-ink'
     : 'bg-surface text-ink border-border hover:bg-bg'

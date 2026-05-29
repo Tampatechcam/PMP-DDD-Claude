@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node .cursor/hooks/block-unsafe-git.mjs",
+        "failClosed": true,
+        "timeout": 10
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/remind-lint-typecheck.mjs",
+        "timeout": 10
+      }
+    ]
+  }
+}

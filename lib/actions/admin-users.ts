@@ -13,38 +13,14 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/db/auth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-
-async function requireAdmin() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not signed in')
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (profile?.role !== 'admin') throw new Error('Admin only')
-  return { user }
-}
+import { siteOrigin } from '@/lib/utils/site-origin'
 
 /**
  * Where the invite email's "Accept" link should land. The auth callback at
  * /callback exchanges the ?code= for a session and redirects to ?next=.
- *
- * Pulls the site origin from NEXT_PUBLIC_SITE_URL if set, otherwise from the
- * Supabase URL's own host (works fine for the cloud project's `Site URL`
- * configured in the dashboard).
  */
-function siteOrigin(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL
-  if (explicit) return explicit.replace(/\/$/, '')
-  // Fallback — Supabase honors its dashboard "Site URL" + "Redirect URLs"
-  // allowlist regardless of what we pass, so this is only the *requested*
-  // redirect; Supabase will pin it to the allowlist.
-  return 'http://localhost:3001'
-}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

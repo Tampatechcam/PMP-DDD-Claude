@@ -196,7 +196,7 @@ export default async function AccountPage({ searchParams }: Props) {
         </div>
         <p className="text-sm text-muted">
           If you usually sign in with a magic link, set a password here so you
-          don't need to fish a link out of your inbox every time.
+          don&apos;t need to fish a link out of your inbox every time.
         </p>
         <PasswordForm
           error={searchParams.error}

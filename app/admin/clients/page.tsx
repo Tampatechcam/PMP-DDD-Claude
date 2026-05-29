@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
+import { Avatar } from '@/components/ui/Avatar'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { adminListClients, adminOrderCountsByClient } from '@/lib/db/clients'
 import { adminListAllOffices } from '@/lib/db/offices'
 
@@ -44,7 +46,7 @@ export default async function AdminClientsPage() {
           Groups · {groups.length}
         </h2>
         {groups.length === 0 ? (
-          <EmptyHint text="No group clients yet." />
+          <EmptyState title="No group clients yet" />
         ) : (
           <ul className="space-y-2">
             {groups.map((c) => (
@@ -67,7 +69,7 @@ export default async function AdminClientsPage() {
           Independent · {independents.length}
         </h2>
         {independents.length === 0 ? (
-          <EmptyHint text="No independent clients yet." />
+          <EmptyState title="No independent clients yet" />
         ) : (
           <ul className="divide-y divide-border border border-border rounded-lg bg-surface overflow-hidden">
             {independents.map((c) => (
@@ -76,7 +78,7 @@ export default async function AdminClientsPage() {
                   href={`/admin/clients/${c.id}`}
                   className="flex items-center gap-3 px-3 py-2 hover:bg-bg group transition-colors"
                 >
-                  <Avatar text={initials(c.name)} tone="muted" />
+                  <Avatar name={c.name} tone="muted" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{c.name}</p>
                     {(c.business_name && c.business_name !== c.name) || c.responsibility ? (
@@ -128,7 +130,7 @@ function GroupCard({
           >
             ▶
           </span>
-          <Avatar text={initials(name)} tone="accent" />
+          <Avatar name={name} tone="accent" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate">{name}</p>
             <p className="text-xs text-muted truncate">
@@ -177,32 +179,5 @@ function GroupCard({
   )
 }
 
-function Avatar({ text, tone }: { text: string; tone: 'accent' | 'muted' }) {
-  return (
-    <div
-      aria-hidden
-      className={`w-7 h-7 rounded grid place-items-center text-xs font-medium shrink-0 ${
-        tone === 'accent'
-          ? 'bg-accent/5 text-accent border border-accent/20'
-          : 'bg-bg text-muted border border-border'
-      }`}
-    >
-      {text}
-    </div>
-  )
-}
-
-function EmptyHint({ text }: { text: string }) {
-  return (
-    <div className="border border-dashed border-border rounded-lg p-4 text-center bg-surface">
-      <p className="text-sm text-muted">{text}</p>
-    </div>
-  )
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
-}
+// Avatar + initials() moved to components/ui/Avatar.tsx; EmptyHint
+// replaced by the shared <EmptyState> primitive (components/ui/EmptyState.tsx).
