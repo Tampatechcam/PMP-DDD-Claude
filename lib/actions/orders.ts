@@ -2,15 +2,8 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { getMyProfile } from '@/lib/db/auth'
+import { requireAdmin } from '@/lib/db/auth'
 import { getCurrentClientIdOrThrow } from '@/lib/db/profiles'
-
-async function requireAdmin() {
-  const profile = await getMyProfile()
-  if (!profile) throw new Error('Not signed in')
-  if (profile.role !== 'admin') throw new Error('Admin only')
-  return profile
-}
 
 /**
  * Order creation.

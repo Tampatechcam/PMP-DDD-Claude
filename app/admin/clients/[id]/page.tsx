@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { adminGetClient, adminListOfficesForClient } from '@/lib/db/clients'
@@ -5,6 +6,7 @@ import { adminListOrders } from '@/lib/db/orders'
 import { formatMoney, formatQuantity } from '@/lib/utils/format'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { TeamSection } from '@/components/admin/TeamSection'
+import { Skeleton, SkeletonRow } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { startViewingAs } from '@/lib/actions/impersonation'
 
@@ -168,7 +170,9 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
         )}
       </section>
 
-      <TeamSection client={{ id: client.id, name: client.name }} />
+      <Suspense fallback={<TeamSectionSkeleton />}>
+        <TeamSection client={{ id: client.id, name: client.name }} />
+      </Suspense>
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium">Orders</h2>
@@ -196,6 +200,22 @@ function readFreeform(addr: unknown): string | null {
     if (typeof v === 'string' && v.trim()) return v
   }
   return null
+}
+
+function TeamSectionSkeleton() {
+  return (
+    <section className="space-y-3" aria-busy="true" aria-label="Loading team">
+      <Skeleton className="h-5 w-28" />
+      <div className="divide-y divide-border border border-border rounded-lg bg-surface">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="px-4 py-3">
+            <SkeletonRow cols={2} />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-24 rounded-lg" />
+    </section>
+  )
 }
 
 function Dl({ children }: { children: React.ReactNode }) {

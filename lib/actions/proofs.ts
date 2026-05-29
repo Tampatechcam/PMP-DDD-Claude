@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/db/auth'
 
 /**
  * Proofs: admin issues signed upload URL → browser uploads PDF directly to
@@ -16,19 +17,6 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
  * Storage path convention (Part 5.3):
  *   proofs/{client_id}/{order_number}/{version}.pdf
  */
-
-async function requireAdmin() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not signed in')
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (profile?.role !== 'admin') throw new Error('Admin only')
-  return { user }
-}
 
 /**
  * Compute the next proof version for an order and mint a signed upload URL
