@@ -8,18 +8,9 @@ import { formatEventDate, formatRelativeDate, orderHref, orderLabel } from '@/li
 import type { OrderRow } from '@/lib/db/orders'
 
 /**
- * Two tabs:
- *   Upcoming     — pivot date is today or later (work still to do).
- *   Past events  — pivot date is in the past OR dm_status is "Order Sent"
- *                  (active work done even if seminar is still ahead).
- *
- * The pivot date is `first_class_day` (the DM drop date — what ops actually
- * tracks) with `event_1_date` as a fallback for digital-only orders that
- * have no DM drop. If neither is set, the order lands in Upcoming so it
- * stays visible until someone fills the date in.
- *
- * Rendered as a real table. Tab choice lives in the URL (?tab=past) so
- * refresh + sharing work.
+ * Two tabs (Upcoming / Past events), rendered as a real table. Tab choice
+ * lives in the URL (?tab=past) so refresh + sharing work. Which tab a row
+ * lands in is decided by `tabOf` below (see its comment for the rules).
  */
 
 export type OrdersTab = 'upcoming' | 'past'
