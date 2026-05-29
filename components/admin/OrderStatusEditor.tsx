@@ -1,5 +1,6 @@
 'use client'
 import { useFormStatus } from 'react-dom'
+import { Button } from '@/components/ui/Button'
 import { updateOrderStatus } from '@/lib/actions/orders'
 
 // Standard workflow values. The order's current value is merged in below so
@@ -115,12 +116,8 @@ function StatusSelect({
 function SaveButton() {
   const { pending } = useFormStatus()
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center justify-center rounded bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? 'Saving…' : 'Save status'}
-    </button>
+    </Button>
   )
 }
