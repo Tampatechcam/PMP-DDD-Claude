@@ -61,4 +61,8 @@ Report concisely, grouped:
 4. **Needs review** — behavior-changing suggestions you did NOT apply.
 
 If a directory is named, restrict to it; otherwise sweep all of `components/`.
-After edits, suggest running `npm run lint` and `npm run typecheck`.
+
+After making edits, run `npm run lint` and `npm run typecheck` from the repo
+root and report the results. If your edits introduced any lint or type errors,
+fix them and re-run until both pass (or until the only remaining failures are
+pre-existing and unrelated to your changes — call those out explicitly).
