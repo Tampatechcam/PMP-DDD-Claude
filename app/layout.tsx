@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -43,6 +45,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-bg text-ink antialiased">
         <ToastProvider>{children}</ToastProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
