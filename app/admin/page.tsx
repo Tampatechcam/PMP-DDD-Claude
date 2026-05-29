@@ -99,14 +99,25 @@ function Tile({
   hint?: string
 }) {
   const valueTone = tone === 'warning' ? 'text-warning' : 'text-ink'
+  const chipTone =
+    tone === 'warning'
+      ? 'bg-warning/10 text-warning ring-warning/20'
+      : 'bg-accent/10 text-accent ring-accent/15'
   return (
-    <Link href={href} className="block group">
-      <Card className="hover:bg-bg transition-colors h-full">
-        <div className="flex items-center justify-between text-muted text-xs uppercase tracking-wider font-medium">
-          <span>{label}</span>
-          <Icon name={icon} className="w-4 h-4 opacity-70 group-hover:opacity-100" />
+    <Link href={href} className="block group focus-ring rounded-lg">
+      <Card
+        interactive
+        className={`h-full ${tone === 'warning' ? 'ring-1 ring-warning/30' : ''}`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-muted text-xs uppercase tracking-wider font-medium">
+            {label}
+          </span>
+          <span className={`grid place-items-center w-8 h-8 rounded-lg ring-1 ${chipTone}`}>
+            <Icon name={icon} className="w-4 h-4" />
+          </span>
         </div>
-        <p className={`mt-2 text-3xl font-semibold tracking-tight ${valueTone}`}>
+        <p className={`mt-3 text-3xl font-semibold tracking-tight tnum ${valueTone}`}>
           {value}
         </p>
         {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}

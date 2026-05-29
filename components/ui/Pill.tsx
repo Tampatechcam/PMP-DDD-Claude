@@ -12,23 +12,23 @@ export type PillTone = 'neutral' | 'success' | 'warning' | 'danger' | 'accent'
  */
 const toneClasses: Record<PillTone, string> = {
   neutral: 'bg-bg text-muted border-border',
-  success: 'bg-success/5 text-success border-success/20',
-  warning: 'bg-warning/5 text-warning border-warning/20',
-  danger:  'bg-danger/5  text-danger  border-danger/20',
-  accent:  'bg-accent/5  text-accent  border-accent/20'
+  success: 'bg-success/10 text-success border-success/25',
+  warning: 'bg-warning/10 text-warning border-warning/25',
+  danger:  'bg-danger/10  text-danger  border-danger/25',
+  accent:  'bg-accent/10  text-accent  border-accent/25'
 }
 
 const dotClasses: Record<PillTone, string> = {
-  neutral: 'bg-muted',
-  success: 'bg-success',
-  warning: 'bg-warning',
-  danger:  'bg-danger',
-  accent:  'bg-accent'
+  neutral: 'bg-muted ring-muted/20',
+  success: 'bg-success ring-success/20',
+  warning: 'bg-warning ring-warning/20',
+  danger:  'bg-danger ring-danger/20',
+  accent:  'bg-accent ring-accent/20'
 }
 
 interface PillProps {
   tone?: PillTone
-  /** Show a leading colored dot. Defaults to true for backward compat with StatusPill. */
+  /** Show a leading colored dot. Defaults to false; pass `withDot` to match the original StatusPill. */
   withDot?: boolean
   className?: string
   children: ReactNode
@@ -42,9 +42,9 @@ export function Pill({
 }: PillProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium border rounded-full ${toneClasses[tone]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium whitespace-nowrap border rounded-full ${toneClasses[tone]} ${className}`}
     >
-      {withDot && <span className={`w-1.5 h-1.5 rounded-full ${dotClasses[tone]}`} />}
+      {withDot && <span className={`w-1.5 h-1.5 rounded-full ring-2 ${dotClasses[tone]}`} />}
       {children}
     </span>
   )

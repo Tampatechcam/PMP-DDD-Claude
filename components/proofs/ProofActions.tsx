@@ -116,7 +116,7 @@ export function ProofActions({ proofId, status }: Props) {
             )}
           </div>
           {viewer.loading ? (
-            <div className="h-64 grid place-items-center text-xs text-muted">
+            <div className="h-[60vh] grid place-items-center text-xs text-muted">
               Loading PDF…
             </div>
           ) : (
@@ -139,7 +139,7 @@ export function ProofActions({ proofId, status }: Props) {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            className="block w-full rounded border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+            className="block w-full rounded border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus-ring"
             placeholder="Specific changes help us turn this around faster."
           />
           <div className="flex gap-2">

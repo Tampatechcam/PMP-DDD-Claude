@@ -77,7 +77,7 @@ export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExt
     <>
       {/* Desktop sidebar (lg+) ─────────────────────────────────── */}
       <aside className="hidden lg:flex w-56 shrink-0 border-r border-border bg-surface flex-col sticky top-0 h-screen">
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-border bg-gradient-to-b from-accent/[0.04] to-transparent">
           <Brand href={brandHref} label={brandLabel} />
         </div>
         {navBody}
@@ -182,13 +182,23 @@ function NavBody({
             <Link
               key={item.href + item.label}
               href={item.href}
-              className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors focus-ring ${
+              aria-current={active ? 'page' : undefined}
+              className={`relative flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors focus-ring ${
                 active
-                  ? 'bg-bg text-ink font-medium'
+                  ? 'bg-accent/10 text-accent font-medium'
                   : 'text-muted hover:bg-bg hover:text-ink'
               }`}
             >
-              <Icon name={item.icon} className="w-4 h-4" />
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-accent"
+                />
+              )}
+              <Icon
+                name={item.icon}
+                className={`w-4 h-4 transition-colors ${active ? 'text-accent' : 'text-muted/80 group-hover:text-ink'}`}
+              />
               {item.label}
             </Link>
           )

@@ -156,14 +156,20 @@ function Tab({
   return (
     <Link
       href={href}
-      className={`inline-flex items-baseline gap-2 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
+      className={`inline-flex items-center gap-2 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
         active
           ? 'border-accent text-ink font-medium'
           : 'border-transparent text-muted hover:text-ink hover:border-border'
       }`}
     >
       {label}
-      <span className={`text-xs ${active ? 'text-muted' : 'text-muted/70'}`}>
+      <span
+        className={`text-[11px] tnum px-1.5 py-0.5 rounded-full border ${
+          active
+            ? 'bg-accent/10 text-accent border-accent/20'
+            : 'bg-bg text-muted border-border'
+        }`}
+      >
         {count}
       </span>
     </Link>
@@ -203,9 +209,9 @@ function Table({
   ordersBasePath?: string
 }) {
   return (
-    <div className="border border-border rounded-lg bg-surface">
+    <div className="border border-border rounded-lg bg-surface shadow-card overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="label bg-bg">
+        <thead className="label bg-bg/80 backdrop-blur supports-[backdrop-filter]:bg-bg/60 sticky top-0 z-10">
           <tr className="border-b border-border">
             <Th className="w-[7%]">Order</Th>
             {!isPast && <Th className="w-[17%]">Order Sent Deadline</Th>}
@@ -255,7 +261,7 @@ function Row({
   const osdRel = formatRelativeDate(o.order_sent_deadline)
   const href = orderHref(o, ordersBasePath)
   return (
-    <tr className="hover:bg-bg transition-colors group">
+    <tr className="hover:bg-bg transition-colors group border-l-2 border-transparent hover:border-accent">
       <td className="px-3 py-2.5 whitespace-nowrap">
         <Link href={href} className="font-medium">
           {orderLabel(o)}
@@ -267,7 +273,7 @@ function Row({
         )}
       </td>
       {!isPast && (
-        <td className="px-3 py-2.5">
+        <td className="px-3 py-2.5 tnum">
           {o.order_sent_deadline ? (
             <>
               <span className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -283,10 +289,10 @@ function Row({
           )}
         </td>
       )}
-      <td className="px-3 py-2.5 whitespace-nowrap">
+      <td className="px-3 py-2.5 whitespace-nowrap tnum">
         {o.event_1_date ? formatEventDate(o.event_1_date) : <span className="italic text-muted/70">pending</span>}
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap text-muted">
+      <td className="px-3 py-2.5 whitespace-nowrap text-muted tnum">
         {o.event_2_date ? formatEventDate(o.event_2_date) : <span className="italic text-muted/70">—</span>}
       </td>
       {showClient && (

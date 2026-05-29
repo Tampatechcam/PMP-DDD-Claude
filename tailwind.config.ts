@@ -27,12 +27,18 @@ const config: Config = {
         ink:     'rgb(var(--ink) / <alpha-value>)',
         muted:   'rgb(var(--muted) / <alpha-value>)',
         accent:  'rgb(var(--accent) / <alpha-value>)',
+        'accent-strong': 'rgb(var(--accent-strong) / <alpha-value>)',
         success: 'rgb(var(--success) / <alpha-value>)',
         warning: 'rgb(var(--warning) / <alpha-value>)',
         danger:  'rgb(var(--danger) / <alpha-value>)'
       },
-      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-      borderRadius: { DEFAULT: '6px', lg: '10px' },
+      fontFamily: { sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'] },
+      borderRadius: { DEFAULT: '6px', lg: '12px', xl: '16px', '2xl': '20px' },
+      boxShadow: {
+        card:        'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        popover:     'var(--shadow-popover)'
+      },
       keyframes: {
         'fade-in':  { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         'slide-up': { '0%': { opacity: '0', transform: 'translateY(8px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },

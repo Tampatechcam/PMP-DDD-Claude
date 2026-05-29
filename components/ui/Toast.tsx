@@ -140,7 +140,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss notification"
-        className="shrink-0 text-muted hover:text-ink rounded p-0.5 focus-ring"
+        className="shrink-0 -mr-1 -mt-0.5 text-muted hover:text-ink rounded p-1.5 focus-ring"
       >
         <Icon name="x" className="w-3.5 h-3.5" />
       </button>
