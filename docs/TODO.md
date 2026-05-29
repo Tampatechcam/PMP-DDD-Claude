@@ -20,11 +20,33 @@ shipped work lives in [docs/tasks/](tasks/README.md).
 - Mirror office region/contact fields onto `ClientInfoCard` for order detail pages
 
 
+## Recently shipped
+
+- UX/UI uplift: dark mode + theme toggle, mobile-responsive shell
+  (drawer + top bar), global ⌘K command palette, admin "Needs
+  attention" rail, removable filter chips on /admin/orders, inline
+  PDF proof viewer, toast notifications on proof decisions, new
+  shared primitives (`Toast`, `EmptyState`, `Skeleton`, `Avatar`,
+  `Kbd`, `Badge`). See `CHANGELOG.md` § Unreleased / Added for the
+  full list.
+
 ## Later (not yet tracked)
 
 - [ ] Sentry or similar error reporting.
-- [ ] Per-client custom branding (logo on login, color accent).
+- [ ] Per-client custom branding (logo on login, color accent) —
+      partially unblocked now that color tokens are CSS variables,
+      a per-client theme can override `--accent` on the body tag.
 - [ ] Email digest of new orders / proof decisions.
+- [ ] Saved-views for /admin/orders (persist a named filter set
+      in localStorage; the URL is already the source of truth so
+      this is just bookmark management).
+- [ ] Keyboard shortcuts cheat sheet (Shift-? overlay) listing
+      ⌘K + the row-level shortcuts we want next (j/k to move,
+      enter to open, esc back).
+- [ ] Real-time updates via Supabase Realtime — proof status flips
+      should land in the client portal without a refresh.
+- [ ] Bulk actions on /admin/orders (multi-select rows → set status,
+      assign mailer type, export).
 - [ ] Admin venue management UI under `/admin/clients/[id]/venues` —
       right now an admin visiting `/venues` sees the client-facing page
       with venues from *all* clients (RLS doesn't filter by client_id for

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { adminListInvoices } from '@/lib/db/invoices'
 import { formatMoney, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
 import { Pill, type PillTone } from '@/components/ui/Pill'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 /**
  * /admin/invoices — admin-only (RLS owns the gate; the layout enforces
@@ -27,12 +28,11 @@ export default async function AdminInvoicesPage() {
       </header>
 
       {invoices.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-10 text-center bg-surface">
-          <p className="text-sm font-medium">No invoices yet</p>
-          <p className="text-xs text-muted mt-1">
-            Invoices appear here as orders move through billing.
-          </p>
-        </div>
+        <EmptyState
+          icon="invoices"
+          title="No invoices yet"
+          description="Invoices appear here as orders move through billing."
+        />
       ) : (
         <div className="border border-border rounded-lg bg-surface">
           <table className="w-full text-sm">

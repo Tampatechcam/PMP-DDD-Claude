@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
 import { Button } from '@/components/ui/Button'
+import { FilterChips, type FilterChip } from '@/components/admin/FilterChips'
 import { adminListOrders, adminDistinctOrderStatuses } from '@/lib/db/orders'
 import { adminListClients } from '@/lib/db/clients'
 
@@ -43,15 +43,9 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
   const clientNameById = Object.fromEntries(clients.map((c) => [c.id, c.name]))
   const activeClient = clients.find((c) => c.id === searchParams.client)
-  const filtersActive =
-    searchParams.client ||
-    searchParams.class ||
-    searchParams.needs ||
-    searchParams.q ||
-    searchParams.from ||
-    searchParams.to ||
-    searchParams.status
 
+  // The current query state, threaded through the filter chips and the
+  // tab navigation so removing one filter preserves the others.
   const preserve = {
     client: searchParams.client,
     class: searchParams.class,
@@ -62,24 +56,30 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     status: searchParams.status
   }
 
+  // Build the chip list once, in the order they appear above the table.
+  const needsLabel: Record<string, string> = {
+    direct_mail: 'Direct mail',
+    digital: 'Digital'
+  }
+  const chips: FilterChip[] = []
+  if (activeClient)              chips.push({ key: 'client', label: 'Client',  value: activeClient.name })
+  if (searchParams.class)        chips.push({ key: 'class',  label: 'Class',   value: searchParams.class })
+  if (searchParams.needs)        chips.push({ key: 'needs',  label: 'Type',    value: needsLabel[searchParams.needs] ?? searchParams.needs })
+  if (searchParams.status)       chips.push({ key: 'status', label: 'Status',  value: searchParams.status })
+  if (searchParams.from)         chips.push({ key: 'from',   label: 'From',    value: searchParams.from })
+  if (searchParams.to)           chips.push({ key: 'to',     label: 'To',      value: searchParams.to })
+  if (searchParams.q)            chips.push({ key: 'q',      label: 'Search',  value: `“${searchParams.q}”` })
+
   return (
     <section className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">All orders</h1>
-        <p className="text-sm text-muted">
-          {orders.length}
-          {orders.length === 500 && ' (capped)'}
-          {activeClient && <> · client: {activeClient.name}</>}
-          {filtersActive && (
-            <>
-              {' · '}
-              <Link href="/admin/orders" className="underline underline-offset-2">
-                clear filters
-              </Link>
-            </>
-          )}
-        </p>
+          <h1 className="text-2xl font-semibold tracking-tight">All orders</h1>
+          <p className="text-sm text-muted">
+            {orders.length}
+            {orders.length === 500 && ' (capped at 500 — narrow with filters)'}
+            {chips.length > 0 && ` · ${chips.length} filter${chips.length === 1 ? '' : 's'} active`}
+          </p>
         </div>
         <Button href="/admin/orders/new">+ New order</Button>
       </header>
@@ -143,6 +143,8 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         </div>
         <Button type="submit">Apply</Button>
       </form>
+
+      <FilterChips chips={chips} basePath="/admin/orders" current={preserve} />
 
       <OrdersList
         orders={orders}

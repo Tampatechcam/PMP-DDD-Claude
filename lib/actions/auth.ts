@@ -1,7 +1,7 @@
 'use server'
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { siteOrigin } from '@/lib/utils/site-origin'
 
 /**
  * Auth server actions. Per ADR 0006 we support both password and magic-link.
@@ -11,16 +11,6 @@ import { createClient } from '@/lib/supabase/server'
  * exists. The same goes for the magic-link flow — we always claim success
  * regardless of whether the address resolves to a user.
  */
-
-function siteOrigin(): string {
-  // Prefer the Host header so the magic-link redirect lands on the same
-  // origin the user signed in from (production, preview, or localhost).
-  const h = headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host')
-  const proto = h.get('x-forwarded-proto') ?? 'https'
-  if (host) return `${proto}://${host}`
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-}
 
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()

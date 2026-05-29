@@ -5,6 +5,70 @@ every PR that lands a user-visible or operationally relevant change.
 
 ## Unreleased
 
+### Added
+- Admin order actions gated with `requireAdmin()`; client layout uses a single
+  `getMyProfile()` auth read; Command Palette lazy-loads on first open;
+  admin route loading skeletons; `/proofs/[id]` redirects to order proof
+  anchors; office contacts on `ClientInfoCard`; demo login behind
+  `DEMO_AUTH_ENABLED` (default off); Cursor hooks block `--no-verify`.
+- **UX/UI uplift across the portal.** Single coordinated change with
+  several user-visible pieces:
+  - **Dark mode.** Color tokens (`bg`, `surface`, `border`, `ink`,
+    `muted`, `accent`, `success`, `warning`, `danger`) are now backed
+    by CSS variables declared in `app/globals.css`. Tailwind reads them
+    through `rgb(var(--token) / <alpha-value>)`, so every existing
+    class string keeps working and `bg-accent/5` still composes
+    correctly. A `.dark` companion block flips the palette; a 9-line
+    inline script in the root layout reads `localStorage('pmp-theme')`
+    before paint to avoid a flash-of-light. The new `<ThemeToggle>` in
+    the sidebar cycles light → dark → system, persisting the explicit
+    choice.
+  - **Global Command Palette (⌘K).** `components/layout/CommandPalette`
+    opens via `⌘K` / `Ctrl-K` or the sidebar search button. Always
+    includes the current shell's nav rows; debounces a server-action
+    query (`lib/actions/search.ts`) that returns matching clients +
+    orders. Scope is `'admin'` (cross-client) or `'client'`
+    (RLS-scoped, honors impersonation) so the same component is safe
+    in either shell. Up/Down + Enter to choose, Esc closes.
+  - **Mobile-responsive shell.** `components/layout/Shell.tsx` replaces
+    the two stand-alone sidebars; the desktop aside renders at
+    `lg` and up, a sticky top bar (hamburger + brand + search + theme)
+    shows on smaller screens, and the hamburger opens a left-drawer
+    overlay carrying the same nav. Both client and admin layouts
+    switched from always-`flex` to `lg:flex` so the top bar stacks
+    above main below the breakpoint.
+  - **Admin Overview "Needs attention" rail.**
+    `components/admin/AdminAttention` surfaces two queues in a single
+    two-column card row: DM-send deadlines inside the next 7 days
+    that haven't shipped, and orders with a proof currently sitting
+    with the client. Reuses the same order slice the Upcoming table
+    already fetches, so it's free at runtime. Renders nothing on a
+    clean day.
+  - **Filter chips on /admin/orders.** `components/admin/FilterChips`
+    renders each active filter as a removable pill (one-click drop)
+    plus a "Clear all" affordance. Replaces the previous one-line
+    "clear filters" link.
+  - **Inline PDF proof viewer + toast feedback on decisions.**
+    `<ProofActions>` now embeds the signed proof URL in an iframe
+    (with an "Open in new tab" escape hatch) instead of forcing a
+    pop-up tab. Approve / Request revision wire through the new
+    `<ToastProvider>` so the confirmation persists across the
+    surrounding revalidation.
+  - **Shared design primitives.** New: `<Toast>` (+ provider mounted
+    in the root layout), `<EmptyState>`, `<Skeleton>` (with shimmer +
+    `prefers-reduced-motion` fallback), `<Avatar>` (+ exported
+    `initials()`), `<Kbd>`, `<Badge>`. Existing pages
+    (`/admin/clients`, `/admin/invoices`, `OrdersList`) refactored
+    to consume them, removing four bespoke "dashed-border empty
+    card" implementations and an inlined initials-avatar.
+  - **Animation tokens.** Added `fade-in`, `slide-up`, and `shimmer`
+    keyframes + utilities in `tailwind.config` for the palette,
+    drawer, toasts, and skeletons.
+  - **Icon set expanded.** Added `search`, `x`, `check`, `menu`,
+    `sun`, `moon`, `sparkles`, `bell`, `alert` outline paths to
+    `components/ui/Icon` so the new components can stay inside the
+    single-source-of-truth SVG set.
+
 ### Changed
 - **Importer writes derived office + client business fields inline now.**
   `scripts/import-v2.ts` previously inserted bare client/office rows then

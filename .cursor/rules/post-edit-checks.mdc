@@ -1,0 +1,17 @@
+---
+description: Suggest lint and typecheck after code edits
+alwaysApply: true
+---
+
+# Post-Edit Verification
+
+After making code edits, suggest the user run both checks before considering the work done:
+
+```bash
+npm run lint        # next lint
+npm run typecheck   # tsc --noEmit
+```
+
+- Surface this suggestion once per batch of related edits, not after every single file.
+- If you can run them yourself non-destructively, prefer running them and reporting results over just suggesting.
+- Don't suggest these for non-code changes (docs, markdown, config-only tweaks that can't affect lint/types).
