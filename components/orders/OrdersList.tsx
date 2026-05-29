@@ -69,8 +69,13 @@ export function OrdersList({
   clientNameById,
   preserveParams
 }: Props) {
-  const upcoming = orders.filter((o) => tabOf(o) === 'upcoming')
-  const past = orders.filter((o) => tabOf(o) === 'past')
+  const upcoming: OrderRow[] = []
+  const past: OrderRow[] = []
+  for (const o of orders) {
+    const tab = tabOf(o)
+    if (tab === 'upcoming') upcoming.push(o)
+    else if (tab === 'past') past.push(o)
+  }
 
   // Both tabs: soonest event_1_date first (ascending).
   upcoming.sort(byEventDateAsc)

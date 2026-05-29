@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { OrderCard } from '@/components/orders/OrderCard'
 import { ClientInfoCard } from '@/components/orders/ClientInfoCard'
-import { getOrderByRef, listEventsForOrder } from '@/lib/db/orders'
+import { getOrderByRefForClient, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { getCurrentClientSelf } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
@@ -18,7 +18,7 @@ interface Props {
  */
 export default async function OrderDetailPage({ params }: Props) {
   // Accepts an integer (DM orders) or "DIG-NNN" (digital-only).
-  const order = await getOrderByRef(params.order_number)
+  const order = await getOrderByRefForClient(params.order_number)
   if (!order) notFound()
 
   const [proofs, events, client, office] = await Promise.all([

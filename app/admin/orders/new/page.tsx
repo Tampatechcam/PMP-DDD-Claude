@@ -1,8 +1,14 @@
 import Link from 'next/link'
-import { AdminOrderForm } from '@/components/admin/AdminOrderForm'
+import dynamic from 'next/dynamic'
+import { OrderFormSkeleton } from '@/components/orders/OrderFormSkeleton'
 import { adminListClients } from '@/lib/db/clients'
 import { adminListAllOffices } from '@/lib/db/offices'
 import { listDistinctVenuesFromOrders } from '@/lib/db/orders'
+
+const AdminOrderForm = dynamic(
+  () => import('@/components/admin/AdminOrderForm').then((m) => ({ default: m.AdminOrderForm })),
+  { loading: () => <OrderFormSkeleton /> }
+)
 
 /**
  * /admin/orders/new — admin-only order creation.

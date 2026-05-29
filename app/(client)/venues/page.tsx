@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
-import { NewVenueForm } from '@/components/venues/NewVenueForm'
+import { AddVenuePanel } from '@/components/venues/AddVenuePanel'
 import { listVenuesForCurrentClient, type VenueWithChildren } from '@/lib/db/venues'
 
 /**
@@ -27,15 +27,7 @@ export default async function VenuesPage() {
         </p>
       </header>
 
-      <details className="bg-surface border border-border rounded-lg">
-        <summary className="flex items-center gap-2 cursor-pointer px-4 py-3 hover:bg-bg list-none [&::-webkit-details-marker]:hidden">
-          <Icon name="plus" className="w-4 h-4 text-muted" />
-          <span className="text-sm font-medium">Add a venue</span>
-        </summary>
-        <div className="border-t border-border p-4">
-          <NewVenueForm />
-        </div>
-      </details>
+      <AddVenuePanel />
 
       {venues.length > 0 && (
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
