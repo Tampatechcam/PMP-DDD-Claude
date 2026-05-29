@@ -182,7 +182,7 @@ function NavBody({
             <Link
               key={item.href + item.label}
               href={item.href}
-              className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors focus-ring ${
                 active
                   ? 'bg-bg text-ink font-medium'
                   : 'text-muted hover:bg-bg hover:text-ink'

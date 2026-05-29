@@ -11,18 +11,18 @@ export type PillTone = 'neutral' | 'success' | 'warning' | 'danger' | 'accent'
  * blocks, 1px border.
  */
 const toneClasses: Record<PillTone, string> = {
-  neutral: 'bg-stone-100 text-stone-700 border-stone-200',
-  success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  warning: 'bg-amber-50 text-amber-900 border-amber-200',
-  danger:  'bg-rose-50 text-rose-800 border-rose-200',
-  accent:  'bg-accent/5 text-accent border-accent/20'
+  neutral: 'bg-bg text-muted border-border',
+  success: 'bg-success/5 text-success border-success/20',
+  warning: 'bg-warning/5 text-warning border-warning/20',
+  danger:  'bg-danger/5  text-danger  border-danger/20',
+  accent:  'bg-accent/5  text-accent  border-accent/20'
 }
 
 const dotClasses: Record<PillTone, string> = {
-  neutral: 'bg-stone-400',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger:  'bg-rose-500',
+  neutral: 'bg-muted',
+  success: 'bg-success',
+  warning: 'bg-warning',
+  danger:  'bg-danger',
   accent:  'bg-accent'
 }
 

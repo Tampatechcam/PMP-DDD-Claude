@@ -52,7 +52,7 @@ export function OrderStatusEditor({
       action={updateOrderStatus}
       className="border border-border rounded-lg bg-surface p-4 space-y-3"
     >
-      <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted">
+      <h2 className="label">
         Status (admin)
       </h2>
 

@@ -44,7 +44,7 @@ export function FilterChips({ chips, basePath, current }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-[11px] uppercase tracking-wide text-muted font-medium mr-1">
+      <span className="label mr-1">
         Filters
       </span>
       {chips.map((chip) => (
