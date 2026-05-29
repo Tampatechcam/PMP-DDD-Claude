@@ -14,11 +14,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!profile) redirect('/login')
   if (profile.role !== 'admin') redirect('/orders')
 
+  // `lg:flex` (not always-flex) so the Shell's mobile top bar can
+  // stack above `main` below the `lg` breakpoint while keeping the
+  // desktop sidebar layout untouched.
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen lg:flex">
       <AdminSidebar />
       <main className="flex-1 min-w-0">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">{children}</div>
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</div>
       </main>
     </div>
   )
