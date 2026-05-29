@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { StatusPill } from './StatusPill'
 import { Icon } from '@/components/ui/Icon'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { formatEventDate, formatRelativeDate, orderHref, orderLabel } from '@/lib/utils/format'
 import type { OrderRow } from '@/lib/db/orders'
 
@@ -94,7 +97,7 @@ export function OrdersList({
         preserveParams={preserveParams}
       />
       {visible.length === 0 ? (
-        <EmptyState tab={activeTab} />
+        <OrdersEmpty tab={activeTab} basePath={basePath} />
       ) : (
         <Table
           orders={visible}
@@ -176,18 +179,22 @@ function Tab({
   )
 }
 
-function EmptyState({ tab }: { tab: OrdersTab }) {
+function OrdersEmpty({ tab, basePath }: { tab: OrdersTab; basePath: string }) {
   return (
-    <div className="border border-dashed border-border rounded-lg p-10 text-center bg-surface">
-      <p className="text-sm font-medium">
-        No {tab === 'past' ? 'past events' : 'upcoming orders'}
-      </p>
-      <p className="text-xs text-muted mt-1">
-        {tab === 'past'
+    <EmptyState
+      icon={tab === 'past' ? 'calendar' : 'orders'}
+      title={tab === 'past' ? 'No past events yet' : 'No upcoming orders'}
+      description={
+        tab === 'past'
           ? 'Orders move here once the DM is sent or the first-class day passes.'
-          : 'Orders show up here while the DM is still being prepped.'}
-      </p>
-    </div>
+          : 'Orders show up here while the DM is still being prepped. Start a new one when you’re ready.'
+      }
+      action={
+        tab === 'past' || !basePath.startsWith('/admin')
+          ? null
+          : <Button href="/admin/orders/new" variant="secondary">+ New order</Button>
+      }
+    />
   )
 }
 
@@ -263,8 +270,8 @@ function Row({
           {orderLabel(o)}
         </Link>
         {o.class_type && (
-          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
-            {o.class_type}
+          <span className="ml-2 align-middle">
+            <Badge>{o.class_type}</Badge>
           </span>
         )}
       </td>

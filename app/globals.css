@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────
+   Theme tokens — space-separated R G B triplets so Tailwind can
+   compose them with arbitrary opacity via `rgb(var(--t) / <alpha>)`.
+   The `:root` values are the original light-mode hex values verbatim;
+   `.dark` is a hand-tuned dark companion that keeps the navy accent
+   recognizable while lifting muted/ink contrast for the inverted bg.
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  --bg:      250 250 249;  /* #FAFAF9 — stone-50              */
+  --surface: 255 255 255;  /* #FFFFFF                          */
+  --border:  231 229 228;  /* #E7E5E4 — stone-200              */
+  --ink:      28  25  23;  /* #1C1917 — stone-900              */
+  --muted:   120 113 108;  /* #78716C — stone-500              */
+  --accent:   30  58  95;  /* #1E3A5F — navy                   */
+  --success:  21 128  61;  /* #15803D                          */
+  --warning: 180  83   9;  /* #B45309                          */
+  --danger:  185  28  28;  /* #B91C1C                          */
+  color-scheme: light;
+}
+
+.dark {
+  --bg:       12  10   9;  /* stone-950                        */
+  --surface:  28  25  23;  /* stone-900                        */
+  --border:   55  50  45;  /* between stone-700/800 — visible  */
+  --ink:     250 250 249;  /* stone-50                         */
+  --muted:   168 162 158;  /* stone-400                        */
+  --accent:  147 197 253;  /* sky-300, readable on stone-950   */
+  --success:  74 222 128;
+  --warning: 250 204  21;
+  --danger:  248 113 113;
+  color-scheme: dark;
+}
+
 :root {
   font-family: Inter, system-ui, sans-serif;
 }
@@ -19,4 +52,20 @@ body {
   .label {
     @apply text-[11px] uppercase tracking-wide text-muted font-medium;
   }
+
+  /* Focus ring shared by interactive primitives (Button, palette items,
+     drawer toggles). Pulled out so palette items don't drift from buttons. */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar-thin used by the command palette + admin tables. */
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--border));
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 }
