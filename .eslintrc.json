@@ -1,0 +1,29 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "react/jsx-key": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@supabase/supabase-js",
+            "message": "Create the Supabase client only in lib/supabase/{server,client,admin}.ts. Import one of those wrappers instead — no fourth init file."
+          },
+          {
+            "name": "@supabase/ssr",
+            "message": "Create the Supabase client only in lib/supabase/{server,client,admin}.ts. Import one of those wrappers instead — no fourth init file."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["lib/supabase/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}
