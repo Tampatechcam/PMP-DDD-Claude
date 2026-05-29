@@ -57,7 +57,7 @@ export function FilterChips({ chips, basePath, current }: Props) {
           <Link
             href={buildHrefWithout(chip.key)}
             aria-label={`Remove ${chip.label} filter`}
-            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-accent/70 hover:text-accent hover:bg-accent/10 transition-colors"
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-accent/70 hover:text-accent hover:bg-accent/10 transition-colors focus-ring"
           >
             <Icon name="x" className="w-3 h-3" />
           </Link>
