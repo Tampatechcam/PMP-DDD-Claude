@@ -21,6 +21,7 @@ export function ProofUploadForm({ orderId, orderLabel }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<string>('')
+  const inputId = `proof-upload-${orderId}`
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,10 +63,11 @@ export function ProofUploadForm({ orderId, orderLabel }: Props) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-medium text-ink mb-1">
+        <label htmlFor={inputId} className="block text-xs font-medium text-ink mb-1">
           Proof PDF for Order {orderLabel}
         </label>
         <input
+          id={inputId}
           type="file"
           accept="application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
