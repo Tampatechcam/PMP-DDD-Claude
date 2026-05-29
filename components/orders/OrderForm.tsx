@@ -70,6 +70,7 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
               name="needs_digital"
               checked={needsDigital}
               onChange={(e) => setNeedsDigital(e.target.checked)}
+              className="accent-accent"
             />
             Digital
           </label>
