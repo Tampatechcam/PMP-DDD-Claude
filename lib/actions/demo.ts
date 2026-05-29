@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { isDemoAuthEnabled } from '@/lib/env'
 
 /**
  * Demo login helpers tied to the temporary "Demo: Client" / "Demo: Admin"
@@ -91,6 +92,7 @@ async function alreadySignedInAs(email: string): Promise<boolean> {
 }
 
 export async function signInAsDemoClient() {
+  if (!isDemoAuthEnabled()) throw new Error('Demo auth is disabled')
   if (await alreadySignedInAs(DEMO_CLIENT_EMAIL)) redirect('/orders')
 
   const userId = await signInOrCreate(DEMO_CLIENT_EMAIL)
@@ -102,6 +104,7 @@ export async function signInAsDemoClient() {
 }
 
 export async function signInAsDemoAdmin() {
+  if (!isDemoAuthEnabled()) throw new Error('Demo auth is disabled')
   if (await alreadySignedInAs(DEMO_ADMIN_EMAIL)) redirect('/admin')
 
   const userId = await signInOrCreate(DEMO_ADMIN_EMAIL)

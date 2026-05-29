@@ -2,7 +2,15 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getMyProfile } from '@/lib/db/auth'
 import { getCurrentClientIdOrThrow } from '@/lib/db/profiles'
+
+async function requireAdmin() {
+  const profile = await getMyProfile()
+  if (!profile) throw new Error('Not signed in')
+  if (profile.role !== 'admin') throw new Error('Admin only')
+  return profile
+}
 
 /**
  * Order creation.
@@ -204,6 +212,7 @@ export async function createOrder(form: FormData) {
  *  3. Redirects into the admin shell (/admin/orders/…).
  */
 export async function createOrderAsAdmin(form: FormData) {
+  await requireAdmin()
   const supabase = createClient()
 
   const client_id = s(form, 'client_id')
@@ -341,6 +350,7 @@ export async function createOrderAsAdmin(form: FormData) {
  * keeping the dashboard accurate between imports.
  */
 export async function updateOrderStatus(form: FormData) {
+  await requireAdmin()
   const supabase = createClient()
 
   const orderId = s(form, 'order_id')

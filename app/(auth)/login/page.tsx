@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Brand } from '@/components/layout/Brand'
 import { getAuthUser } from '@/lib/db/auth'
 import { signInAsDemoClient, signInAsDemoAdmin } from '@/lib/actions/demo'
+import { isDemoAuthEnabled } from '@/lib/env'
 
 interface Props {
   searchParams: { mode?: string; error?: string; sent?: string }
@@ -16,6 +17,7 @@ export default async function LoginPage({ searchParams }: Props) {
   const mode = searchParams.mode === 'magic' ? 'magic' : 'password'
   const error = searchParams.error
   const sent = searchParams.sent === '1'
+  const demoEnabled = isDemoAuthEnabled()
 
   return (
     <main className="min-h-screen grid place-items-center px-4 py-10 bg-bg auth-backdrop">
@@ -39,6 +41,7 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* Temporary demo buttons. Remove (and delete lib/actions/demo.ts)
             before production. */}
+        {demoEnabled && (
         <div className="bg-surface/80 border border-dashed border-border rounded-xl p-5 shadow-card">
           <p className="label mb-2">
             Demo
@@ -61,6 +64,7 @@ export default async function LoginPage({ searchParams }: Props) {
             </form>
           </div>
         </div>
+        )}
 
         <p className="text-center text-[11px] text-muted">
           © PMP — internal use only

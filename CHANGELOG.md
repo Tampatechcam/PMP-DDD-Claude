@@ -6,6 +6,11 @@ every PR that lands a user-visible or operationally relevant change.
 ## Unreleased
 
 ### Added
+- Admin order actions gated with `requireAdmin()`; client layout uses a single
+  `getMyProfile()` auth read; Command Palette lazy-loads on first open;
+  admin route loading skeletons; `/proofs/[id]` redirects to order proof
+  anchors; office contacts on `ClientInfoCard`; demo login behind
+  `DEMO_AUTH_ENABLED` (default off); Cursor hooks block `--no-verify`.
 - **UX/UI uplift across the portal.** Single coordinated change with
   several user-visible pieces:
   - **Dark mode.** Color tokens (`bg`, `surface`, `border`, `ink`,

@@ -152,7 +152,7 @@ export function OrderCard({
         <Section title="Proofs">
           <ul className="space-y-4 text-sm">
             {proofs.map((p) => (
-              <li key={p.id} className="space-y-2">
+              <li key={p.id} id={`proof-${p.id}`} className="space-y-2 scroll-mt-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <span>
                     v{p.version}

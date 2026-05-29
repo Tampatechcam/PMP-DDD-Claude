@@ -1,4 +1,5 @@
 'use client'
+import dynamic from 'next/dynamic'
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -7,7 +8,12 @@ import { Icon, type IconName } from '@/components/ui/Icon'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Kbd } from '@/components/ui/Kbd'
 import { signOut } from '@/lib/actions/auth'
-import { CommandPalette, type PaletteScope } from './CommandPalette'
+import type { PaletteScope } from './CommandPalette'
+
+const CommandPalette = dynamic(
+  () => import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+  { ssr: false, loading: () => null }
+)
 
 /**
  * Unified app shell. Replaces the two `<aside>` blocks that used to live
@@ -137,12 +143,14 @@ export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExt
         </div>
       )}
 
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        scope={paletteScope}
-        navItems={navItems}
-      />
+      {paletteOpen && (
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          scope={paletteScope}
+          navItems={navItems}
+        />
+      )}
     </>
   )
 }
