@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 
 /**
  * Static client info card — pulled from the Client Dictionary. Rendered
@@ -148,11 +149,7 @@ export function ClientInfoCard({
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-sm font-medium">{office.name}</p>
-            {office.state && (
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
-                {office.state}
-              </span>
-            )}
+            {office.state && <Badge>{office.state}</Badge>}
           </div>
           {office.advisor_names && office.advisor_names.length > 0 && (
             <p className="text-xs text-muted mt-0.5">
