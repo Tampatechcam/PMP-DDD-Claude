@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { WebVitals } from '@/lib/axiom/client'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import { VercelTelemetry } from '@/components/observability/VercelTelemetry'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -47,8 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <WebVitals />
       <body className="bg-bg text-ink antialiased">
         <ToastProvider>{children}</ToastProvider>
-        <Analytics />
-        <SpeedInsights />
+        <VercelTelemetry />
       </body>
     </html>
   )
