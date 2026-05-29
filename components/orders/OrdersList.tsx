@@ -1,22 +1,16 @@
 import Link from 'next/link'
 import { StatusPill } from './StatusPill'
 import { Icon } from '@/components/ui/Icon'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { formatEventDate, formatRelativeDate, orderHref, orderLabel } from '@/lib/utils/format'
 import type { OrderRow } from '@/lib/db/orders'
 
 /**
- * Two tabs:
- *   Upcoming     — pivot date is today or later (work still to do).
- *   Past events  — pivot date is in the past OR dm_status is "Order Sent"
- *                  (active work done even if seminar is still ahead).
- *
- * The pivot date is `first_class_day` (the DM drop date — what ops actually
- * tracks) with `event_1_date` as a fallback for digital-only orders that
- * have no DM drop. If neither is set, the order lands in Upcoming so it
- * stays visible until someone fills the date in.
- *
- * Rendered as a real table. Tab choice lives in the URL (?tab=past) so
- * refresh + sharing work.
+ * Two tabs (Upcoming / Past events), rendered as a real table. Tab choice
+ * lives in the URL (?tab=past) so refresh + sharing work. Which tab a row
+ * lands in is decided by `tabOf` below (see its comment for the rules).
  */
 
 export type OrdersTab = 'upcoming' | 'past'
@@ -94,7 +88,7 @@ export function OrdersList({
         preserveParams={preserveParams}
       />
       {visible.length === 0 ? (
-        <EmptyState tab={activeTab} />
+        <OrdersEmpty tab={activeTab} basePath={basePath} />
       ) : (
         <Table
           orders={visible}
@@ -162,32 +156,42 @@ function Tab({
   return (
     <Link
       href={href}
-      className={`inline-flex items-baseline gap-2 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
+      className={`inline-flex items-center gap-2 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
         active
           ? 'border-accent text-ink font-medium'
           : 'border-transparent text-muted hover:text-ink hover:border-border'
       }`}
     >
       {label}
-      <span className={`text-xs ${active ? 'text-muted' : 'text-muted/70'}`}>
+      <span
+        className={`text-[11px] tnum px-1.5 py-0.5 rounded-full border ${
+          active
+            ? 'bg-accent/10 text-accent border-accent/20'
+            : 'bg-bg text-muted border-border'
+        }`}
+      >
         {count}
       </span>
     </Link>
   )
 }
 
-function EmptyState({ tab }: { tab: OrdersTab }) {
+function OrdersEmpty({ tab, basePath }: { tab: OrdersTab; basePath: string }) {
   return (
-    <div className="border border-dashed border-border rounded-lg p-10 text-center bg-surface">
-      <p className="text-sm font-medium">
-        No {tab === 'past' ? 'past events' : 'upcoming orders'}
-      </p>
-      <p className="text-xs text-muted mt-1">
-        {tab === 'past'
+    <EmptyState
+      icon={tab === 'past' ? 'calendar' : 'orders'}
+      title={tab === 'past' ? 'No past events yet' : 'No upcoming orders'}
+      description={
+        tab === 'past'
           ? 'Orders move here once the DM is sent or the first-class day passes.'
-          : 'Orders show up here while the DM is still being prepped.'}
-      </p>
-    </div>
+          : 'Orders show up here while the DM is still being prepped. Start a new one when you’re ready.'
+      }
+      action={
+        tab === 'past' || !basePath.startsWith('/admin')
+          ? null
+          : <Button href="/admin/orders/new" variant="secondary">+ New order</Button>
+      }
+    />
   )
 }
 
@@ -205,9 +209,9 @@ function Table({
   ordersBasePath?: string
 }) {
   return (
-    <div className="border border-border rounded-lg bg-surface">
+    <div className="border border-border rounded-lg bg-surface shadow-card overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="label bg-bg">
+        <thead className="label bg-bg/80 backdrop-blur supports-[backdrop-filter]:bg-bg/60 sticky top-0 z-10">
           <tr className="border-b border-border">
             <Th className="w-[7%]">Order</Th>
             {!isPast && <Th className="w-[17%]">Order Sent Deadline</Th>}
@@ -257,19 +261,19 @@ function Row({
   const osdRel = formatRelativeDate(o.order_sent_deadline)
   const href = orderHref(o, ordersBasePath)
   return (
-    <tr className="hover:bg-bg transition-colors group">
+    <tr className="hover:bg-bg transition-colors group border-l-2 border-transparent hover:border-accent">
       <td className="px-3 py-2.5 whitespace-nowrap">
         <Link href={href} className="font-medium">
           {orderLabel(o)}
         </Link>
         {o.class_type && (
-          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-bg text-muted border border-border">
-            {o.class_type}
+          <span className="ml-2 align-middle">
+            <Badge>{o.class_type}</Badge>
           </span>
         )}
       </td>
       {!isPast && (
-        <td className="px-3 py-2.5">
+        <td className="px-3 py-2.5 tnum">
           {o.order_sent_deadline ? (
             <>
               <span className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -285,10 +289,10 @@ function Row({
           )}
         </td>
       )}
-      <td className="px-3 py-2.5 whitespace-nowrap">
+      <td className="px-3 py-2.5 whitespace-nowrap tnum">
         {o.event_1_date ? formatEventDate(o.event_1_date) : <span className="italic text-muted/70">pending</span>}
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap text-muted">
+      <td className="px-3 py-2.5 whitespace-nowrap text-muted tnum">
         {o.event_2_date ? formatEventDate(o.event_2_date) : <span className="italic text-muted/70">—</span>}
       </td>
       {showClient && (
