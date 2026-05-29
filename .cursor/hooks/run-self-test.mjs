@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const dir = dirname(fileURLToPath(import.meta.url));
-const guard = join(dir, "before-shell-guard.mjs");
-const afterEdit = join(dir, "after-file-edit.mjs");
+const gitGuard = join(dir, "block-unsafe-git.mjs");
+const lintReminder = join(dir, "remind-lint-typecheck.mjs");
 
 function run(script, input) {
   const r = spawnSync(process.execPath, [script], {
@@ -19,28 +19,40 @@ function run(script, input) {
 const cases = [
   {
     name: "deny --no-verify",
-    script: guard,
+    script: gitGuard,
     input: '{"command":"git commit --no-verify -m x"}',
     expect: '"permission":"deny"',
   },
   {
-    name: "ask force-push main",
-    script: guard,
+    name: "deny force-push main",
+    script: gitGuard,
     input: '{"command":"git push --force origin main"}',
-    expect: '"permission":"ask"',
+    expect: '"permission":"deny"',
   },
   {
     name: "allow git status",
-    script: guard,
+    script: gitGuard,
     input: '{"command":"git status"}',
     expect: '"permission":"allow"',
   },
   {
+    name: "allow force-push feature branch",
+    script: gitGuard,
+    input: '{"command":"git push --force origin feature/foo"}',
+    expect: '"permission":"allow"',
+  },
+  {
     name: "lint reminder for tsx",
-    script: afterEdit,
+    script: lintReminder,
     input:
       '{"file_path":"C:/proj/components/Foo.tsx","conversation_id":"self-test"}',
     expect: "additional_context",
+  },
+  {
+    name: "skip non-ts file",
+    script: lintReminder,
+    input: '{"file_path":"C:/proj/README.md","conversation_id":"self-test"}',
+    expect: "{}",
   },
 ];
 

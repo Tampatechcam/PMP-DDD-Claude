@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * afterFileEdit — remind agent to run lint + typecheck after .ts/.tsx edits (debounced per session).
+ * afterFileEdit — remind agent to run lint + typecheck after .ts/.tsx edits (once per batch).
  * stdin: { file_path, edits?, conversation_id?, session_id?, ... }
  * stdout: { additional_context? }
  */
@@ -48,21 +48,6 @@ function shouldRemind(sessionKey, stateFile) {
   return true;
 }
 
-function detectRawFromWarning(filePath, edits) {
-  const normalized = filePath.replace(/\\/g, "/");
-  const inAppOrComponents =
-    /\/app\//.test(normalized) || /\/components\//.test(normalized);
-  const inDbLayer = /\/lib\/db\//.test(normalized);
-  if (!inAppOrComponents || inDbLayer) return "";
-
-  const addedFrom = (edits ?? []).some((edit) =>
-    String(edit.new_string ?? "").includes(".from("),
-  );
-  if (!addedFrom) return "";
-
-  return " Data-layer: new `.from(` under app/components — prefer `lib/db/*` for Supabase reads.";
-}
-
 function main() {
   let payload = {};
   try {
@@ -90,11 +75,8 @@ function main() {
     return;
   }
 
-  let context = LINT_REMINDER;
-  context += detectRawFromWarning(filePath, payload.edits);
-
   process.stdout.write(
-    `${JSON.stringify({ additional_context: context })}\n`,
+    `${JSON.stringify({ additional_context: LINT_REMINDER })}\n`,
   );
 }
 
