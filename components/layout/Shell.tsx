@@ -183,7 +183,7 @@ function NavBody({
               key={item.href + item.label}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              className={`relative flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors focus-ring ${
+              className={`group relative flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors focus-ring ${
                 active
                   ? 'bg-accent/10 text-accent font-medium'
                   : 'text-muted hover:bg-bg hover:text-ink'
