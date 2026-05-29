@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Brand } from './Brand'
 import { Icon, type IconName } from '@/components/ui/Icon'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -65,12 +65,14 @@ export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExt
   }, [pathname])
 
   const navBody = (
+    <Suspense fallback={<NavBodyFallback items={navItems} pathname={pathname} onPaletteOpen={() => setPaletteOpen(true)} footerExtra={footerExtra} />}>
     <NavBody
       items={navItems}
       pathname={pathname}
       onPaletteOpen={() => setPaletteOpen(true)}
       footerExtra={footerExtra}
     />
+    </Suspense>
   )
 
   return (
@@ -145,6 +147,16 @@ export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExt
   )
 }
 
+
+function NavBodyFallback(props: {
+  items: ShellNavItem[]
+  pathname: string
+  onPaletteOpen: () => void
+  footerExtra?: ReactNode
+}) {
+  return <NavBodyContent {...props} search={new URLSearchParams()} />
+}
+
 function NavBody({
   items,
   pathname,
@@ -156,10 +168,31 @@ function NavBody({
   onPaletteOpen: () => void
   footerExtra?: ReactNode
 }) {
-  const search = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search)
-    : new URLSearchParams()
+  const search = useSearchParams()
+  return (
+    <NavBodyContent
+      items={items}
+      pathname={pathname}
+      search={search}
+      onPaletteOpen={onPaletteOpen}
+      footerExtra={footerExtra}
+    />
+  )
+}
 
+function NavBodyContent({
+  items,
+  pathname,
+  search,
+  onPaletteOpen,
+  footerExtra
+}: {
+  items: ShellNavItem[]
+  pathname: string
+  search: URLSearchParams
+  onPaletteOpen: () => void
+  footerExtra?: ReactNode
+}) {
   return (
     <>
       <div className="px-2 pt-2">
