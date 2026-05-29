@@ -257,9 +257,12 @@ function Row({
   const osdRel = formatRelativeDate(o.order_sent_deadline)
   const href = orderHref(o, ordersBasePath)
   return (
-    <tr className="hover:bg-bg transition-colors group">
+    <tr className="relative hover:bg-bg transition-colors group">
       <td className="px-3 py-2.5 whitespace-nowrap">
-        <Link href={href} className="font-medium">
+        <Link
+          href={href}
+          className="font-medium rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent before:absolute before:inset-0 before:content-['']"
+        >
           {orderLabel(o)}
         </Link>
         {o.class_type && (
@@ -308,16 +311,10 @@ function Row({
         <StatusPill status={o.display_status} />
       </td>
       <td className="px-3 py-2.5 w-8 text-right">
-        <Link
-          href={href}
-          className="inline-flex"
-          aria-label={`Open order ${orderLabel(o)}`}
-        >
-          <Icon
-            name="arrowRight"
-            className="w-4 h-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity"
-          />
-        </Link>
+        <Icon
+          name="arrowRight"
+          className="inline-flex w-4 h-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity"
+        />
       </td>
     </tr>
   )
