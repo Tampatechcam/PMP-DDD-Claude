@@ -80,6 +80,7 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
               name="needs_google_sheet"
               checked={needsSheet}
               onChange={(e) => setNeedsSheet(e.target.checked)}
+              className="accent-accent"
             />
             Google sheet
           </label>
@@ -185,7 +186,7 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
           <button
             type="button"
             onClick={() => setEventCount((c) => Math.min(4, c + 1))}
-            className="text-xs underline underline-offset-2 text-muted"
+            className="text-xs underline underline-offset-2 text-muted hover:text-ink transition-colors rounded focus-ring"
           >
             + Add another event
           </button>
