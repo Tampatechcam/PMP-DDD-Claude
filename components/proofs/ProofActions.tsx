@@ -131,10 +131,11 @@ export function ProofActions({ proofId, status }: Props) {
 
       {askingForReason && (
         <div className="space-y-2">
-          <label className="block text-xs font-medium text-ink">
+          <label htmlFor={`proof-reason-${proofId}`} className="block text-xs font-medium text-ink">
             What needs to change?
           </label>
           <textarea
+            id={`proof-reason-${proofId}`}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}

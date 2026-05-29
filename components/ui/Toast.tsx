@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode
 } from 'react'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 
 /**
  * Lightweight toast system. Provider lives in the root layout so any
@@ -113,8 +113,6 @@ export function useToast(): ToastContextValue {
   }
   return ctx
 }
-
-import type { IconName } from './Icon'
 
 const toneStyles: Record<ToastTone, { wrap: string; icon: string; iconName: IconName }> = {
   success: { wrap: 'border-success/30 bg-success/5', icon: 'text-success', iconName: 'check' },
