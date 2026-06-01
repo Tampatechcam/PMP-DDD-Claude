@@ -1,5 +1,14 @@
 # Contributing
 
+## Shell
+
+Run `npm` scripts from **bash** (WSL or git-bash) or **PowerShell** — not
+raw `cmd.exe`. `package.json` has scripts like
+`db:types` that use POSIX-style `$SUPABASE_PROJECT_REF` expansion, which
+`cmd.exe` will not expand (it would pass the literal string to the
+Supabase CLI). Bash matches what CI (Vercel / Netlify) uses, so prefer it
+when in doubt.
+
 ## Branching
 
 - `main` is protected; Vercel auto-deploys it to production.

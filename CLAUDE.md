@@ -5,7 +5,7 @@
 **Cam Hebeler** — building PMP Client Dashboard. Email: `camhebeler@gmail.com`.
 
 Active project + only project tracked here right now. Working solo plus
-parallel Claude agents on `feature/admin-views`.
+parallel Claude agents on short-lived feature branches off `main`.
 
 ## Project
 
@@ -14,9 +14,10 @@ portal + ops admin shell for Power Mailers Plus, a direct-mail marketing
 service for financial advisors running retirement-planning seminars.
 
 - **Repo:** `C:\Users\cah50\Downloads\PMP DDD CLaude`
-- **Active branch:** `feature/admin-views` (Day-7 deliverables landed plus 5 days of follow-on work)
-- **Deployment:** Vercel (Site URL hooked into Supabase auth)
+- **Active branch:** `main` — deploy target. Cut feature branches from `main` and PR back into it. The pre-`main` `pr/*` and `feature/{app-shell,admin-views}` branches were rolled up into `main` on 2026-05-31; backup tag `backup/pre-merge-sweep-2026-05-31` preserves the prior state.
+- **Deployment:** Vercel (production = `main`, per `vercel.json`). Netlify also wired (`netlify.toml`). Site URL hooked into Supabase auth.
 - **DB:** Supabase project `amtunktskgwvvqumrbde`, 13 migrations applied + tracked
+- **Shell:** Run npm scripts from bash (WSL or git-bash) or PowerShell — `db:types` uses `$VAR` syntax which `cmd.exe` does not expand. See `CONTRIBUTING.md`.
 
 ## Groups vs. independents
 
@@ -67,7 +68,7 @@ This project uses **parallel Claude agents on non-overlapping scope**. The dispa
 - **Commit often, descriptively.** Each shipped task gets its own commit with a body that reads like a small ADR. Co-Authored-By trailer on each.
 - **MD per task.** Every shipped task gets a retrospective at `docs/tasks/Txxx-*.md` — what / why / approach / files / verification.
 - **Never bypass safety hooks.** Don't `--no-verify` on commits. Don't disable RLS or `security_invoker` casually.
-- **Branch protection:** `main` doesn't exist yet — currently working off `feature/admin-views`. Need to cut `main` before any merge.
+- **Branch protection:** `main` is the deploy target and is protected — feature branches are cut from `main` and merged back via PR.
 
 ## See also
 
