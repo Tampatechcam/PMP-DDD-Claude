@@ -23,12 +23,16 @@ export default async function ClientLayout({ children }: { children: React.React
     if (!impersonatedId) redirect('/admin')
   }
 
+  // `lg:flex` rather than always-flex so the Shell's mobile top bar
+  // (rendered inside ClientSidebar as a `<lg:hidden>` sibling of the
+  // desktop aside) lays out above `main` on small screens instead of
+  // crowding next to it. Desktop is unchanged.
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen lg:flex">
       <ClientSidebar />
       <main className="flex-1 min-w-0">
         <ViewingAsBanner />
-        <div className="max-w-[1400px] mx-auto px-6 py-8">{children}</div>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</div>
       </main>
     </div>
   )
