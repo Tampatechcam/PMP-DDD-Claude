@@ -1,0 +1,13 @@
+# Next.js 14 App Router — Netlify applies the OpenNext adapter automatically.
+# Do not set `publish` to `.next`; the runtime plugin provisions functions + assets.
+# https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Optional: match Vercel's 1mb Server Action cap (Next default is higher on some hosts).
+[context.production.environment]
+  NODE_ENV = "production"

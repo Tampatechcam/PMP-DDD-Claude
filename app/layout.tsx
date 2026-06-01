@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { WebVitals } from '@/lib/axiom/client'
+import { VercelTelemetry } from '@/components/observability/VercelTelemetry'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -41,8 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
+      <WebVitals />
       <body className="bg-bg text-ink antialiased">
         <ToastProvider>{children}</ToastProvider>
+        <VercelTelemetry />
       </body>
     </html>
   )

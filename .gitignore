@@ -48,3 +48,6 @@ scripts/.import-work/
 
 # Claude Code per-user overrides (the shared .claude/settings.json is fine)
 .claude/settings.local.json
+
+# Cursor hook debounce state (scripts are committed; runtime state is not)
+.cursor/hooks/.state/lint-reminder.json

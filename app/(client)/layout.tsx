@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { ClientSidebar } from '@/components/layout/ClientSidebar'
 import { ViewingAsBanner } from '@/components/layout/ViewingAsBanner'
-import { getAuthUser, getMyProfile } from '@/lib/db/auth'
+import { getMyProfile } from '@/lib/db/auth'
 import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 /**
@@ -14,10 +14,8 @@ import { getImpersonatedClientId } from '@/lib/db/impersonation'
  * otherwise get every client's rows back (admin RLS returns all). Fail closed.
  */
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
-  const user = await getAuthUser()
-  if (!user) redirect('/login')
-
   const profile = await getMyProfile()
+  if (!profile) redirect('/login')
   if (profile?.role === 'admin') {
     const impersonatedId = await getImpersonatedClientId()
     if (!impersonatedId) redirect('/admin')

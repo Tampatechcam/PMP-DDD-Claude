@@ -27,7 +27,16 @@ export type OfficeForOrderCard = {
   registration_url_direct: string | null
   registration_url_digital: string | null
   advisor_names: string[] | null
+  main_contact: OfficeContact | null
+  secondary_contact: OfficeContact | null
   mailer_return_address: { freeform?: string } | Record<string, unknown> | null
+}
+
+export type OfficeContact = {
+  name?: string | null
+  email?: string | null
+  phone?: string | null
+  position?: string | null
 }
 
 /**
@@ -62,7 +71,7 @@ export async function getOfficeForOrderCard(
   const { data, error } = await supabase
     .from('offices')
     .select(
-      'name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, mailer_return_address'
+      'name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, main_contact, secondary_contact, mailer_return_address'
     )
     .eq('id', officeId)
     .maybeSingle()
