@@ -6,7 +6,12 @@ every PR that lands a user-visible or operationally relevant change.
 ## Unreleased
 
 ### Changed
-- Sentry browser config (`sentry.client.config.ts`): DSN-gated init (skips
+- Migrated browser Sentry init from the deprecated `sentry.client.config.ts`
+  to `instrumentation-client.ts` (the path Sentry/Next require going
+  forward, incl. Turbopack), and added the required
+  `onRouterTransitionStart` export so client-side navigations stay
+  instrumented.
+- Sentry browser config (`instrumentation-client.ts`): DSN-gated init (skips
   the SDK entirely when no DSN is set), env-aware trace + replay sampling,
   Replay integration only loaded when sampling is enabled (so non-prod
   builds don't ship the replay bundle), privacy-safe replay defaults
