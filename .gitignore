@@ -51,3 +51,8 @@ scripts/.import-work/
 
 # Cursor hook debounce state (scripts are committed; runtime state is not)
 .cursor/hooks/.state/lint-reminder.json
+
+# Local Netlify folder
+.netlify
+# Netlify Edge generated lockfile (Deno) — not used by the Vercel/Next build
+deno.lock

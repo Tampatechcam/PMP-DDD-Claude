@@ -23,7 +23,22 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
 
   // Refreshes the session cookie if it's expired.
   // Do not put auth gating here — RLS handles security; route groups handle UI.
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Root-route bounce. Previously lived in `app/page.tsx`, but on Netlify's
+  // Linux runtime a pure-redirect server component crashes with
+  // "Cannot read properties of undefined (reading 'clientModules')" inside
+  // app-page.runtime.prod. Doing the redirect at the edge sidesteps the
+  // broken page entry entirely. Other auth-gated routes already redirect
+  // from their layouts (`app/(client)/layout.tsx`, `app/admin/layout.tsx`)
+  // and don't hit this bug.
+  if (req.nextUrl.pathname === '/') {
+    if (!user) return NextResponse.redirect(new URL('/login', req.url))
+    // Don't read profiles.role here — middleware can't hit Postgres via
+    // the data layer. Send everyone to /orders; admins click into /admin
+    // from the sidebar.
+    return NextResponse.redirect(new URL('/orders', req.url))
+  }
 
   return res
 }

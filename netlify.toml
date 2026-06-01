@@ -7,7 +7,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-
-# Optional: match Vercel's 1mb Server Action cap (Next default is higher on some hosts).
-[context.production.environment]
-  NODE_ENV = "production"
+  # Do NOT set NODE_ENV=production here — Netlify uses it during `npm install`
+  # and would skip every devDependency, including `typescript`, which Next
+  # needs to compile `.tsx` files (and the `@/*` path alias resolution that
+  # depends on it). `next build` already outputs a production bundle on its
+  # own; the runtime will set NODE_ENV correctly at request time.
