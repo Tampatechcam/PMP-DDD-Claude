@@ -40,27 +40,6 @@ export async function searchEverything(
   const term = `%${q}%`
   const hits: PaletteHit[] = []
 
-  if (isAdminSearch) {
-    const { data: clients } = await supabase
-      .from('clients')
-      .select('id, name, business_name, responsibility')
-      .or(`name.ilike.${term},business_name.ilike.${term}`)
-      .order('name')
-      .limit(8)
-    for (const c of clients ?? []) {
-      const subtitle = c.business_name && c.business_name !== c.name
-        ? c.business_name
-        : c.responsibility
-      hits.push({
-        kind: 'client',
-        id: c.id as string,
-        name: c.name as string,
-        subtitle: subtitle as string | null,
-        href: `/admin/clients/${c.id}`
-      })
-    }
-  }
-
   let q1 = supabase
     .from('orders_with_display_status')
     .select('id, order_number, display_ref, advisor_name, job_name, market, class_type, event_1_date, client_id')
@@ -81,8 +60,42 @@ export async function searchEverything(
     q1 = q1.eq('client_id', impersonatedId)
   }
 
-  const { data: orders } = await q1
-  const ordersBase = isAdminSearch ? '/admin/orders' : '/orders'
+  if (isAdminSearch) {
+    const [{ data: clients }, { data: orders }] = await Promise.all([
+      supabase
+        .from('clients')
+        .select('id, name, business_name, responsibility')
+        .or(`name.ilike.${term},business_name.ilike.${term}`)
+        .order('name')
+        .limit(8),
+      q1
+    ])
+    for (const c of clients ?? []) {
+      const subtitle = c.business_name && c.business_name !== c.name
+        ? c.business_name
+        : c.responsibility
+      hits.push({
+        kind: 'client',
+        id: c.id as string,
+        name: c.name as string,
+        subtitle: subtitle as string | null,
+        href: `/admin/clients/${c.id}`
+      })
+    }
+    appendOrderHits(hits, orders, '/admin/orders')
+  } else {
+    const { data: orders } = await q1
+    appendOrderHits(hits, orders, '/orders')
+  }
+
+  return hits.slice(0, MAX_RESULTS)
+}
+
+function appendOrderHits(
+  hits: PaletteHit[],
+  orders: Record<string, unknown>[] | null,
+  ordersBase: string
+) {
   for (const o of orders ?? []) {
     const label = (o.display_ref as string | null) ?? `#${o.order_number}`
     const subtitleParts = [
@@ -99,6 +112,4 @@ export async function searchEverything(
       href: `${ordersBase}/${(o.display_ref as string | null) ?? o.order_number}`
     })
   }
-
-  return hits.slice(0, MAX_RESULTS)
 }

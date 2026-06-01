@@ -63,14 +63,21 @@ export type OrderRow = {
   updated_at: string
 }
 
+/** Columns needed by OrdersList, AdminAttention, and admin filter chips. */
+const ORDER_LIST_SELECT =
+  'id, order_number, display_ref, client_id, advisor_name, needs_direct_mail, class_type, market, venue_text, event_1_date, event_2_date, order_sent_deadline, dm_status, display_status'
+
+const DEFAULT_LIST_LIMIT = 500
+
 export async function listOrdersForClient(opts?: { officeId?: string }) {
   const supabase = createClient()
   const impersonatedId = await getImpersonatedClientId()
 
   let q = supabase
     .from('orders_with_display_status')
-    .select('*')
+    .select(ORDER_LIST_SELECT)
     .order('event_1_date', { ascending: true, nullsFirst: false })
+    .limit(DEFAULT_LIST_LIMIT)
 
   // Normal clients rely on RLS to scope to their own orders. An admin who is
   // "viewing as" a client must scope explicitly — admin RLS would otherwise
@@ -195,7 +202,7 @@ export async function adminListOrders(opts?: {
   const supabase = createClient()
   let q = supabase
     .from('orders_with_display_status')
-    .select('*')
+    .select(ORDER_LIST_SELECT)
     .order('event_1_date', { ascending: true, nullsFirst: false })
 
   if (opts?.clientId) q = q.eq('client_id', opts.clientId)

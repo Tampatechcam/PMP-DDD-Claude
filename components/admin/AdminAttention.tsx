@@ -118,7 +118,7 @@ function AttentionList({
             <li key={o.id}>
               <Link
                 href={orderHref(o, '/admin/orders')}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-bg group transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-bg group transition-colors focus-ring"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">

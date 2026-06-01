@@ -1,8 +1,14 @@
 import Link from 'next/link'
-import { OrderForm } from '@/components/orders/OrderForm'
+import dynamic from 'next/dynamic'
+import { OrderFormSkeleton } from '@/components/orders/OrderFormSkeleton'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { listDistinctVenuesFromOrders } from '@/lib/db/orders'
 import { getCurrentClientSelf } from '@/lib/db/clients'
+
+const OrderForm = dynamic(
+  () => import('@/components/orders/OrderForm').then((m) => ({ default: m.OrderForm })),
+  { loading: () => <OrderFormSkeleton /> }
+)
 
 interface Props {
   searchParams: { office?: string }

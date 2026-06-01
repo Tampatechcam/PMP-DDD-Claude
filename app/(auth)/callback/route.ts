@@ -4,7 +4,8 @@ import { safeNextPath } from '@/lib/utils/site-origin'
 
 /**
  * OAuth / magic-link callback. Exchanges the ?code= query param for a session
- * cookie, then bounces to ?next= (or /orders). Only relative paths allowed.
+ * cookie, then bounces to ?next= (or /orders). Only relative paths are allowed
+ * for ?next= to block open redirects.
  */
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)

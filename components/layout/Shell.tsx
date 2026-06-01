@@ -49,7 +49,12 @@ interface ShellProps {
 export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExtra }: ShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [paletteEverOpened, setPaletteEverOpened] = useState(false)
   const pathname = usePathname()
+
+  useEffect(() => {
+    if (paletteOpen) setPaletteEverOpened(true)
+  }, [paletteOpen])
 
   // Global ⌘K / Ctrl-K. Captures before any input handler so it works
   // from inside the search field too.
@@ -143,7 +148,7 @@ export function Shell({ navItems, brandHref, brandLabel, paletteScope, footerExt
         </div>
       )}
 
-      {paletteOpen && (
+      {paletteEverOpened && (
         <CommandPalette
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getMyProfile } from '@/lib/db/auth'
 import { getImpersonatedClientId } from '@/lib/db/impersonation'
 
 /**
@@ -11,17 +12,7 @@ import { getImpersonatedClientId } from '@/lib/db/impersonation'
  * for that, so most callers can `if (!profile) throw` safely.
  */
 export async function getCurrentProfile() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, role, client_id, full_name')
-    .eq('id', user.id)
-    .single()
-  if (error) throw error
-  return data
+  return getMyProfile()
 }
 
 /**

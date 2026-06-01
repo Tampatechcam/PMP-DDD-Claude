@@ -121,7 +121,7 @@ function GroupCard({
 }) {
   return (
     <li>
-      <details open className="group/d border border-border rounded-lg bg-surface overflow-hidden">
+      <details className="group/d border border-border rounded-lg bg-surface overflow-hidden">
         <summary className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-bg select-none list-none">
           {/* Chevron — rotates 90° when <details open> via Tailwind group-open named-group */}
           <span

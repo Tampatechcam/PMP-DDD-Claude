@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { ClientSidebar } from '@/components/layout/ClientSidebar'
 import { ViewingAsBanner } from '@/components/layout/ViewingAsBanner'
@@ -29,7 +30,9 @@ export default async function ClientLayout({ children }: { children: React.React
     <div className="min-h-screen lg:flex">
       <ClientSidebar />
       <main className="flex-1 min-w-0">
-        <ViewingAsBanner />
+        <Suspense fallback={null}>
+          <ViewingAsBanner />
+        </Suspense>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</div>
       </main>
     </div>

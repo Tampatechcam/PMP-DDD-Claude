@@ -6,6 +6,7 @@ every PR that lands a user-visible or operationally relevant change.
 ## Unreleased
 
 ### Added
+- shadcn `alert-dialog` (Radix) with PMP tokens; venue delete uses accessible confirm instead of `window.confirm`.
 - Admin order actions gated with `requireAdmin()`; client layout uses a single
   `getMyProfile()` auth read; Command Palette lazy-loads on first open;
   admin route loading skeletons; `/proofs/[id]` redirects to order proof

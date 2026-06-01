@@ -49,3 +49,17 @@ export const getMyProfile = cache(async () => {
   if (error) throw error
   return data
 })
+
+export type MyProfile = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>
+
+/**
+ * Server Actions / mutations: fail closed unless the signed-in user is an
+ * admin. Uses cached getMyProfile() so a layout + action in the same request
+ * share one profiles query instead of re-hitting auth + profiles separately.
+ */
+export const requireAdmin = cache(async (): Promise<MyProfile> => {
+  const profile = await getMyProfile()
+  if (!profile) throw new Error('Not signed in')
+  if (profile.role !== 'admin') throw new Error('Admin only')
+  return profile
+})

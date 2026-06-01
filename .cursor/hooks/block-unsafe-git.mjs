@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * beforeShellExecution — block --no-verify; ask on force-push to main/master.
- * stdin: { command, cwd?, sandbox? } → stdout: { permission, user_message?, agent_message? }
+ * beforeShellExecution — block unsafe git commands (no jq).
+ * stdin: { command, cwd?, sandbox? }
+ * stdout: { permission: "allow" | "deny", user_message?, agent_message? }
  */
 import { readFileSync } from "node:fs";
 
@@ -30,9 +31,10 @@ function main() {
   } catch {
     respond({
       permission: "deny",
-      user_message: "Shell guard could not parse hook input; command blocked (fail-closed).",
+      user_message:
+        "Git safety hook could not parse shell input; command blocked (fail-closed).",
       agent_message:
-        "before-shell-guard received invalid JSON on stdin. Retry the command or check .cursor/hooks.json.",
+        "block-unsafe-git received invalid JSON on stdin. Retry the command or check .cursor/hooks.json.",
     });
     return;
   }
@@ -46,13 +48,12 @@ function main() {
       user_message:
         "PMP policy: do not bypass git hooks (--no-verify). Fix lint/typecheck or pre-commit failures instead.",
       agent_message:
-        "Shell command blocked: --no-verify is never allowed in this project. Resolve hook failures; do not skip verification.",
+        "Shell command blocked: --no-verify is never allowed. Resolve hook failures; do not skip verification.",
     });
     return;
   }
 
-  const isGitPush =
-    /\bgit\b/.test(cmd) && /\bpush\b/.test(cmd);
+  const isGitPush = /\bgit\b/.test(cmd) && /\bpush\b/.test(cmd);
   const hasForce =
     /--force(?:\s|$|-)/.test(cmd) ||
     /--force-with-lease(?:\s|$|-)/.test(cmd) ||
@@ -63,11 +64,11 @@ function main() {
 
   if (isGitPush && hasForce && targetsMainBranch) {
     respond({
-      permission: "ask",
+      permission: "deny",
       user_message:
-        "Possible force-push to main/master — review before approving (project policy discourages this).",
+        "PMP policy: force-push to main/master is blocked. Use a feature branch or ask the user explicitly for another approach.",
       agent_message:
-        "Hook flagged a git push with force flags targeting main or master. Only proceed if the user explicitly requested a force push.",
+        "Shell command blocked: git push with force flags targeting main or master is not allowed in this project.",
     });
     return;
   }

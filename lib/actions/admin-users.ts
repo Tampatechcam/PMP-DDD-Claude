@@ -13,22 +13,14 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/db/auth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { siteOrigin } from '@/lib/utils/site-origin'
 
-async function requireAdmin() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not signed in')
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (profile?.role !== 'admin') throw new Error('Admin only')
-  return { user }
-}
+/**
+ * Where the invite email's "Accept" link should land. The auth callback at
+ * /callback exchanges the ?code= for a session and redirects to ?next=.
+ */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
