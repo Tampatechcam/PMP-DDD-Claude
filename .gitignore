@@ -51,3 +51,6 @@ scripts/.import-work/
 
 # Cursor hook debounce state (scripts are committed; runtime state is not)
 .cursor/hooks/.state/lint-reminder.json
+
+# Local Netlify folder
+.netlify
