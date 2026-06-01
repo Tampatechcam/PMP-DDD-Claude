@@ -18,8 +18,9 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
 
   const base =
     'block w-full rounded border border-border bg-surface px-3 py-2 ' +
-    'text-sm text-ink placeholder:text-muted ' +
-    'focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
+    'text-sm text-ink placeholder:text-muted shadow-sm transition-colors ' +
+    'hover:border-muted/40 ' +
+    'focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg focus:border-accent'
   return (
     <div className="space-y-1">
       {label && (
