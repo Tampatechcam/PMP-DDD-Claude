@@ -5,6 +5,16 @@ every PR that lands a user-visible or operationally relevant change.
 
 ## Unreleased
 
+### Changed
+- Sentry browser config (`sentry.client.config.ts`): DSN-gated init (skips
+  the SDK entirely when no DSN is set), env-aware trace + replay sampling,
+  Replay integration only loaded when sampling is enabled (so non-prod
+  builds don't ship the replay bundle), privacy-safe replay defaults
+  (`maskAllText` + `blockAllMedia` — opt-out per-element with
+  `data-sentry-unmask`), explicit `sendDefaultPii: false`, and release
+  tagged from `NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA` so source maps line up
+  with the deploy.
+
 ### Added
 - shadcn `alert-dialog` (Radix) with PMP tokens; venue delete uses accessible confirm instead of `window.confirm`.
 - Admin order actions gated with `requireAdmin()`; client layout uses a single
