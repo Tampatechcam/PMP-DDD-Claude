@@ -54,3 +54,5 @@ scripts/.import-work/
 
 # Local Netlify folder
 .netlify
+# Netlify Edge generated lockfile (Deno) — not used by the Vercel/Next build
+deno.lock
