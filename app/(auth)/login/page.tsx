@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Button } from '@/components/ui/Button'
-import { Brand } from '@/components/layout/Brand'
+import { Logo } from '@/components/layout/Logo'
 import { getAuthUser } from '@/lib/db/auth'
 import { signInAsDemoClient, signInAsDemoAdmin } from '@/lib/actions/demo'
 import { isDemoAuthEnabled } from '@/lib/env'
@@ -22,11 +22,11 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen grid place-items-center px-4 py-10 bg-bg auth-backdrop">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-7">
         <div className="text-center space-y-3">
-          <div className="inline-flex scale-110 origin-center"><Brand href="/login" /></div>
+          <Logo href="/login" size="lg" />
           <p className="text-sm text-muted">
-            Direct mail &amp; digital orders, proofs, and history.
+            Direct mail &amp; digital orders, proofs &amp; history — all in one place.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default async function LoginPage({ searchParams }: Props) {
         )}
 
         <p className="text-center text-[11px] text-muted">
-          © PMP — internal use only
+          © Power Mailers Plus · internal use only
         </p>
       </div>
     </main>
