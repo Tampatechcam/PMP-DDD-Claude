@@ -54,7 +54,7 @@ function getDate(v: string | null | undefined): string | null {
   let v2 = s.replace(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s*/i, '')
   if (/^12\/30\/1899$/.test(v2)) return null
   let m = v2.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s*$/)
-  if (m) { let [, mm, dd, yy] = m; if (yy.length === 2) yy = '20' + yy; return `${yy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}` }
+  if (m) { const mm = m[1]!, dd = m[2]!; let yy = m[3]!; if (yy.length === 2) yy = '20' + yy; return `${yy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}` }
   m = v2.match(/^([A-Za-z]+)\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})?\s*$/)
   if (m) { const mo = MONTHS[m[1]!.toLowerCase()]; if (mo) return `${m[3] || '2026'}-${mo}-${m[2]!.padStart(2,'0')}` }
   return null

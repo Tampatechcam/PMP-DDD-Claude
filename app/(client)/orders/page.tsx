@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { listOrdersForClient } from '@/lib/db/orders'
 import { listOfficesForCurrentClient } from '@/lib/db/offices'
 import { getCurrentClientSelf } from '@/lib/db/clients'
+import { LiveRefresh } from '@/components/realtime/LiveRefresh'
 
 interface Props {
   searchParams: { office?: string; tab?: string }
@@ -25,6 +26,7 @@ export default async function OrdersListPage({ searchParams }: Props) {
 
   return (
     <section className="space-y-5">
+      <LiveRefresh />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
