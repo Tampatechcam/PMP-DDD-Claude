@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Button } from '@/components/ui/Button'
 import { Brand } from '@/components/layout/Brand'
 import { getAuthUser } from '@/lib/db/auth'
@@ -37,6 +38,14 @@ export default async function LoginPage({ searchParams }: Props) {
               : 'Use your email and password.'}
           </p>
           <LoginForm mode={mode} error={error} sent={sent} />
+
+          <div className="my-5 flex items-center gap-3" aria-hidden>
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[11px] uppercase tracking-wide text-muted">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <GoogleSignInButton />
         </div>
 
         {/* Temporary demo buttons. Remove (and delete lib/actions/demo.ts)
