@@ -1,6 +1,14 @@
 import { redirect } from 'next/navigation'
 import { getMyProfile } from '@/lib/db/auth'
 
+// Never statically prerender `/`. A prerendered root-redirect page crashes
+// Netlify's Linux runtime with "Cannot read properties of undefined (reading
+// 'clientModules')" (a Next 14.2.x route-manifest bug). This page already reads
+// cookies via getMyProfile() — which forces dynamic rendering — but the explicit
+// flag makes that guarantee durable against future refactors/manifest shifts.
+// (`middleware.ts` redirects `/` at the edge before this ever renders anyway.)
+export const dynamic = 'force-dynamic'
+
 /**
  * Root route — bounce based on role:
  *   signed out                 → /login
