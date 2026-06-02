@@ -6,7 +6,6 @@ import { getOrderByRefForClient, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { getCurrentClientSelf } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
-import { LiveRefresh } from '@/components/realtime/LiveRefresh'
 
 interface Props {
   params: { order_number: string }
@@ -31,8 +30,6 @@ export default async function OrderDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-4">
-      <LiveRefresh filter={`order_id=eq.${order.id}`} tables={['proofs']} />
-      <LiveRefresh filter={`id=eq.${order.id}`} tables={['orders']} />
       <p className="text-xs">
         <Link href="/orders" className="text-muted hover:text-ink underline underline-offset-2">
           ← Orders

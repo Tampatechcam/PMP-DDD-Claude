@@ -3,9 +3,10 @@ import { getMyProfile } from '@/lib/db/auth'
 
 // Never statically prerender `/`. A prerendered root-redirect page crashes
 // Netlify's Linux runtime with "Cannot read properties of undefined (reading
-// 'clientModules')" (a Next 14.2.x route-manifest bug). This page already reads
-// cookies via getMyProfile() — which forces dynamic rendering — but the explicit
-// flag makes that guarantee durable against future refactors/manifest shifts.
+// 'clientModules')" (a Next 14.2.x route-manifest bug) — reproduced locally when
+// this is absent. This page already reads cookies via getMyProfile() (→ dynamic),
+// but the explicit flag makes that guarantee durable. NOTE: this build-fix is
+// independent of the realtime feature; it is required for the Netlify build.
 // (`middleware.ts` redirects `/` at the edge before this ever renders anyway.)
 export const dynamic = 'force-dynamic'
 

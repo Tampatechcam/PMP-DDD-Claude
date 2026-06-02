@@ -6,7 +6,6 @@ import { AdminAttention } from '@/components/admin/AdminAttention'
 import { adminListOrders } from '@/lib/db/orders'
 import { adminListClients } from '@/lib/db/clients'
 import { adminCounts } from '@/lib/db/dashboards'
-import { LiveRefresh } from '@/components/realtime/LiveRefresh'
 
 interface Props {
   searchParams: { tab?: string }
@@ -30,7 +29,6 @@ export default async function AdminHome({ searchParams }: Props) {
 
   return (
     <section className="space-y-6">
-      <LiveRefresh />
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
         <p className="text-sm text-muted">
