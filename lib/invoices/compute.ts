@@ -18,6 +18,8 @@ export interface InvoiceComputeInput {
   dmRate: number | null
   mailingQuantity: number | null
   needsDirectMail: boolean
+  /** Direct-mail discount as a percent, e.g. 5 for "5%". Null/0 = none. */
+  dmDiscountPct: number | null
   digital: number | null
   tech: number | null
   /** The order's office state, e.g. "FL". Drives whether tax applies. */
@@ -25,29 +27,44 @@ export interface InvoiceComputeInput {
 }
 
 export interface InvoiceComputeResult {
-  /** DM rate × mailing quantity, rounded to cents. 0 when not a DM order. */
+  /** DM rate × mailing quantity, before discount. 0 when not a DM order. */
+  dmGross: number
+  /** Discount applied to the DM line (dmGross × pct). */
+  dmDiscount: number
+  /** Net DM charged: dmGross − dmDiscount. This is what tax + total use. */
   dmTotal: number
   digital: number
   tech: number
-  /** Pre-tax: dmTotal + digital + tech. */
+  /** Pre-tax: dmTotal (net) + digital + tech. */
   subtotal: number
   /** 3% of subtotal. */
   ccProcessing: number
   /** True when the order's office is in Florida — DM line is taxed at 7%. */
   flTaxable: boolean
-  /** Estimated FL tax (7% of dmTotal) for the preview. Stripe is authoritative. */
+  /** Estimated FL tax (7% of net dmTotal) for the preview. Stripe is authoritative. */
   estimatedTax: number
   /** Preview grand total: subtotal + ccProcessing + estimatedTax. */
   estimatedTotal: number
 }
 
+/** Parse a stored discount string ("5%", "6", "") to a number, or null. */
+export function parsePercent(raw: string | number | null | undefined): number | null {
+  if (raw == null) return null
+  const n = typeof raw === 'number' ? raw : Number(String(raw).replace('%', '').trim())
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 export function computeInvoiceLineItems(
   input: InvoiceComputeInput
 ): InvoiceComputeResult {
-  const dmTotal =
+  const dmGross =
     input.needsDirectMail && input.dmRate != null && input.mailingQuantity != null
       ? round2(input.dmRate * input.mailingQuantity)
       : 0
+  const pct = input.dmDiscountPct != null && input.dmDiscountPct > 0 ? input.dmDiscountPct : 0
+  const dmDiscount = round2(dmGross * (pct / 100))
+  const dmTotal = round2(dmGross - dmDiscount)
+
   const digital = input.digital != null ? round2(input.digital) : 0
   const tech = input.tech != null ? round2(input.tech) : 0
 
@@ -60,6 +77,8 @@ export function computeInvoiceLineItems(
   const estimatedTotal = round2(subtotal + ccProcessing + estimatedTax)
 
   return {
+    dmGross,
+    dmDiscount,
     dmTotal,
     digital,
     tech,

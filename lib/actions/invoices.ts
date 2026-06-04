@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/db/auth'
 import { adminGetInvoiceForOrder } from '@/lib/db/invoices'
 import { getStripe, flTaxRateId } from '@/lib/stripe/server'
-import { computeInvoiceLineItems, toCents } from '@/lib/invoices/compute'
+import { computeInvoiceLineItems, parsePercent, toCents } from '@/lib/invoices/compute'
 
 /** Total tax in cents. Stripe v22 moved tax from `invoice.tax` to `total_taxes[]`. */
 function invoiceTaxCents(inv: Stripe.Invoice): number {
@@ -58,7 +58,7 @@ export async function generateInvoice(form: FormData) {
 
   const { data: client, error: clientErr } = await supabase
     .from('clients')
-    .select('id, name, stripe_customer_id, default_mailer_rate, billing_email')
+    .select('id, name, stripe_customer_id, default_mailer_rate, billing_email, direct_mail_discount')
     .eq('id', order.client_id)
     .maybeSingle()
   if (clientErr) throw clientErr
@@ -78,12 +78,15 @@ export async function generateInvoice(form: FormData) {
     ? officeRel[0]?.state ?? null
     : officeRel?.state ?? null
 
-  // Admin can override the rate; default to the client's standard rate.
+  // Admin can override the rate + DM discount; default to the client's values.
   const dmRate = num(form, 'invoiced_dm_rate') ?? client.default_mailer_rate
+  const dmDiscountPct =
+    num(form, 'dm_discount_pct') ?? parsePercent(client.direct_mail_discount)
   const calc = computeInvoiceLineItems({
     dmRate,
     mailingQuantity: order.mailing_quantity,
     needsDirectMail: order.needs_direct_mail,
+    dmDiscountPct,
     digital: num(form, 'invoiced_digital'),
     tech: num(form, 'invoiced_tech'),
     officeState,
@@ -134,7 +137,7 @@ export async function generateInvoice(form: FormData) {
       currency: 'usd',
       description: `Direct mail — order ${orderRef}${
         order.mailing_quantity ? ` (${order.mailing_quantity} pcs @ $${dmRate})` : ''
-      }`,
+      }${dmDiscountPct ? `, less ${dmDiscountPct}%` : ''}`,
       ...(calc.flTaxable && taxRate ? { tax_rates: [taxRate] } : {}),
     })
   }

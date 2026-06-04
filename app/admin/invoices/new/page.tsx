@@ -5,6 +5,7 @@ import { adminGetClient } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
 import { adminGetInvoiceForOrder } from '@/lib/db/invoices'
 import { GenerateInvoiceForm } from '@/components/admin/GenerateInvoiceForm'
+import { parsePercent } from '@/lib/invoices/compute'
 import { orderLabel } from '@/lib/utils/format'
 
 interface Props {
@@ -34,6 +35,9 @@ export default async function NewInvoicePage({ searchParams }: Props) {
     ?.default_mailer_rate ?? null
   const defaultEmail = (client as { billing_email?: string | null } | null)
     ?.billing_email ?? null
+  const defaultDiscountPct = parsePercent(
+    (client as { direct_mail_discount?: string | null } | null)?.direct_mail_discount
+  )
   const orderRef = order.display_ref ?? String(order.order_number)
 
   return (
@@ -62,6 +66,7 @@ export default async function NewInvoicePage({ searchParams }: Props) {
         mailingQuantity={order.mailing_quantity}
         defaultRate={defaultRate}
         defaultDigital={order.digital_budget}
+        defaultDiscountPct={defaultDiscountPct}
         officeState={office?.state ?? null}
         defaultEmail={defaultEmail}
       />
