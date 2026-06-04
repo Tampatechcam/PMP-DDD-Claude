@@ -42,6 +42,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          billing_email: string | null
           business_name: string | null
           business_website: string | null
           created_at: string | null
@@ -62,9 +63,11 @@ export type Database = {
           notes: string | null
           responsibility: string | null
           start_before_paid: boolean | null
+          stripe_customer_id: string | null
           tech_sequences: string | null
         }
         Insert: {
+          billing_email?: string | null
           business_name?: string | null
           business_website?: string | null
           created_at?: string | null
@@ -85,9 +88,11 @@ export type Database = {
           notes?: string | null
           responsibility?: string | null
           start_before_paid?: boolean | null
+          stripe_customer_id?: string | null
           tech_sequences?: string | null
         }
         Update: {
+          billing_email?: string | null
           business_name?: string | null
           business_website?: string | null
           created_at?: string | null
@@ -108,6 +113,7 @@ export type Database = {
           notes?: string | null
           responsibility?: string | null
           start_before_paid?: boolean | null
+          stripe_customer_id?: string | null
           tech_sequences?: string | null
         }
         Relationships: []
@@ -117,8 +123,10 @@ export type Database = {
           cc_processing: number | null
           created_at: string | null
           fl_state_tax: number | null
+          hosted_invoice_url: string | null
           id: string
           invoice_paid_date: string | null
+          invoice_pdf_url: string | null
           invoice_sent_date: string | null
           invoiced_digital: number | null
           invoiced_dm_rate: number | null
@@ -126,14 +134,18 @@ export type Database = {
           invoiced_tech: number | null
           order_id: string
           status: string
+          stripe_invoice_id: string | null
+          stripe_status: string | null
           total_invoice: number | null
         }
         Insert: {
           cc_processing?: number | null
           created_at?: string | null
           fl_state_tax?: number | null
+          hosted_invoice_url?: string | null
           id?: string
           invoice_paid_date?: string | null
+          invoice_pdf_url?: string | null
           invoice_sent_date?: string | null
           invoiced_digital?: number | null
           invoiced_dm_rate?: number | null
@@ -141,14 +153,18 @@ export type Database = {
           invoiced_tech?: number | null
           order_id: string
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_status?: string | null
           total_invoice?: number | null
         }
         Update: {
           cc_processing?: number | null
           created_at?: string | null
           fl_state_tax?: number | null
+          hosted_invoice_url?: string | null
           id?: string
           invoice_paid_date?: string | null
+          invoice_pdf_url?: string | null
           invoice_sent_date?: string | null
           invoiced_digital?: number | null
           invoiced_dm_rate?: number | null
@@ -156,6 +172,8 @@ export type Database = {
           invoiced_tech?: number | null
           order_id?: string
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_status?: string | null
           total_invoice?: number | null
         }
         Relationships: [

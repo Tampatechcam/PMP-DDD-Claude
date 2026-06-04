@@ -8,9 +8,10 @@ import { Shell, type ShellNavItem } from './Shell'
  */
 
 const nav: ShellNavItem[] = [
-  { href: '/orders',  label: 'Orders',  icon: 'orders' },
-  { href: '/venues',  label: 'Venues',  icon: 'venues' },
-  { href: '/account', label: 'Account', icon: 'account' }
+  { href: '/orders',   label: 'Orders',   icon: 'orders' },
+  { href: '/venues',   label: 'Venues',   icon: 'venues' },
+  { href: '/invoices', label: 'Invoices', icon: 'invoices' },
+  { href: '/account',  label: 'Account',  icon: 'account' }
 ]
 
 export function ClientSidebar() {
