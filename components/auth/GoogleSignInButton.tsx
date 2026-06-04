@@ -15,12 +15,11 @@ import { createClient } from '@/lib/supabase/client'
  * Configuration → Redirect URLs (the prod origin already is — magic links use it).
  */
 export function GoogleSignInButton({ next }: { next?: string }) {
-  const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const loading = state === 'loading'
 
   async function signIn() {
-    setLoading(true)
-    setFailed(false)
+    setState('loading')
     const supabase = createClient()
     const params = next ? `?next=${encodeURIComponent(next)}` : ''
     const { error } = await supabase.auth.signInWithOAuth({
@@ -29,10 +28,7 @@ export function GoogleSignInButton({ next }: { next?: string }) {
     })
     // On success the browser is already navigating to Google; we only get here
     // if starting the flow failed.
-    if (error) {
-      setFailed(true)
-      setLoading(false)
-    }
+    if (error) setState('error')
   }
 
   return (
@@ -41,7 +37,7 @@ export function GoogleSignInButton({ next }: { next?: string }) {
         {!loading && <GoogleMark />}
         Continue with Google
       </Button>
-      {failed && (
+      {state === 'error' && (
         <p className="text-sm text-danger" role="alert">
           Couldn’t start Google sign-in. Try again.
         </p>

@@ -16,6 +16,12 @@ const ORANGE = '#F15B29'
 const BLUE = '#1C8FC9' // slightly deepened from the brand sky so wordmark text stays legible on white
 const SWOOSH = '#2AA9E0'
 
+const SIZE = {
+  sm: { markH: 'h-7', textCls: 'text-base' },
+  md: { markH: 'h-9', textCls: 'text-xl' },
+  lg: { markH: 'h-12', textCls: 'text-2xl' }
+} as const
+
 export function Logo({
   href,
   size = 'md',
@@ -25,9 +31,7 @@ export function Logo({
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
-  const markH = size === 'lg' ? 'h-12' : size === 'sm' ? 'h-7' : 'h-9'
-  const textCls =
-    size === 'lg' ? 'text-2xl' : size === 'sm' ? 'text-base' : 'text-xl'
+  const { markH, textCls } = SIZE[size]
 
   const inner = (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
