@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { Pill, type PillTone } from '@/components/ui/Pill'
+import { Button } from '@/components/ui/Button'
 import { adminGetInvoice } from '@/lib/db/invoices'
+import { voidInvoice } from '@/lib/actions/invoices'
 import { formatMoney, formatEventDate, orderHref, orderLabel } from '@/lib/utils/format'
 
 interface Props {
@@ -95,6 +97,38 @@ export default async function AdminInvoiceDetailPage({ params }: Props) {
           {inv.total_invoice != null ? formatMoney(Number(inv.total_invoice)) : '—'}
         </p>
       </Card>
+
+      {inv.stripe_invoice_id && (
+        <Card>
+          <h2 className="text-sm font-medium mb-3">Stripe</h2>
+          <div className="flex flex-wrap gap-2">
+            {inv.hosted_invoice_url && (
+              <Button href={inv.hosted_invoice_url} variant="secondary" size="sm" target="_blank">
+                Payment page
+              </Button>
+            )}
+            {inv.invoice_pdf_url && (
+              <Button href={inv.invoice_pdf_url} variant="secondary" size="sm" target="_blank">
+                Download PDF
+              </Button>
+            )}
+            {!paid && inv.status !== 'Void' && (
+              <form action={voidInvoice} className="inline">
+                <input type="hidden" name="invoice_id" value={inv.id} />
+                <input type="hidden" name="stripe_invoice_id" value={inv.stripe_invoice_id} />
+                <Button type="submit" variant="danger" size="sm">
+                  Void invoice
+                </Button>
+              </form>
+            )}
+          </div>
+          {inv.stripe_status && (
+            <p className="text-xs text-muted mt-3">
+              Stripe status: <span className="text-ink">{inv.stripe_status}</span>
+            </p>
+          )}
+        </Card>
+      )}
     </section>
   )
 }

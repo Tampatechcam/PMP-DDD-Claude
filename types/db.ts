@@ -42,14 +42,17 @@ export type Database = {
       }
       clients: {
         Row: {
+          billing_email: string | null
           business_name: string | null
           business_website: string | null
           created_at: string | null
           default_class_type: string | null
           default_digital_budget: number | null
+          default_mailer_product_id: string | null
           default_mailer_rate: number | null
           default_mailer_type: string | null
           default_mailing_quantity: number | null
+          default_tech_product_id: string | null
           description: string | null
           direct_mail_discount: string | null
           disclaimer: string | null
@@ -62,17 +65,21 @@ export type Database = {
           notes: string | null
           responsibility: string | null
           start_before_paid: boolean | null
+          stripe_customer_id: string | null
           tech_sequences: string | null
         }
         Insert: {
+          billing_email?: string | null
           business_name?: string | null
           business_website?: string | null
           created_at?: string | null
           default_class_type?: string | null
           default_digital_budget?: number | null
+          default_mailer_product_id?: string | null
           default_mailer_rate?: number | null
           default_mailer_type?: string | null
           default_mailing_quantity?: number | null
+          default_tech_product_id?: string | null
           description?: string | null
           direct_mail_discount?: string | null
           disclaimer?: string | null
@@ -85,17 +92,21 @@ export type Database = {
           notes?: string | null
           responsibility?: string | null
           start_before_paid?: boolean | null
+          stripe_customer_id?: string | null
           tech_sequences?: string | null
         }
         Update: {
+          billing_email?: string | null
           business_name?: string | null
           business_website?: string | null
           created_at?: string | null
           default_class_type?: string | null
           default_digital_budget?: number | null
+          default_mailer_product_id?: string | null
           default_mailer_rate?: number | null
           default_mailer_type?: string | null
           default_mailing_quantity?: number | null
+          default_tech_product_id?: string | null
           description?: string | null
           direct_mail_discount?: string | null
           disclaimer?: string | null
@@ -108,17 +119,35 @@ export type Database = {
           notes?: string | null
           responsibility?: string | null
           start_before_paid?: boolean | null
+          stripe_customer_id?: string | null
           tech_sequences?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_default_mailer_product_id_fkey"
+            columns: ["default_mailer_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_default_tech_product_id_fkey"
+            columns: ["default_tech_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
           cc_processing: number | null
           created_at: string | null
           fl_state_tax: number | null
+          hosted_invoice_url: string | null
           id: string
           invoice_paid_date: string | null
+          invoice_pdf_url: string | null
           invoice_sent_date: string | null
           invoiced_digital: number | null
           invoiced_dm_rate: number | null
@@ -126,14 +155,18 @@ export type Database = {
           invoiced_tech: number | null
           order_id: string
           status: string
+          stripe_invoice_id: string | null
+          stripe_status: string | null
           total_invoice: number | null
         }
         Insert: {
           cc_processing?: number | null
           created_at?: string | null
           fl_state_tax?: number | null
+          hosted_invoice_url?: string | null
           id?: string
           invoice_paid_date?: string | null
+          invoice_pdf_url?: string | null
           invoice_sent_date?: string | null
           invoiced_digital?: number | null
           invoiced_dm_rate?: number | null
@@ -141,14 +174,18 @@ export type Database = {
           invoiced_tech?: number | null
           order_id: string
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_status?: string | null
           total_invoice?: number | null
         }
         Update: {
           cc_processing?: number | null
           created_at?: string | null
           fl_state_tax?: number | null
+          hosted_invoice_url?: string | null
           id?: string
           invoice_paid_date?: string | null
+          invoice_pdf_url?: string | null
           invoice_sent_date?: string | null
           invoiced_digital?: number | null
           invoiced_dm_rate?: number | null
@@ -156,6 +193,8 @@ export type Database = {
           invoiced_tech?: number | null
           order_id?: string
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_status?: string | null
           total_invoice?: number | null
         }
         Relationships: [
@@ -514,6 +553,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_price_history: {
+        Row: {
+          created_at: string | null
+          id: number
+          price: number
+          product_id: string
+          stripe_price_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          price: number
+          product_id: string
+          stripe_price_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          price?: number
+          product_id?: string
+          stripe_price_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          price: number
+          sort: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          price: number
+          sort?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          price?: number
+          sort?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

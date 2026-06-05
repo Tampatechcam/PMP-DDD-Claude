@@ -6,7 +6,10 @@ import { getOrderByRef, listEventsForOrder } from '@/lib/db/orders'
 import { listProofsForOrder } from '@/lib/db/proofs'
 import { adminGetClient } from '@/lib/db/clients'
 import { getOfficeForOrderCard } from '@/lib/db/offices'
+import { adminGetInvoiceForOrder, type InvoiceRow } from '@/lib/db/invoices'
 import { Button } from '@/components/ui/Button'
+import { Pill, type PillTone } from '@/components/ui/Pill'
+import { formatMoney } from '@/lib/utils/format'
 import { OrderStatusEditor } from '@/components/admin/OrderStatusEditor'
 
 interface Props {
@@ -24,12 +27,15 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const order = await getOrderByRef(params.order_number)
   if (!order) notFound()
 
-  const [proofs, events, client, office] = await Promise.all([
+  const [proofs, events, client, office, invoice] = await Promise.all([
     listProofsForOrder(order.id),
     listEventsForOrder(order.id),
     adminGetClient(order.client_id),
-    order.office_id ? getOfficeForOrderCard(order.office_id) : null
+    order.office_id ? getOfficeForOrderCard(order.office_id) : null,
+    adminGetInvoiceForOrder(order.id)
   ])
+
+  const orderRef = order.display_ref ?? String(order.order_number)
 
   return (
     <section className="space-y-5">
@@ -50,12 +56,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         <div className="space-y-6">
           <OrderStatusEditor
             orderId={order.id}
-            refSlug={order.display_ref ?? String(order.order_number)}
+            refSlug={orderRef}
             needsDM={order.needs_direct_mail}
             needsDigital={order.needs_digital}
             dmStatus={order.dm_status}
             digitalStatus={order.digital_status}
           />
+          <InvoiceCard invoice={invoice} orderRef={orderRef} />
           {client && (
             <ClientInfoCard
               client={client}
@@ -67,4 +74,48 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       </div>
     </section>
   )
+}
+
+/**
+ * Sidebar invoice block. Shows the existing invoice (status + total + link)
+ * or a "Generate invoice" CTA into the Stripe flow when there's none yet.
+ */
+function InvoiceCard({
+  invoice,
+  orderRef
+}: {
+  invoice: InvoiceRow | null
+  orderRef: string
+}) {
+  return (
+    <div className="border border-border rounded-lg bg-surface p-4 space-y-3">
+      <h2 className="label">Invoice</h2>
+      {invoice ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <InvoiceStatusPill status={invoice.status} paid={!!invoice.invoice_paid_date} />
+            <span className="text-sm font-medium tabular-nums">
+              {invoice.total_invoice != null ? formatMoney(Number(invoice.total_invoice)) : '—'}
+            </span>
+          </div>
+          <Button href={`/admin/invoices/${invoice.id}`} variant="secondary" size="sm" fullWidth>
+            View invoice
+          </Button>
+        </div>
+      ) : (
+        <Button href={`/admin/invoices/new?order=${orderRef}`} size="sm" fullWidth>
+          Generate invoice
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function InvoiceStatusPill({ status, paid }: { status: string; paid: boolean }) {
+  const tone: PillTone = paid
+    ? 'success'
+    : status.toLowerCase().includes('sent')
+      ? 'warning'
+      : 'neutral'
+  return <Pill tone={tone}>{status}</Pill>
 }
