@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { adminGetClient, adminListOfficesForClient } from '@/lib/db/clients'
 import { adminListOrders } from '@/lib/db/orders'
+import { listActiveByCategory } from '@/lib/db/products'
 import { formatMoney, formatQuantity } from '@/lib/utils/format'
 import { OrdersList, type OrdersTab } from '@/components/orders/OrdersList'
+import { ClientPricingDefaultsForm } from '@/components/admin/ClientPricingDefaultsForm'
 import { TeamSection } from '@/components/admin/TeamSection'
 import { Skeleton, SkeletonRow } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
@@ -27,12 +29,21 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
   // any one client's expected DM workload. OrdersList does its own
   // Upcoming/Past bucketing client-side after the fetch.
   const activeTab: OrdersTab = searchParams.tab === 'past' ? 'past' : 'upcoming'
-  const [client, offices, orders] = await Promise.all([
+  const [client, offices, orders, mailerProducts, techProducts] = await Promise.all([
     adminGetClient(params.id),
     adminListOfficesForClient(params.id),
-    adminListOrders({ clientId: params.id, limit: 500 })
+    adminListOrders({ clientId: params.id, limit: 500 }),
+    listActiveByCategory('dm_mailer'),
+    listActiveByCategory('tech')
   ])
   if (!client) notFound()
+
+  // adminGetClient is select('*') but loosely typed — narrow the new pricing FKs.
+  const pricing = client as unknown as {
+    default_mailer_product_id: string | null
+    default_tech_product_id: string | null
+    default_digital_budget: number | null
+  }
 
   return (
     <section className="space-y-6">
@@ -85,6 +96,22 @@ export default async function AdminClientDetailPage({ params, searchParams }: Pr
           <Dt>Tech / sequences</Dt><Dd>{client.tech_sequences}</Dd>
           <Dt>Start before paid</Dt><Dd>{client.start_before_paid ? 'Yes' : 'No'}</Dd>
         </Dl>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-medium mb-3">Pricing defaults (auto-invoicing)</h2>
+        <p className="text-xs text-muted mb-3">
+          These pre-fill the generate-invoice form. Products come from the{' '}
+          <a href="/admin/pricing" className="underline underline-offset-2">pricing sheet</a>.
+        </p>
+        <ClientPricingDefaultsForm
+          clientId={client.id}
+          mailerProducts={mailerProducts}
+          techProducts={techProducts}
+          defaultMailerProductId={pricing.default_mailer_product_id}
+          defaultTechProductId={pricing.default_tech_product_id}
+          defaultDigitalBudget={pricing.default_digital_budget}
+        />
       </Card>
 
       {(client.description || client.notes) && (

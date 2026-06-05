@@ -26,6 +26,7 @@ const nav: ShellNavItem[] = [
   { href: '/admin/clients',  label: 'Clients',  icon: 'clients' },
   { href: '/admin/orders',   label: 'Orders',   icon: 'orders' },
   { href: '/admin/invoices', label: 'Invoices', icon: 'invoices' },
+  { href: '/admin/pricing',  label: 'Pricing',  icon: 'document' },
   { href: '/admin/profiles', label: 'Users',    icon: 'profiles' }
 ]
 

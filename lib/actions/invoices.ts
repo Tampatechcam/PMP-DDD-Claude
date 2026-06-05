@@ -5,6 +5,7 @@ import type Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/db/auth'
 import { adminGetInvoiceForOrder } from '@/lib/db/invoices'
+import { getProduct } from '@/lib/db/products'
 import { getStripe, flTaxRateId } from '@/lib/stripe/server'
 import { computeInvoiceLineItems, parsePercent, toCents } from '@/lib/invoices/compute'
 
@@ -58,7 +59,7 @@ export async function generateInvoice(form: FormData) {
 
   const { data: client, error: clientErr } = await supabase
     .from('clients')
-    .select('id, name, stripe_customer_id, default_mailer_rate, billing_email, direct_mail_discount')
+    .select('id, name, stripe_customer_id, default_mailer_rate, billing_email, direct_mail_discount, default_mailer_product_id, default_tech_product_id')
     .eq('id', order.client_id)
     .maybeSingle()
   if (clientErr) throw clientErr
@@ -78,19 +79,47 @@ export async function generateInvoice(form: FormData) {
     ? officeRel[0]?.state ?? null
     : officeRel?.state ?? null
 
-  // Admin can override the rate + DM discount; default to the client's values.
-  const dmRate = num(form, 'invoiced_dm_rate') ?? client.default_mailer_rate
+  // Resolve catalog products (mailer + tech). Form selection falls back to the
+  // client's saved defaults; these carry the real Stripe price_ids.
+  const clientDefaults = client as unknown as {
+    default_mailer_product_id: string | null
+    default_tech_product_id: string | null
+  }
+  const mailerProductId = s(form, 'mailer_product_id') ?? clientDefaults.default_mailer_product_id
+  const techProductId = s(form, 'tech_product_id') ?? clientDefaults.default_tech_product_id
+  const [mailerProduct, techProduct] = await Promise.all([
+    mailerProductId ? getProduct(mailerProductId) : Promise.resolve(null),
+    techProductId ? getProduct(techProductId) : Promise.resolve(null),
+  ])
+
+  // Admin can override the per-piece rate; otherwise use the mailer product's
+  // price (or the client's legacy default_mailer_rate). Tech amount comes from
+  // the chosen tech product (or a manual amount).
+  const manualRate = num(form, 'invoiced_dm_rate')
+  const productRate = mailerProduct ? Number(mailerProduct.price) : null
+  const dmRate = manualRate ?? productRate ?? client.default_mailer_rate
   const dmDiscountPct =
     num(form, 'dm_discount_pct') ?? parsePercent(client.direct_mail_discount)
+  const techAmount = techProduct ? Number(techProduct.price) : num(form, 'invoiced_tech')
+
   const calc = computeInvoiceLineItems({
     dmRate,
     mailingQuantity: order.mailing_quantity,
     needsDirectMail: order.needs_direct_mail,
     dmDiscountPct,
     digital: num(form, 'invoiced_digital'),
-    tech: num(form, 'invoiced_tech'),
+    tech: techAmount,
     officeState,
   })
+
+  // Use the real Stripe price_id for the DM line when we can: the mailer product
+  // has one AND the admin didn't override the per-piece rate (a Stripe price is
+  // fixed at the product's amount). Otherwise fall back to a computed amount.
+  const dmUsePriceId =
+    !!mailerProduct?.stripe_price_id &&
+    order.needs_direct_mail &&
+    !!order.mailing_quantity &&
+    (manualRate == null || manualRate === productRate)
 
   const stripe = getStripe()
   const taxRate = flTaxRateId()
@@ -130,7 +159,26 @@ export async function generateInvoice(form: FormData) {
   // 2. Create the pending invoice items. Skip zero lines. FL tax rides on the
   //    DM line only.
   const items: Stripe.InvoiceItemCreateParams[] = []
-  if (calc.dmTotal > 0) {
+  const taxOnDm = calc.flTaxable && taxRate ? { tax_rates: [taxRate] } : {}
+
+  if (dmUsePriceId) {
+    // Real Stripe product line: unit (per-piece) price × quantity. FL tax rides
+    // here; a discount is a separate negative line below.
+    items.push({
+      customer: customerId,
+      pricing: { price: mailerProduct!.stripe_price_id! },
+      quantity: order.mailing_quantity!,
+      ...taxOnDm,
+    })
+    if (calc.dmDiscount > 0) {
+      items.push({
+        customer: customerId,
+        amount: -toCents(calc.dmDiscount),
+        currency: 'usd',
+        description: `Direct mail discount (${dmDiscountPct}%)`,
+      })
+    }
+  } else if (calc.dmTotal > 0) {
     items.push({
       customer: customerId,
       amount: toCents(calc.dmTotal),
@@ -138,7 +186,7 @@ export async function generateInvoice(form: FormData) {
       description: `Direct mail — order ${orderRef}${
         order.mailing_quantity ? ` (${order.mailing_quantity} pcs @ $${dmRate})` : ''
       }${dmDiscountPct ? `, less ${dmDiscountPct}%` : ''}`,
-      ...(calc.flTaxable && taxRate ? { tax_rates: [taxRate] } : {}),
+      ...taxOnDm,
     })
   }
   if (calc.digital > 0) {
@@ -150,12 +198,17 @@ export async function generateInvoice(form: FormData) {
     })
   }
   if (calc.tech > 0) {
-    items.push({
-      customer: customerId,
-      amount: toCents(calc.tech),
-      currency: 'usd',
-      description: `Tech / sequences — order ${orderRef}`,
-    })
+    if (techProduct?.stripe_price_id) {
+      // Real Stripe product line for the tech add-on.
+      items.push({ customer: customerId, pricing: { price: techProduct.stripe_price_id }, quantity: 1 })
+    } else {
+      items.push({
+        customer: customerId,
+        amount: toCents(calc.tech),
+        currency: 'usd',
+        description: `Tech / sequences — order ${orderRef}`,
+      })
+    }
   }
   if (calc.ccProcessing > 0) {
     items.push({
