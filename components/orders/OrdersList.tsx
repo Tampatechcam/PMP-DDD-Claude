@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatEventDate, formatRelativeDate, orderHref, orderLabel } from '@/lib/utils/format'
+import { SelectableOrdersTable } from '@/components/admin/SelectableOrdersTable'
 import type { OrderRow } from '@/lib/db/orders'
 
 /**
@@ -58,6 +59,8 @@ interface Props {
   showClient?: boolean
   clientNameById?: Record<string, string>
   preserveParams?: Record<string, string | undefined>
+  /** Admin only: render row checkboxes + a bulk-delete toolbar. */
+  selectable?: boolean
 }
 
 export function OrdersList({
@@ -67,7 +70,8 @@ export function OrdersList({
   ordersBasePath,
   showClient,
   clientNameById,
-  preserveParams
+  preserveParams,
+  selectable
 }: Props) {
   const upcoming: OrderRow[] = []
   const past: OrderRow[] = []
@@ -94,6 +98,14 @@ export function OrdersList({
       />
       {visible.length === 0 ? (
         <OrdersEmpty tab={activeTab} basePath={basePath} />
+      ) : selectable ? (
+        <SelectableOrdersTable
+          orders={visible}
+          showClient={showClient}
+          clientNameById={clientNameById}
+          isPast={activeTab === 'past'}
+          ordersBasePath={ordersBasePath}
+        />
       ) : (
         <Table
           orders={visible}
