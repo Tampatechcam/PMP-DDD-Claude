@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Pill, type PillTone } from '@/components/ui/Pill'
 import { formatMoney } from '@/lib/utils/format'
 import { OrderStatusEditor } from '@/components/admin/OrderStatusEditor'
+import { DeleteOrderButton } from '@/components/admin/DeleteOrderButton'
 
 interface Props {
   params: { order_number: string }
@@ -48,7 +49,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             {client?.name ?? 'Client'}
           </Link>
         </p>
-        <Button href={`/admin/proofs/${order.id}/upload`}>Upload proof</Button>
+        <div className="flex items-center gap-2">
+          <Button href={`/admin/proofs/${order.id}/upload`}>Upload proof</Button>
+          <DeleteOrderButton orderId={order.id} orderRef={orderRef} hasInvoice={!!invoice} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6">

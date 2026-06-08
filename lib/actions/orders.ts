@@ -374,3 +374,36 @@ export async function updateOrderStatus(form: FormData) {
   revalidatePath('/admin')
   if (ref) revalidatePath(`/admin/orders/${ref}`)
 }
+
+/**
+ * Delete an order (admin only). FK cascades remove its proofs and order_events.
+ * Guard: refuse if the order still has an invoice — deleting would silently drop
+ * the billing record (and orphan the Stripe invoice). Void/remove the invoice
+ * first. Redirects to the orders list on success.
+ */
+export async function deleteOrder(form: FormData) {
+  await requireAdmin()
+  const supabase = createClient()
+
+  const orderId = s(form, 'order_id')
+  if (!orderId) throw new Error('order_id is required.')
+
+  const { data: invoices, error: invErr } = await supabase
+    .from('invoices')
+    .select('id')
+    .eq('order_id', orderId)
+    .limit(1)
+  if (invErr) throw invErr
+  if (invoices && invoices.length > 0) {
+    throw new Error(
+      'This order has an invoice. Void or remove the invoice first, then delete the order.'
+    )
+  }
+
+  const { error } = await supabase.from('orders').delete().eq('id', orderId)
+  if (error) throw error
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  redirect('/admin/orders')
+}
