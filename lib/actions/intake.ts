@@ -67,7 +67,7 @@ export async function commitIntakeCsv(csvText: string): Promise<IntakeResult> {
     .select('id, name')
     .in('name', clientNames)
   if (cErr) return { ok: false, error: `Lookup clients failed: ${cErr.message}` }
-  const clientByName = new Map((clients ?? []).map((c) => [c.name, c.id]))
+  const clientByName = new Map(((clients ?? []) as { id: string; name: string }[]).map((c) => [c.name, c.id]))
   const unknownClients = clientNames.filter((n) => !clientByName.has(n))
   if (unknownClients.length) {
     return { ok: false, error: `Unknown clients: ${unknownClients.slice(0, 5).join(', ')}${unknownClients.length > 5 ? '…' : ''}` }
@@ -80,7 +80,7 @@ export async function commitIntakeCsv(csvText: string): Promise<IntakeResult> {
     .select('id, client_id, name')
     .in('client_id', clientIds)
   const officeKey = (cid: string, name: string) => `${cid}::${name.toLowerCase().trim()}`
-  const officeByKey = new Map((offices ?? []).map((o) => [officeKey(o.client_id as string, o.name as string), o.id]))
+  const officeByKey = new Map(((offices ?? []) as { id: string; client_id: string; name: string }[]).map((o) => [officeKey(o.client_id, o.name), o.id]))
 
   // Next order number
   const { data: maxRow } = await supabase.from('orders').select('order_number').order('order_number', { ascending: false }).limit(1).maybeSingle()
@@ -116,7 +116,7 @@ export async function commitIntakeCsv(csvText: string): Promise<IntakeResult> {
 
   // Audit one entry per inserted order
   await recordAudit(
-    (inserted ?? []).map((row, i) => ({
+    ((inserted ?? []) as { id: string; order_number: number }[]).map((row, i) => ({
       table_name: 'orders',
       row_id: row.id as string,
       action: 'INSERT' as const,
@@ -131,6 +131,6 @@ export async function commitIntakeCsv(csvText: string): Promise<IntakeResult> {
   return {
     ok: true,
     created: inserted?.length ?? 0,
-    orderNumbers: (inserted ?? []).map((r) => r.order_number as number)
+    orderNumbers: ((inserted ?? []) as { id: string; order_number: number }[]).map((r) => r.order_number)
   }
 }

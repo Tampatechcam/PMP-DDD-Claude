@@ -33,4 +33,11 @@ const nav: ShellNavItem[] = [
 ]
 
 export function AdminSidebar() {
-  ret
+  return (
+    <Shell
+      navItems={nav}
+      brandHref="/admin"
+      paletteScope="admin"
+    />
+  )
+}

@@ -1,5 +1,5 @@
 import 'server-only'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Service-role Supabase client. BYPASSES RLS.
@@ -11,8 +11,21 @@ import { createClient } from '@supabase/supabase-js'
  *
  * Used by: admin-only Server Actions, the one-shot import script, RLS tests.
  */
-export const supabaseAdmin = createClient(
+export const supabaseAdmin = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
 )
+
+/**
+ * Factory variant — returns a fresh service-role client. Some callers prefer
+ * to mint a new instance per request rather than share the singleton above
+ * (mostly for test isolation; the underlying HTTP/2 connection is reused).
+ */
+export function createClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+  )
+}

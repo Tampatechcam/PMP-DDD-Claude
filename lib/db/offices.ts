@@ -56,7 +56,7 @@ export async function adminListAllOffices() {
     )
     .order('name')
   if (error) throw error
-  return (data ?? []) as {
+  return (data ?? []) as unknown as {
     id: string
     name: string
     client_id: string

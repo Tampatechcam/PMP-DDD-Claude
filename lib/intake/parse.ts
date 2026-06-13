@@ -27,11 +27,11 @@ export function parseIntakeCsv(text: string): { headers: string[]; rows: Record<
     }
   }
   if (field || cur.length) { cur.push(field); rows.push(cur) }
-  while (rows.length && rows[rows.length - 1].every((c) => !c?.trim())) rows.pop()
+  while (rows.length && rows[rows.length - 1]!.every((c) => !c?.trim())) rows.pop()
 
   if (rows.length < 2) return { headers: [], rows: [], error: 'CSV needs a header row and at least one data row.' }
 
-  const headers = rows[0].map((h) => h.trim())
+  const headers = rows[0]!.map((h) => h.trim())
   const missing = INTAKE_COLUMNS.filter((c) => !headers.includes(c))
   if (missing.length) return { headers, rows: [], error: `Missing required columns: ${missing.join(', ')}. Download the template from /templates/standard-intake.csv.` }
 
