@@ -286,15 +286,4 @@ export async function voidInvoice(form: FormData) {
 
   const id = s(form, 'invoice_id')
   const stripeInvoiceId = s(form, 'stripe_invoice_id')
-  if (!id || !stripeInvoiceId) throw new Error('invoice_id + stripe_invoice_id required.')
-
-  const stripe = getStripe()
-  const voided = await stripe.invoices.voidInvoice(stripeInvoiceId)
-
-  const { error } = await supabase
-    .from('invoices')
-    .update({ status: 'Void', stripe_status: voided.status })
-    .eq('id', id)
-  if (error) throw error
-
-  const user = await get
+  if (!id || !stripeInvoiceId) throw new Error('invoice_id + stripe_invoice_id require

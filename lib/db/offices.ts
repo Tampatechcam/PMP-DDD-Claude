@@ -51,28 +51,4 @@ export async function adminListAllOffices() {
     .select(
       'id, name, client_id, state, advisor_names, ' +
       'default_class_type, default_mailing_quantity, default_mailer_type, ' +
-      'default_start_time, default_end_time, default_charity, ' +
-      'default_needs_dm, default_needs_digital, default_needs_sheet'
-    )
-    .order('name')
-  if (error) throw error
-  return (data ?? []) as {
-    id: string
-    name: string
-    client_id: string
-    state: string | null
-    advisor_names: string[] | null
-    default_class_type: string | null
-    default_mailing_quantity: number | null
-    default_mailer_type: string | null
-    default_start_time: string | null
-    default_end_time: string | null
-    default_charity: string | null
-    default_needs_dm: boolean | null
-    default_needs_digital: boolean | null
-    default_needs_sheet: boolean | null
-  }[]
-}
-
-/**
- * Single office by uuid. Returns null when the order has no office_id
+      'default_start_time, default_end_time

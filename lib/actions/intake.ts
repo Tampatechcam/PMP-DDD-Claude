@@ -128,9 +128,4 @@ export async function commitIntakeCsv(csvText: string): Promise<IntakeResult> {
 
   revalidatePath('/admin/orders')
   revalidatePath('/admin')
-  return {
-    ok: true,
-    created: inserted?.length ?? 0,
-    orderNumbers: (inserted ?? []).map((r) => r.order_number as number)
-  }
-}
+  return 

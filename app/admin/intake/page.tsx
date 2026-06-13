@@ -50,9 +50,4 @@ export default function AdminIntakePage() {
           <li>event_2_date, first_class_day, order_sent_deadline, start_time, end_time, event_1_room, order_instructions (optional)</li>
         </ul>
         <p className="text-xs text-muted">
-          Dates: <code>YYYY-MM-DD</code>. Times: <code>HH:MM</code> (24h). Quantity: positive integer.
-        </p>
-      </div>
-    </section>
-  )
-}
+          Dates: <code>YYYY-MM-DD</code>. Times: <code>HH:MM</code> (24h). Quantity: positive inte

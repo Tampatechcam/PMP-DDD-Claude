@@ -4,6 +4,7 @@ import { OrderFormSkeleton } from '@/components/orders/OrderFormSkeleton'
 import { adminListClients } from '@/lib/db/clients'
 import { adminListAllOffices } from '@/lib/db/offices'
 import { listDistinctVenuesFromOrders } from '@/lib/db/orders'
+import { loadVenueCascade } from '@/lib/db/venue-cascade'
 
 const AdminOrderForm = dynamic(
   () => import('@/components/admin/AdminOrderForm').then((m) => ({ default: m.AdminOrderForm })),
@@ -18,10 +19,11 @@ const AdminOrderForm = dynamic(
  * Past venues drive the quick-fill dropdown in the Venue card.
  */
 export default async function AdminNewOrderPage() {
-  const [clients, allOffices, pastVenues] = await Promise.all([
+  const [clients, allOffices, pastVenues, cascade] = await Promise.all([
     adminListClients(),
     adminListAllOffices(),
-    listDistinctVenuesFromOrders()
+    listDistinctVenuesFromOrders(),
+    loadVenueCascade()
   ])
 
   return (
@@ -43,9 +45,4 @@ export default async function AdminNewOrderPage() {
 
       <AdminOrderForm
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
-        allOffices={allOffices}
-        pastVenues={pastVenues}
-      />
-    </section>
-  )
-}
+       

@@ -48,5 +48,4 @@ export async function auditDistinctSources(): Promise<string[]> {
     .select('source')
     .limit(1000)
   if (error) return []
-  return Array.from(new Set((data ?? []).map((r) => r.source as string))).sort()
-}
+  return Array.from(new Set((data

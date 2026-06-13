@@ -115,12 +115,4 @@ export function IntakeForm() {
           {state.result.invalidRows && (
             <ul className="text-xs mt-2 space-y-1 font-mono">
               {state.result.invalidRows.slice(0, 50).map((r) => (
-                <li key={r.line}>line {r.line}: {r.errors.join(' · ')}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
+                <li key={r.line}>line {r.line}: {r

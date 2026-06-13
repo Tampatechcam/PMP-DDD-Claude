@@ -31,6 +31,3 @@ const nav: ShellNavItem[] = [
   { href: '/admin/profiles', label: 'Users',    icon: 'profiles' },
   { href: '/admin/audit',    label: 'Audit log', icon: 'document' }
 ]
-
-export function AdminSidebar() {
-  ret

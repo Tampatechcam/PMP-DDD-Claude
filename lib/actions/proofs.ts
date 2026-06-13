@@ -151,22 +151,4 @@ export async function decideProof(
     table_name: 'proofs',
     row_id: proofId,
     action: 'UPDATE',
-    source: 'client-proof-decision',
-    actor_email: user?.email ?? null,
-    after: { status: decision, client_comment: comment ?? null, version: proof.version }
-  })
-
-  revalidatePath('/orders', 'layout')
-}
-
-/**
- * Server-side helper that mints a short-lived signed download URL for a
- * proof PDF. The caller's RLS already vets read access on the proofs row;
- * the storage policy on `proofs read own client` does the same for the
- * file, so we can use the user's session client here.
- */
-export async function getProofDownloadUrl(proofId: string): Promise<string> {
-  const supabase = createClient()
-  const { data: proof, error } = await supabase
-    .from('proofs')
-    .select('storage_path')
+    source: 'client-proof-decisio

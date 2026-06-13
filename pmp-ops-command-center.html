@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PMP Ops Command Center</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #fafaf9;
+    color: #1c1917;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  a { color: inherit; }
+  button { font-family: inherit; }
+
+  /* ============== AUTH GATE ============== */
+  .auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(1200px circle at 0% 0%, #fef3c7 0%, transparent 40%),
+      radial-gradient(800px circle at 100% 100%, #dbeafe 0%, transparent 40%),
+      #fafaf9;
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 10px 25px -10px rgba(0,0,0,0.12);
+  }
+  .auth-brand { text-align: center; margin-bottom: 22px; }
+  .auth-brand .logo {
+    display: inline-block; width: 44px; height: 44px;
+    border-radius: 10px; background: #1c1917; color: #fafaf9;
+    line-height: 44px; font-weight: 700; font-size: 18px; letter-spacing: 0.5px;
+  }
+  .auth-brand .title { font-size: 18px; font-weight: 600; margin-top: 10px; }
+  .auth-brand .sub   { font-size: 12px; color: #78716c; margin-top: 2px; }
+  .auth-card h1 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .auth-card .lede { font-size: 13px; color: #78716c; margin: 0 0 18px; }
+  .field { display: block; margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: #57534e; text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid #d6d3d1; border-radius: 8px;
+    font: inherit; color: #1c1917; background: #fff;
+  }
+  .field input:focus {
+    outline: none; border-color: #1c1917;
+    box-shadow: 0 0 0 3px rgba(28,25,23,0.08);
+  }
+  .btn-primary {
+    width: 100%; padding: 11px 14px;
+    background: #1c1917; color: #fafaf9;
+    border: 0; border-radius: 8px;
+    font-weight: 600; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-primary:hover:not(:disabled) { background: #292524; }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  .auth-error {
+    background: #fef2f2; border: 1px solid #fecaca;
+    color: #991b1b; padding: 8px 11px; border-radius: 8px;
+    font-size: 12px; margin-bottom: 14px;
+  }
+  .auth-toggle {
+    text-align: center; margin-top: 14px;
+    font-size: 12px; color: #78716c;
+  }
+  .auth-toggle button {
+    background: none; border: 0; padding: 0; color: #1c1917;
+    text-decoration: underline; cursor: pointer; font-size: 12px;
+  }
+  .auth-foot {
+    text-align: center; font-size: 11px; color: #a8a29e;
+    margin-top: 18px;
+  }
+
+  /* ============== DASHBOARD ============== */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: #fff; border-right: 1px solid #e7e5e4;
+    padding: 16px 10px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar .brand { padding: 4px 10px 16px; border-bottom: 1px solid #f5f5f4; margin-bottom: 8px; }
+  .sidebar .brand .title { font-weight: 600; font-size: 13px; color: #1c1917; }
+  .sidebar .brand .sub   { font-size: 11px; color: #78716c; margin-top: 2px; }
+  .sidebar nav button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 11px; margin: 1px 0;
+    border: 0; background: transparent; border-radius: 7px;
+    cursor: pointer; font-size: 13px; color: #44403c; text-align: left;
+  }
+  .sidebar nav button:hover { background: #f5f5f4; color: #1c1917; }
+  .sidebar nav button.active { background: #1c1917; color: #fafaf9; font-weight: 600; }
+  .sidebar nav .icon { width: 16px; text-align: center; opacity: 0.7; }
+  .sidebar nav button.active .icon { opacity: 1; }
+  .sidebar .user-block {
+    margin-top: auto; padding: 12px 10px 4px; border-top: 1px solid #f5f5f4;
+    font-size: 12px; color: #57534e;
+  }
+  .sidebar .user-block .email { color: #1c1917; font-weight: 500; word-break: break-all; }
+  .sidebar .user-block button {
+    margin-top: 8px; width: 100%;
+    padding: 6px 10px; background: #fff;
+    border: 1px solid #d6d3d1; border-radius: 6px;
+    cursor: pointer; font-size: 12px; color: #44403c;
+  }
+  .sidebar .user-block button:hover { background: #f5f5f4; }
+
+  .main { flex: 1; min-width: 0; padding: 24px 28px; }
+  .view-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; font-weight: 600; }
+  .sub { color: #78716c; font-size: 12px; margin-top: 2px; }
+  .refresh-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: #fff;
+    border: 1px solid #e7e5e4; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: #1c1917;
+    cursor: pointer;
+  }
+  .refresh-btn:hover:not(:disabled) { background: #f5f5f4; border-color: #d6d3d1; }
+  .refresh-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .refresh-btn.spinning .refresh-icon { animation: spin 0.9s linear infinite; display: inline-block; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat {
+    background: #fff; border: 1px solid #e7e5e4; border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat .label { font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  .stat .value { font-size: 20px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat.danger .value { color: #b91c1c; }
+  .stat.warn   .value { color: #b45309; }
+  .stat.ok     .value { color: #166534; }
+
+  section.card {
+    background: #fff; border: 1px solid #e7e5e4; border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  section.card h2 {
+    font-size: 13px; font-weight: 600; color: #44403c;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin: 0 0 12px;
+  }
+  section.card h2 .count {
+    font-weight: 500; color: #78716c; margin-left: 6px;
+    text-transform: none; letter-spacing: 0;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid #e7e5e4;
+    color: #57534e; font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid #f5f5f4; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf9; }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .pill.ok       { background: #dcfce7; color: #166534; }
+  .pill.info     { background: #dbeafe; color: #1e40af; }
+  .pill.amber    { background: #fef3c7; color: #92400e; }
+  .pill.muted    { background: #f5f5f4; color: #57534e; }
+  .pill.danger   { background: #fee2e2; color: #991b1b; }
+  .pill.through  { background: #f5f5f4; color: #78716c; text-decoration: line-through; }
+
+  .badge-overdue { color: #b91c1c; font-weight: 600; }
+  .badge-soon    { color: #b45309; font-weight: 600; }
+  .badge-ok      { color: #57534e; }
+
+  .empty {
+    text-align: center; color: #a8a29e;
+    padding: 22px 0; font-size: 13px;
+    background: #fafaf9; border-radius: 6px;
+  }
+  .err-banner {
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
+  }
+  .info-banner {
+    background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
+  }
+  .small { font-size: 11px; color: #78716c; }
+  .nowrap { white-space: nowrap; }
+  .right { text-align: right; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============================ SIGN-IN GATE ============================ -->
+<div id="auth-gate" class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="logo">P</span>
+      <div class="title">PMP Ops Command Center</div>
+      <div class="sub">Power Mailers Plus · internal</div>
+    </div>
+
+    <h1 id="auth-title">Sign in</h1>
+    <p class="lede" id="auth-lede">Use your email and password.</p>
+
+    <div id="auth-error" class="auth-error hidden"></div>
+
+    <form id="auth-form" autocomplete="on">
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" autocomplete="email" value="camhebeler@gmail.com" required>
+      </div>
+      <div class="field" id="auth-password-wrap">
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" autocomplete="current-password" required>
+      </div>
+      <button id="auth-submit" type="submit" class="btn-primary">Sign in</button>
+    </form>
+
+    <div class="auth-toggle">
+      Forgot password? Reset it in the
+      <a href="https://supabase.com/dashboard/project/amtunktskgwvvqumrbde/auth/users" target="_blank" rel="noopener">Supabase dashboard</a>
+      (or via the production site at <code>/login</code>).
+    </div>
+
+    <div class="auth-foot">© Power Mailers Plus · internal use only</div>
+  </div>
+</div>
+
+<!-- ============================ DASHBOARD ============================ -->
+<div id="dashboard" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="title">PMP Command Center</div>
+      <div class="sub">Live · Supabase</div>
+    </div>
+    <nav id="nav">
+      <button data-view="home"    class="active"><span class="icon">●</span> Home</button>
+      <button data-view="orders"><span class="icon">○</span> All orders</button>
+      <button data-view="past"><span class="icon">↺</span> Past orders</button>
+      <button data-view="clients"><span class="icon">◫</span> Clients</button>
+    </nav>
+    <div class="user-block">
+      <div>Signed in as</div>
+      <div class="email" id="user-email">—</div>
+      <button id="sign-out-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="err-banner" class="err-banner hidden"></div>
+    <div id="info-banner" class="info-banner hidden"></div>
+
+    <!-- HOME view: deadline buckets -->
+    <section id="view-home" class="view active">
+      <div class="view-bar">
+        <div>
+          <h1>This week & ahead</h1>
+          <div class="sub" id="home-sub">Loading…</div>
+        </div>
+        <button id="refresh-btn" class="refresh-btn">
+          <span class="refresh-icon">↻</span> Refresh
+        </button>
+      </div>
+
+      <div class="stats" id="home-stats"></div>
+
+      <div id="buckets"></div>
+    </section>
+
+    <!-- ORDERS view: all orders -->
+    <section id="view-orders" class="view">
+      <div class="view-bar">
+        <div>
+          <h1>All orders</h1>
+          <div class="sub" id="orders-sub"></div>
+        </div>
+        <button class="refresh-btn" onclick="loadOrders()">
+          <span class="refresh-icon">↻</span> Refresh
+        </button>
+      </div>
+      <section class="card">
+        <div id="orders-table"></div>
+      </section>
+    </section>
+
+    <!-- PAST view -->
+    <section id="view-past" class="view">
+      <div class="view-bar">
+        <div>
+          <h1>Past orders</h1>
+          <div class="sub" id="past-sub"></div>
+        </div>
+      </div>
+      <section class="card">
+        <div id="past-table"></div>
+      </section>
+    </section>
+
+    <!-- CLIENTS view -->
+    <section id="view-clients" class="view">
+      <div class="view-bar">
+        <div>
+          <h1>Clients</h1>
+          <div class="sub" id="clients-sub"></div>
+        </div>
+      </div>
+      <section class="card">
+        <div id="clients-table"></div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<!-- Supabase JS as a UMD script (no ES modules, works from file://). -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script>
+// Global error surfacing — if anything below blows up, show it instead of dying silently.
+window.addEventListener("error", (e) => {
+  const b = document.getElementById("auth-error");
+  if (b) {
+    b.textContent = "JS error: " + (e.message || e.error?.message || "unknown");
+    b.classList.remove("hidden");
+  } else {
+    document.body.insertAdjacentHTML("afterbegin",
+      `<div style="background:#fef2f2;color:#991b1b;padding:12px;border:1px solid #fecaca">JS error: ${(e.message || "").replace(/[<>]/g,"")}</div>`);
+  }
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const msg = (e.reason && (e.reason.message || String(e.reason))) || "unknown promise rejection";
+  const b = document.getElementById("auth-error");
+  if (b) { b.textContent = msg; b.classList.remove("hidden"); }
+});
+</script>
+<script>
+// =============================================================
+//  PMP Ops Command Center — Supabase-backed, real auth
+//
+//  Architecture:
+//   1. Sign-in gate uses Supabase JS client + email/password OTP code
+//      (works from file:// — no redirect URL needed).
+//   2. Once authenticated, the user's JWT satisfies RLS:
+//        orders_select policy = (client_id = current_client_id() OR is_admin())
+//      so the queries below "just work" — same data the production
+//      app would show this user.
+//   3. We hit the base `orders` table (NOT the security_invoker view)
+//      and compute display_status client-side.
+// =============================================================
+
+// The UMD bundle exposes `supabase.createClient`. Wait until DOM + script are loaded.
+if (typeof window.supabase === "undefined" || !window.supabase.createClient) {
+  document.addEventListener("DOMContentLoaded", () => {
+    const b = document.getElementById("auth-error");
+    if (b) {
+      b.textContent = "Couldn't load Supabase JS from the CDN. Check internet / corporate firewall.";
+      b.classList.remove("hidden");
+    }
+  });
+  throw new Error("Supabase JS UMD bundle didn't load.");
+}
+const { createClient } = window.supabase;
+
+// Anon key from production .env.local — RLS-safe (publishable).
+const SUPABASE_URL  = "https://amtunktskgwvvqumrbde.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtdHVua3Rza2d3dnZxdW1yYmRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjYxMDEsImV4cCI6MjA5NTEwMjEwMX0.ZDWKs6Kwj48W02E9mBX13Lj8SSUlItRs8IwnwNmBtIk";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: window.localStorage,
+    storageKey: "pmp-ops-cowork-auth",
+  },
+});
+
+// In-memory store
+let SESSION = null;
+let ALL_ORDERS = [];
+let ALL_CLIENTS = [];
+
+// =============================================================
+//  AUTH FLOW
+// =============================================================
+
+const $ = (id) => document.getElementById(id);
+
+function showError(msg) {
+  const el = $("auth-error");
+  el.textContent = msg;
+  // reset to red — showSuccess() may have flipped these inline.
+  el.style.background = "";
+  el.style.borderColor = "";
+  el.style.color = "";
+  el.classList.remove("hidden");
+}
+function clearError() {
+  const el = $("auth-error");
+  el.classList.add("hidden");
+  el.style.background = "";
+  el.style.borderColor = "";
+  el.style.color = "";
+}
+
+// Password-only sign-in. Magic links / email-link / email-OTP all require
+// an HTTPS redirect URL Supabase trusts, which a file:// page can't satisfy.
+// Admin accounts (like camhebeler@gmail.com) have passwords set — RLS sees
+// is_admin() = true once signed in, so the dashboard returns all orders.
+$("auth-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearError();
+  const email    = $("auth-email").value.trim();
+  const password = $("auth-password").value;
+  const btn      = $("auth-submit");
+  btn.disabled = true;
+  const labelBefore = btn.textContent;
+  btn.textContent = "Signing in…";
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    // onAuthStateChange will route to dashboard.
+  } catch (err) {
+    console.error(err);
+    showError(prettyAuthError((err && err.message) || "Something went wrong."));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelBefore;
+  }
+});
+
+function prettyAuthError(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes("invalid login"))               return "Email or password is incorrect.";
+  if (m.includes("token has expired"))           return "That code expired. Click 'Use a different email' and request a new one.";
+  if (m.includes("invalid otp") || m.includes("token is invalid")) return "That code didn't match. Double-check the 6 digits.";
+  if (m.includes("signups not allowed"))         return "That email isn't authorized yet. Ask an admin to add you.";
+  if (m.includes("email not confirmed"))         return "Please confirm your email first.";
+  if (m.includes("rate limit"))                  return "Too many attempts. Try again in a minute.";
+  return msg;
+}
+
+$("sign-out-btn").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  // onAuthStateChange will route back to the gate.
+});
+
+supabase.auth.onAuthStateChange((event, session) => {
+  SESSION = session;
+  if (session) {
+    enterDashboard(session);
+  } else {
+    leaveDashboard();
+  }
+});
+
+// Initial hydration — no top-level await (regular script, not a module).
+supabase.auth.getSession().then(({ data }) => {
+  SESSION = data?.session || null;
+  if (SESSION) enterDashboard(SESSION);
+}).catch((err) => {
+  console.error("getSession failed:", err);
+  showError("Couldn't read existing session: " + (err.message || err));
+});
+
+function enterDashboard(session) {
+  $("auth-gate").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  $("user-email").textContent = session?.user?.email || "—";
+  bindNav();
+  bindRefresh();
+  loadAll();
+}
+function leaveDashboard() {
+  $("dashboard").classList.add("hidden");
+  $("auth-gate").classList.remove("hidden");
+}
+
+// =============================================================
+//  NAVIGATION
+// =============================================================
+
+function bindNav() {
+  document.querySelectorAll("#nav button").forEach((b) => {
+    b.onclick = () => {
+      document.querySelectorAll("#nav button").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      const view = b.dataset.view;
+      document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+      $(`view-${view}`).classList.add("active");
+    };
+  });
+}
+
+function bindRefresh() {
+  $("refresh-btn").onclick = () => loadAll(true);
+}
+
+// =============================================================
+//  DATA LAYER
+// =============================================================
+
+async function loadAll(isRefresh) {
+  setBanner("info", "Loading orders…");
+  const btn = $("refresh-btn");
+  if (btn) btn.classList.add("spinning");
+  try {
+    await Promise.all([loadOrders(), loadClients()]);
+    clearBanner();
+    renderHome();
+  } catch (err) {
+    console.error(err);
+    setBanner("err", "Couldn't load data: " + (err.message || err));
+  } finally {
+    if (btn) btn.classList.remove("spinning");
+  }
+}
+
+async function loadOrders() {
+  // Base orders + joined client/office/venue. RLS is enforced;
+  // your row visibility = your role's visibility.
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`
+      id, order_number, display_ref,
+      client_id, office_id, venue_id,
+      advisor_name, class_type, market, charity,
+      venue_text, venue_address_text,
+      event_1_date, event_1_room,
+      event_2_date, event_2_room,
+      event_3_date, event_3_room,
+      event_4_date, event_4_room,
+      start_time, end_time, time_notes,
+      mailing_quantity, mailer_type, selected_mailer_design,
+      client_approval_deadline, order_sent_deadline, first_class_day,
+      dm_status, digital_status, main_status,
+      order_instructions, notes,
+      clients ( name, is_group, business_name ),
+      offices ( name, state, registration_phone ),
+      venues  ( name, address )
+    `)
+    .order("first_class_day", { ascending: false, nullsFirst: false })
+    .limit(5000);
+
+  if (error) throw error;
+
+  ALL_ORDERS = (data || []).map((r) => {
+    const displayStatus =
+      (r.main_status && r.main_status.trim()) ||
+      (r.dm_status   && r.dm_status.trim())   ||
+      (r.digital_status && r.digital_status.trim()) ||
+      "Submitted";
+    const ref = r.display_ref || (r.order_number != null ? `#${r.order_number}` : "");
+    return {
+      ...r,
+      _status: displayStatus,
+      _ref: ref,
+      _client: r.clients?.name || "",
+      _office: [r.offices?.name, r.offices?.state].filter(Boolean).join(" · "),
+      _venue: r.venues?.name || r.venue_text || "",
+      _firstClassDate: r.first_class_day ? new Date(r.first_class_day) : null,
+      _orderSentDate: r.order_sent_deadline ? new Date(r.order_sent_deadline) : null,
+      _approvalDate: r.client_approval_deadline ? new Date(r.client_approval_deadline) : null,
+    };
+  });
+}
+
+async function loadClients() {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name, is_group, business_name, billing_email")
+    .order("name", { ascending: true });
+  if (error) {
+    console.warn("clients load:", error.message);
+    ALL_CLIENTS = [];
+    return;
+  }
+  ALL_CLIENTS = data || [];
+}
+
+// =============================================================
+//  RENDER
+// =============================================================
+
+function setBanner(kind, msg) {
+  clearBanner();
+  const el = kind === "err" ? $("err-banner") : $("info-banner");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+function clearBanner() {
+  $("err-banner").classList.add("hidden");
+  $("info-banner").classList.add("hidden");
+}
+
+function isCancelled(s) {
+  const x = (s || "").toLowerCase();
+  return x.includes("cancel") || x.includes("on hold") || x.includes("campaign completed");
+}
+
+function daysBetween(a, b) {
+  return Math.round((a.getTime() - b.getTime()) / 86400000);
+}
+
+function fmtShort(d) {
+  if (!d) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function pillForStatus(s) {
+  const x = (s || "").toLowerCase();
+  if (isCancelled(s)) return `<span class="pill through">${escapeHtml(s)}</span>`;
+  if (x.includes("approved") || x.includes("order sent")) return `<span class="pill ok">${escapeHtml(s)}</span>`;
+  if (x.includes("awaiting") || x.includes("proof")) return `<span class="pill amber">${escapeHtml(s)}</span>`;
+  if (x.includes("submitted") || x.includes("details")) return `<span class="pill info">${escapeHtml(s)}</span>`;
+  if (x.includes("completed")) return `<span class="pill muted">${escapeHtml(s)}</span>`;
+  return `<span class="pill muted">${escapeHtml(s || "—")}</span>`;
+}
+
+function classPill(c) {
+  const x = (c || "").toUpperCase();
+  if (!x) return "";
+  let cls = "muted";
+  if (x.startsWith("R101")) cls = "info";
+  else if (x.startsWith("R90")) cls = "info";
+  else if (x.startsWith("W101")) cls = "amber";
+  else if (x.startsWith("SS101")) cls = "amber";
+  return `<span class="pill ${cls}">${escapeHtml(x)}</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderHome() {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Active = not cancelled AND (no date OR future-dated)
+  const active = ALL_ORDERS.filter((r) => {
+    if (isCancelled(r._status)) return false;
+    if (!r._firstClassDate) return true;
+    return daysBetween(r._firstClassDate, today) >= 0;
+  });
+
+  const past = ALL_ORDERS.filter((r) => {
+    if (isCancelled(r._status)) return true;
+    if (!r._firstClassDate) return false;
+    return daysBetween(r._firstClassDate, today) < 0;
+  });
+
+  // Stats
+  const overdue = active.filter((r) => r._orderSentDate && daysBetween(r._orderSentDate, today) < 0);
+  const awaitingApproval = active.filter((r) => /awaiting/i.test(r._status));
+  const inWeek1 = active.filter((r) => r._firstClassDate && daysBetween(r._firstClassDate, today) <= 7 && daysBetween(r._firstClassDate, today) >= 0);
+
+  $("home-stats").innerHTML = `
+    ${statCard("Active orders", active.length, "")}
+    ${statCard("Past 7 days due", inWeek1.length, "amber")}
+    ${statCard("Awaiting approval", awaitingApproval.length, "warn")}
+    ${statCard("Order-sent overdue", overdue.length, overdue.length ? "danger" : "ok")}
+  `;
+  $("home-sub").textContent = `${ALL_ORDERS.length} total orders · ${active.length} active · ${past.length} past · signed in as ${SESSION?.user?.email || ""}`;
+
+  // Buckets: weeks 1-4 + 4+ weeks + undated
+  const buckets = [
+    { label: "Past due", filter: (r) => r._firstClassDate && daysBetween(r._firstClassDate, today) < 0 && !isCancelled(r._status), tone: "danger" },
+    { label: "This week (next 7 days)", filter: (r) => r._firstClassDate && between(daysBetween(r._firstClassDate, today), 0, 7) },
+    { label: "Week 2 (8–14 days)",  filter: (r) => r._firstClassDate && between(daysBetween(r._firstClassDate, today), 8, 14) },
+    { label: "Week 3 (15–21 days)", filter: (r) => r._firstClassDate && between(daysBetween(r._firstClassDate, today), 15, 21) },
+    { label: "Week 4 (22–28 days)", filter: (r) => r._firstClassDate && between(daysBetween(r._firstClassDate, today), 22, 28) },
+    { label: "4+ weeks out",        filter: (r) => r._firstClassDate && daysBetween(r._firstClassDate, today) > 28 },
+    { label: "No date set",         filter: (r) => !r._firstClassDate && !isCancelled(r._status) },
+  ];
+
+  const bucketsEl = $("buckets");
+  bucketsEl.innerHTML = "";
+
+  const remaining = active.concat(
+    ALL_ORDERS.filter((r) => isCancelled(r._status) === false && r._firstClassDate && daysBetween(r._firstClassDate, today) < 0)
+  );
+  const dedup = [...new Map(remaining.map((r) => [r.id, r])).values()];
+
+  for (const b of buckets) {
+    const rows = dedup.filter(b.filter);
+    if (!rows.length) continue;
+    bucketsEl.appendChild(renderBucket(b.label, rows, today, b.tone));
+  }
+
+  // Render the rest of the views too
+  renderOrders();
+  renderPast(past);
+  renderClients();
+}
+
+function between(n, a, b) { return n >= a && n <= b; }
+
+function statCard(label, value, tone) {
+  return `<div class="stat ${tone}"><div class="label">${escapeHtml(label)}</div><div class="value">${value}</div></div>`;
+}
+
+function renderBucket(label, rows, today, tone) {
+  const section = document.createElement("section");
+  section.className = "card";
+  section.innerHTML = `
+    <h2>${escapeHtml(label)} <span class="count">${rows.length}</span></h2>
+    ${renderOrderTable(rows, today, { showFirstClass: true, showAdvisor: true })}
+  `;
+  return section;
+}
+
+function renderOrderTable(rows, today, { showFirstClass, showAdvisor }) {
+  if (!rows.length) return `<div class="empty">No orders here.</div>`;
+  const head = `
+    <tr>
+      <th>Ref</th>
+      ${showAdvisor ? "<th>Advisor / Client</th>" : ""}
+      <th>Class</th>
+      ${showFirstClass ? "<th>First class</th>" : ""}
+      <th>Order sent due</th>
+      <th>Status</th>
+      <th class="right">Mailing qty</th>
+    </tr>`;
+  const body = rows.map((r) => {
+    const dueClass = orderSentTone(r, today);
+    return `
+      <tr>
+        <td class="nowrap"><strong>${escapeHtml(r._ref)}</strong></td>
+        ${showAdvisor ? `<td>${escapeHtml(r.advisor_name || "—")}<div class="small">${escapeHtml(r._client)}${r._office ? " · " + escapeHtml(r._office) : ""}</div></td>` : ""}
+        <td>${classPill(r.class_type)}</td>
+        ${showFirstClass ? `<td class="nowrap">${fmtShort(r._firstClassDate)}</td>` : ""}
+        <td class="nowrap ${dueClass}">${fmtShort(r._orderSentDate)}</td>
+        <td>${pillForStatus(r._status)}</td>
+        <td class="right nowrap">${r.mailing_quantity != null ? Number(r.mailing_quantity).toLocaleString() : "—"}</td>
+      </tr>`;
+  }).join("");
+  return `<table>${head}${body}</table>`;
+}
+
+function orderSentTone(r, today) {
+  if (!r._orderSentDate) return "";
+  const d = daysBetween(r._orderSentDate, today);
+  if (d < 0) return "badge-overdue";
+  if (d <= 3) return "badge-soon";
+  return "badge-ok";
+}
+
+function renderOrders() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const rows = [...ALL_ORDERS].sort((a, b) => {
+    const da = a._firstClassDate?.getTime() ?? -Infinity;
+    const db = b._firstClassDate?.getTime() ?? -Infinity;
+    return db - da;
+  });
+  $("orders-sub").textContent = `${rows.length} orders total`;
+  $("orders-table").innerHTML = renderOrderTable(rows, today, { showFirstClass: true, showAdvisor: true });
+}
+
+function renderPast(past) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const rows = [...past].sort((a, b) => {
+    const da = a._firstClassDate?.getTime() ?? -Infinity;
+    const db = b._firstClassDate?.getTime() ?? -Infinity;
+    return db - da;
+  });
+  $("past-sub").textContent = `${rows.length} past orders`;
+  $("past-table").innerHTML = renderOrderTable(rows, today, { showFirstClass: true, showAdvisor: true });
+}
+
+functi

@@ -119,12 +119,4 @@ export default async function AuditLogPage({ searchParams }: Props) {
                       </pre>
                     </details>
                   ) : <span className="text-xs text-muted">—</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  )
-}
+       

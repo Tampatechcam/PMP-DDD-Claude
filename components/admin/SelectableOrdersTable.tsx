@@ -181,6 +181,4 @@ export function SelectableOrdersTable({
   )
 }
 
-function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return <th className={`text-left px-3 py-2.5 font-semibold whitespace-nowrap${className ? ` ${className}` : ''}`}>{children}</th>
-}
+function Th({ children, className }: { chi

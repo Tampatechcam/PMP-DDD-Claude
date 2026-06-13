@@ -44,4 +44,4 @@ export const INTAKE_COLUMNS = [
 /** Per-row validation result for the preview screen. */
 export type ValidatedRow =
   | { ok: true; line: number; row: IntakeRow }
-  | { ok: false; line: number; errors: string[]; raw: Record<string, string> }
+  | { ok: false; line: number; er

@@ -49,6 +49,4 @@ export function validateIntakeRows(rawRows: Record<string, string>[]): Validated
     const parsed = intakeRowSchema.safeParse(raw)
     if (parsed.success) return { ok: true, line: i + 2, row: parsed.data }
     const errors = parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`)
-    return { ok: false, line: i + 2, errors, raw }
-  })
-}
+    ret

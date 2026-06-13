@@ -92,6 +92,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ summary: text })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ error: `Anthropic call failed: ${message}` }, { status: 502 })
-  }
-}
+    re

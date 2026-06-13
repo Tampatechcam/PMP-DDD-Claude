@@ -1,9 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { createOrderAsAdmin } from '@/lib/actions/orders'
+import type {
+  CascadeVenue,
+  CascadeBuilding,
+  CascadeRoom,
+} from '@/lib/db/venue-cascade'
 
 const CLASS_TYPES = ['R101', 'W101', 'SS101', 'WAT', 'R90', 'Taxes', 'Other']
 
@@ -54,6 +59,9 @@ interface Props {
   clients: ClientOption[]
   allOffices: OfficeOption[]
   pastVenues: PastVenue[]
+  venues: CascadeVenue[]
+  buildings: CascadeBuilding[]
+  rooms: CascadeRoom[]
 }
 
 /**
@@ -61,8 +69,21 @@ interface Props {
  * picker — all loaded once at page render, no async round-trips. Mirrors
  * the client-side OrderForm but adds client/office selection and initial
  * status fields.
+ *
+ * Venue is an Office → Venue → Building → Room cascade. The dropdowns filter
+ * in memory (no DB round-trips). On selection the form composes a human
+ * `venue_text` ("Venue • Building • Room") and `venue_address_text` for the
+ * existing server action, and also ships the raw `venue_id` / `building_id` /
+ * `room_id` as hidden inputs for forward-compatibility.
  */
-export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
+export function AdminOrderForm({
+  clients,
+  allOffices,
+  pastVenues,
+  venues,
+  buildings,
+  rooms,
+}: Props) {
   const [needsDM, setNeedsDM] = useState(true)
   const [needsDigital, setNeedsDigital] = useState(false)
   const [needsSheet, setNeedsSheet] = useState(false)
@@ -72,9 +93,45 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
 
   const clientOffices = allOffices.filter((o) => o.client_id === clientId)
   const selectedOffice = clientOffices.find((o) => o.id === officeId)
+  // When there's exactly one office we auto-select it for the cascade filter.
+  const effectiveOfficeId =
+    officeId || (clientOffices.length === 1 ? clientOffices[0]!.id : '')
 
-  const [venueText, setVenueText] = useState('')
-  const [venueAddress, setVenueAddress] = useState('')
+  // ── Venue cascade state ────────────────────────────────────────────
+  const [venueId, setVenueId] = useState('')
+  const [buildingId, setBuildingId] = useState('')
+  const [roomId, setRoomId] = useState('')
+
+  // Venues for the selected office (fall back to all if none scoped yet).
+  const officeVenues = useMemo(() => {
+    if (!effectiveOfficeId) return []
+    const scoped = venues.filter((v) => v.office_id === effectiveOfficeId)
+    // Office may have no scoped venues yet — show all so the form is usable.
+    return scoped.length > 0 ? scoped : venues
+  }, [venues, effectiveOfficeId])
+
+  const venueBuildings = useMemo(
+    () => buildings.filter((b) => b.venue_id === venueId),
+    [buildings, venueId]
+  )
+  const buildingRooms = useMemo(
+    () => rooms.filter((r) => r.building_id === buildingId),
+    [rooms, buildingId]
+  )
+
+  const selectedVenue = venues.find((v) => v.id === venueId)
+  const selectedBuilding = buildings.find((b) => b.id === buildingId)
+  const selectedRoom = rooms.find((r) => r.id === roomId)
+
+  // Composed values the existing server action reads.
+  const venueText = [
+    selectedVenue?.name,
+    selectedBuilding?.name,
+    selectedRoom?.name,
+  ]
+    .filter(Boolean)
+    .join(' • ')
+  const venueAddress = selectedVenue?.address?.formatted ?? ''
 
   // Most seminar pairs are Mon+Wed or Tue+Thu — show 2 event slots by default.
   // User can click "+ Add another event" up to 4.
@@ -94,10 +151,32 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
     setDefaultsAppliedFor(selectedOffice.id)
   }
 
-  // Reset office when client changes
+  // Reset office + cascade when client changes
   function handleClientChange(id: string) {
     setClientId(id)
     setOfficeId('')
+    setVenueId('')
+    setBuildingId('')
+    setRoomId('')
+  }
+
+  function handleOfficeChange(id: string) {
+    setOfficeId(id)
+    // Office scopes venues — clear downstream cascade.
+    setVenueId('')
+    setBuildingId('')
+    setRoomId('')
+  }
+
+  function handleVenueChange(id: string) {
+    setVenueId(id)
+    setBuildingId('')
+    setRoomId('')
+  }
+
+  function handleBuildingChange(id: string) {
+    setBuildingId(id)
+    setRoomId('')
   }
 
   return (
@@ -124,7 +203,7 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
             label="Office"
             name="office_id"
             value={officeId}
-            onChange={(e) => setOfficeId(e.target.value)}
+            onChange={(e) => handleOfficeChange(e.target.value)}
           >
             <option value="">{clientOffices.length === 1 ? clientOffices[0]!.name : 'All offices / unassigned'}</option>
             {clientOffices.length > 1 && clientOffices.map((o) => (
@@ -200,44 +279,72 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
         {/* Job name is auto-generated server-side from the new order's number — no manual field needed. */}
       </Card>
 
-      {/* ── Venue ──────────────────────────────────────────────────── */}
+      {/* ── Venue (Office → Venue → Building → Room cascade) ─────────── */}
       <Card className="space-y-4">
         <h2 className="text-sm font-medium">Venue</h2>
 
-        {pastVenues.length > 0 && (
-          <Select
-            label="Fill from past order"
-            value=""
-            onChange={(e) => {
-              const v = pastVenues.find((p) => p.venue_text === e.target.value)
-              if (!v) return
-              setVenueText(v.venue_text)
-              setVenueAddress(v.venue_address_text ?? '')
-            }}
-          >
-            <option value="">— select a past venue —</option>
-            {pastVenues.map((v) => (
-              <option key={v.venue_text} value={v.venue_text}>
-                {v.venue_text}
-              </option>
-            ))}
-          </Select>
+        {!effectiveOfficeId ? (
+          <p className="text-xs text-muted">
+            Pick a client and office first — venues are scoped per office.
+          </p>
+        ) : (
+          <>
+            <Select
+              label="Venue"
+              value={venueId}
+              onChange={(e) => handleVenueChange(e.target.value)}
+            >
+              <option value="">— select a venue —</option>
+              {officeVenues.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </Select>
+
+            {venueId && (
+              <Select
+                label="Building"
+                value={buildingId}
+                onChange={(e) => handleBuildingChange(e.target.value)}
+              >
+                <option value="">
+                  {venueBuildings.length ? '— select a building —' : 'No buildings on this venue'}
+                </option>
+                {venueBuildings.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </Select>
+            )}
+
+            {buildingId && (
+              <Select
+                label="Room"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+              >
+                <option value="">
+                  {buildingRooms.length ? '— select a room —' : 'No rooms in this building'}
+                </option>
+                {buildingRooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </Select>
+            )}
+
+            {venueText && (
+              <p className="text-xs text-muted">
+                Selected: <span className="text-ink">{venueText}</span>
+                {venueAddress ? ` — ${venueAddress}` : ''}
+              </p>
+            )}
+          </>
         )}
 
-        <Input
-          name="venue_text"
-          label="Venue name"
-          value={venueText}
-          onChange={(e) => setVenueText(e.target.value)}
-          placeholder="e.g. DoubleTree by Hilton St. Louis Airport"
-        />
-        <Input
-          name="venue_address_text"
-          label="Venue address"
-          value={venueAddress}
-          onChange={(e) => setVenueAddress(e.target.value)}
-          placeholder="123 Main St, St. Louis, MO 63101"
-        />
+        {/* Composed + raw values for the server action */}
+        <input type="hidden" name="venue_text" value={venueText} />
+        <input type="hidden" name="venue_address_text" value={venueAddress} />
+        <input type="hidden" name="venue_id" value={venueId} />
+        <input type="hidden" name="building_id" value={buildingId} />
+        <input type="hidden" name="room_id" value={roomId} />
       </Card>
 
       {/* ── Events ─────────────────────────────────────────────────── */}
@@ -278,104 +385,4 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
         <Input name="time_notes" label="Time notes (optional)" />
       </Card>
 
-      {/* ── Direct mail ────────────────────────────────────────────── */}
-      {needsDM && (
-        <Card className="space-y-4">
-          <h2 className="text-sm font-medium">Direct mail</h2>
-
-          <Select label="Initial DM status" name="dm_status">
-            {DM_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </Select>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              name="mailing_quantity"
-              type="number"
-              min={1}
-              step={1}
-              label="Mailing quantity"
-              placeholder="7000"
-            />
-            <Input name="mailer_type" label="Mailer type" placeholder="New FTA R101" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              name="client_approval_deadline"
-              type="date"
-              label="Client approval deadline"
-            />
-            <Input
-              name="order_sent_deadline"
-              type="date"
-              label="Send deadline"
-            />
-          </div>
-          <Input
-            name="sending_list_folder_url"
-            type="url"
-            label="Sending list folder URL"
-          />
-          <Input name="qr_code_link" type="url" label="QR code link (optional)" />
-
-          <details>
-            <summary className="cursor-pointer text-xs text-muted">
-              Override mailer return address
-            </summary>
-            <div className="mt-2 grid grid-cols-1 sm:grid-cols-6 gap-2">
-              <div className="sm:col-span-4">
-                <Input name="return_address_street" label="Street" />
-              </div>
-              <div className="sm:col-span-3">
-                <Input name="return_address_city" label="City" />
-              </div>
-              <div className="sm:col-span-1">
-                <Input name="return_address_state" label="State" maxLength={2} />
-              </div>
-              <div className="sm:col-span-2">
-                <Input name="return_address_zip" label="Zip" />
-              </div>
-            </div>
-          </details>
-        </Card>
-      )}
-
-      {/* ── Digital ────────────────────────────────────────────────── */}
-      {needsDigital && (
-        <Card className="space-y-4">
-          <h2 className="text-sm font-medium">Digital</h2>
-
-          <Select label="Initial digital status" name="digital_status">
-            {DIGITAL_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </Select>
-
-          <Input
-            name="digital_budget"
-            type="number"
-            min={0}
-            step="0.01"
-            label="Budget"
-            placeholder="840"
-          />
-          <Input
-            name="landing_page_url_direct"
-            type="url"
-            label="Landing page (direct mail recipients)"
-          />
-          <Input
-            name="landing_page_url_digital"
-            type="url"
-            label="Landing page (digital recipients)"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input name="privacy_company_name" label="Privacy company name" />
-            <Input
-              name="privacy_company_website"
-              type="url"
-              label="Privacy company website"
-            />
-          </div>
-        </Ca
+    

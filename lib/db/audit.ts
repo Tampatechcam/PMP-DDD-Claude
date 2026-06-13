@@ -36,6 +36,4 @@ export async function recordAudit(ev: AuditEvent | AuditEvent[]): Promise<void> 
   const { error } = await supabase.from('audit_log').insert(rows)
   if (error) {
     // Never block the caller on audit failure — just log it server-side.
-    console.error('[audit] failed to record', { error: error.message, count: rows.length })
-  }
-}
+    console.error('[audit] failed to record', { error: error

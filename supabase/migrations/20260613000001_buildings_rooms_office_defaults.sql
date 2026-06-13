@@ -58,4 +58,4 @@ CREATE POLICY rooms_admin_all
 
 COMMENT ON TABLE public.buildings IS 'Buildings within a venue. Used by intake to cascade Venue → Building → Room.';
 COMMENT ON TABLE public.rooms     IS 'Rooms within a building.';
-COMMENT ON COLUMN public.venues.office_id IS 'Which office uses this venue. Scopes the intake form''s venue picker.';
+COMMENT ON COLUMN public.venues.office_id IS 'Which office
