@@ -18,6 +18,7 @@
     "verify:rls": "tsx --env-file=.env.local scripts/verify-rls.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
     "@axiomhq/js": "^1.6.1",
     "@axiomhq/logging": "^0.2.2",
     "@axiomhq/nextjs": "^0.2.2",
@@ -39,8 +40,7 @@
     "resend": "^6.12.4",
     "stripe": "^22.2.0",
     "tailwind-merge": "^3.6.0",
-    "zod": "^3.23.8",
-    "@anthropic-ai/sdk": "^0.27.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
@@ -51,4 +51,8 @@
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.38",
     "supabase": "^1.187.0",
-    "tailwindcss": "^3.4.4",
+    "tailwindcss": "^3.4.4",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.5"
+  }
+}
