@@ -25,18 +25,12 @@ const nav: ShellNavItem[] = [
   },
   { href: '/admin/clients',  label: 'Clients',  icon: 'clients' },
   { href: '/admin/orders',   label: 'Orders',   icon: 'orders' },
+  { href: '/admin/intake',   label: 'Intake',   icon: 'orders' },
   { href: '/admin/invoices', label: 'Invoices', icon: 'invoices' },
   { href: '/admin/pricing',  label: 'Pricing',  icon: 'document' },
-  { href: '/admin/profiles', label: 'Users',    icon: 'profiles' }
+  { href: '/admin/profiles', label: 'Users',    icon: 'profiles' },
+  { href: '/admin/audit',    label: 'Audit log', icon: 'document' }
 ]
 
 export function AdminSidebar() {
-  return (
-    <Shell
-      navItems={nav}
-      brandHref="/admin"
-      brandLabel="Admin"
-      paletteScope="admin"
-    />
-  )
-}
+  ret

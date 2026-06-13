@@ -1,0 +1,3 @@
+client_name,office_name,advisor_name,class_type,mailing_quantity,event_1_date,event_2_date,first_class_day,order_sent_deadline,start_time,end_time,venue_text,venue_address_text,event_1_room,order_instructions
+Financial & Tax Architects,FTA STL,John Sample,R101,7000,2026-08-12,2026-08-14,2026-07-29,2026-07-15,18:00,19:30,Sheraton St. Louis • Conf Room A,1234 Main St St. Louis MO 63101,Conf Room A,
+William Warner,William Warner - PA,William Warner,R101,9000,2026-08-19,2026-08-21,2026-08-05,2026-07-22,18:00,19:30,Temple University-Ambler • LCC 103,580 Meeting House Rd Ambler PA 19002,LCC 103,

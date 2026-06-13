@@ -48,7 +48,12 @@ export async function adminListAllOffices() {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('offices')
-    .select('id, name, client_id, state, advisor_names')
+    .select(
+      'id, name, client_id, state, advisor_names, ' +
+      'default_class_type, default_mailing_quantity, default_mailer_type, ' +
+      'default_start_time, default_end_time, default_charity, ' +
+      'default_needs_dm, default_needs_digital, default_needs_sheet'
+    )
     .order('name')
   if (error) throw error
   return (data ?? []) as {
@@ -57,24 +62,17 @@ export async function adminListAllOffices() {
     client_id: string
     state: string | null
     advisor_names: string[] | null
+    default_class_type: string | null
+    default_mailing_quantity: number | null
+    default_mailer_type: string | null
+    default_start_time: string | null
+    default_end_time: string | null
+    default_charity: string | null
+    default_needs_dm: boolean | null
+    default_needs_digital: boolean | null
+    default_needs_sheet: boolean | null
   }[]
 }
 
 /**
- * Single office by uuid. Returns null when the order has no office_id
- * (digital-only orders sometimes do) or when the row was removed.
- */
-export async function getOfficeForOrderCard(
-  officeId: string
-): Promise<OfficeForOrderCard | null> {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from('offices')
-    .select(
-      'name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, main_contact, secondary_contact, mailer_return_address'
-    )
-    .eq('id', officeId)
-    .maybeSingle()
-  if (error) throw error
-  return (data ?? null) as OfficeForOrderCard | null
-}
+ * Single office by uuid. Returns null when the order has no office_id

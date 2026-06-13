@@ -33,6 +33,16 @@ export type OfficeOption = {
   name: string
   client_id: string
   advisor_names: string[] | null
+  /** Per-office defaults populated from order history. Used to pre-fill the form. */
+  default_class_type?: string | null
+  default_mailing_quantity?: number | null
+  default_mailer_type?: string | null
+  default_start_time?: string | null
+  default_end_time?: string | null
+  default_charity?: string | null
+  default_needs_dm?: boolean | null
+  default_needs_digital?: boolean | null
+  default_needs_sheet?: boolean | null
 }
 
 export type PastVenue = {
@@ -66,7 +76,23 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
   const [venueText, setVenueText] = useState('')
   const [venueAddress, setVenueAddress] = useState('')
 
-  const [eventCount, setEventCount] = useState(1)
+  // Most seminar pairs are Mon+Wed or Tue+Thu — show 2 event slots by default.
+  // User can click "+ Add another event" up to 4.
+  const [eventCount, setEventCount] = useState(2)
+
+  // Charity pre-fills from the selected office's default_charity. User can edit.
+  const [charity, setCharity] = useState('')
+
+  // Track which office we've already auto-applied defaults for, so we apply
+  // them on first selection but don't fight the user if they change a field.
+  const [defaultsAppliedFor, setDefaultsAppliedFor] = useState<string | null>(null)
+  if (selectedOffice && defaultsAppliedFor !== selectedOffice.id) {
+    if (selectedOffice.default_charity) setCharity(selectedOffice.default_charity)
+    if (selectedOffice.default_needs_dm     != null) setNeedsDM(selectedOffice.default_needs_dm)
+    if (selectedOffice.default_needs_digital != null) setNeedsDigital(selectedOffice.default_needs_digital)
+    if (selectedOffice.default_needs_sheet  != null) setNeedsSheet(selectedOffice.default_needs_sheet)
+    setDefaultsAppliedFor(selectedOffice.id)
+  }
 
   // Reset office when client changes
   function handleClientChange(id: string) {
@@ -164,8 +190,14 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
           label="Market"
           placeholder='e.g. "South STL #7"'
         />
-        <Input name="charity" label="Charity / sponsor (optional)" />
-        <Input name="job_name" label="Job name (optional)" />
+        <Input
+          name="charity"
+          label="Charity / sponsor"
+          value={charity}
+          onChange={(e) => setCharity(e.target.value)}
+          placeholder={selectedOffice?.default_charity ? `Office default: ${selectedOffice.default_charity}` : 'optional'}
+        />
+        {/* Job name is auto-generated server-side from the new order's number — no manual field needed. */}
       </Card>
 
       {/* ── Venue ──────────────────────────────────────────────────── */}
@@ -346,54 +378,4 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
               label="Privacy company website"
             />
           </div>
-        </Card>
-      )}
-
-      {/* ── Notes ──────────────────────────────────────────────────── */}
-      <Card className="space-y-4">
-        <h2 className="text-sm font-medium">Notes</h2>
-        <Input name="order_instructions" label="Instructions (optional)" />
-        <Input name="notes" label="Internal notes (optional)" />
-      </Card>
-
-      <Button type="submit">Create order</Button>
-    </form>
-  )
-}
-
-function Select(props: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
-  const { label, id, className, children, ...rest } = props
-  const inputId = id ?? `sel-${label.toLowerCase().replace(/\W+/g, '-')}`
-  const base =
-    'block w-full rounded border border-border bg-surface px-3 py-2 ' +
-    'text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
-  return (
-    <div className="space-y-1">
-      <label htmlFor={inputId} className="block text-xs font-medium text-ink">
-        {label}
-      </label>
-      <select id={inputId} className={`${base} ${className ?? ''}`} {...rest}>
-        {children}
-      </select>
-    </div>
-  )
-}
-
-function AdvisorNameInput({ office }: { office?: OfficeOption }) {
-  const suggestions = office?.advisor_names ?? []
-  return (
-    <div>
-      <Input
-        name="advisor_name"
-        label="Advisor name"
-        list="advisor-name-suggestions"
-        placeholder={suggestions[0] ?? 'e.g. John Smith'}
-      />
-      <datalist id="advisor-name-suggestions">
-        {suggestions.map((n) => (
-          <option key={n} value={n} />
-        ))}
-      </datalist>
-    </div>
-  )
-}
+        </Ca

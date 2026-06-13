@@ -2,8 +2,9 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/db/auth'
+import { requireAdmin, getAuthUser } from '@/lib/db/auth'
 import { getCurrentClientIdOrThrow } from '@/lib/db/profiles'
+import { recordAudit } from '@/lib/db/audit'
 
 /**
  * Order creation.
@@ -370,6 +371,16 @@ export async function updateOrderStatus(form: FormData) {
     payload: patch
   })
 
+  const user = await getAuthUser()
+  await recordAudit({
+    table_name: 'orders',
+    row_id: orderId,
+    action: 'UPDATE',
+    source: 'admin-status-edit',
+    actor_email: user?.email ?? null,
+    after: patch
+  })
+
   revalidatePath('/admin/orders')
   revalidatePath('/admin')
   if (ref) revalidatePath(`/admin/orders/${ref}`)
@@ -403,6 +414,15 @@ export async function deleteOrder(form: FormData) {
   const { error } = await supabase.from('orders').delete().eq('id', orderId)
   if (error) throw error
 
+  const user = await getAuthUser()
+  await recordAudit({
+    table_name: 'orders',
+    row_id: orderId,
+    action: 'DELETE',
+    source: 'admin-delete',
+    actor_email: user?.email ?? null
+  })
+
   revalidatePath('/admin/orders')
   revalidatePath('/admin')
   redirect('/admin/orders')
@@ -430,18 +450,4 @@ export async function bulkDeleteOrders(
     .from('invoices')
     .select('order_id')
     .in('order_id', ids)
-  if (invErr) throw invErr
-  const blocked = new Set((invoiced ?? []).map((r) => (r as { order_id: string }).order_id))
-  const deletable = ids.filter((id) => !blocked.has(id))
-
-  let deleted = 0
-  if (deletable.length > 0) {
-    const { error } = await supabase.from('orders').delete().in('id', deletable)
-    if (error) throw error
-    deleted = deletable.length
-  }
-
-  revalidatePath('/admin/orders')
-  revalidatePath('/admin')
-  return { deleted, skipped: ids.length - deletable.length }
-}
+  if (invErr) 

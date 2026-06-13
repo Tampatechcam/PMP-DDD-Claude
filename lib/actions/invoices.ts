@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import type Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/db/auth'
+import { requireAdmin, getAuthUser } from '@/lib/db/auth'
+import { recordAudit } from '@/lib/db/audit'
 import { adminGetInvoiceForOrder } from '@/lib/db/invoices'
 import { getProduct } from '@/lib/db/products'
 import { getStripe, flTaxRateId } from '@/lib/stripe/server'
@@ -296,6 +297,4 @@ export async function voidInvoice(form: FormData) {
     .eq('id', id)
   if (error) throw error
 
-  revalidatePath('/admin/invoices')
-  revalidatePath(`/admin/invoices/${id}`)
-}
+  const user = await get

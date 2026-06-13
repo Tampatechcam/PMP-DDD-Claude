@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAdmin } from '@/lib/db/auth'
+import { requireAdmin, getAuthUser } from '@/lib/db/auth'
+import { recordAudit } from '@/lib/db/audit'
 
 /**
  * Proofs: admin issues signed upload URL → browser uploads PDF directly to
@@ -145,6 +146,16 @@ export async function decideProof(
     payload: comment ? { comment } : null
   })
 
+  const user = await getAuthUser()
+  await recordAudit({
+    table_name: 'proofs',
+    row_id: proofId,
+    action: 'UPDATE',
+    source: 'client-proof-decision',
+    actor_email: user?.email ?? null,
+    after: { status: decision, client_comment: comment ?? null, version: proof.version }
+  })
+
   revalidatePath('/orders', 'layout')
 }
 
@@ -158,16 +169,4 @@ export async function getProofDownloadUrl(proofId: string): Promise<string> {
   const supabase = createClient()
   const { data: proof, error } = await supabase
     .from('proofs')
-    .select('storage_path')
-    .eq('id', proofId)
-    .single()
-  if (error || !proof) throw error ?? new Error('Proof not found')
-
-  const { data: signed, error: signedErr } = await supabase
-    .storage
-    .from('proofs')
-    .createSignedUrl(proof.storage_path, 600)
-  if (signedErr || !signed) throw signedErr ?? new Error('Could not sign URL')
-
-  return signed.signedUrl
-}
+    .select('storage_path')
