@@ -45,15 +45,22 @@ export type OfficeOption = {
   default_needs_sheet?: boolean | null
 }
 
-export type PastVenue = {
-  venue_text: string
-  venue_address_text: string | null
+export type VenueOption = {
+  id: string
+  office_id: string | null
+  name: string
+  address: { formatted?: string } | null
 }
+
+export type BuildingOption = { id: string; venue_id: string; name: string }
+export type RoomOption = { id: string; building_id: string; name: string }
 
 interface Props {
   clients: ClientOption[]
   allOffices: OfficeOption[]
-  pastVenues: PastVenue[]
+  venues: VenueOption[]
+  buildings: BuildingOption[]
+  rooms: RoomOption[]
 }
 
 /**
@@ -62,7 +69,7 @@ interface Props {
  * the client-side OrderForm but adds client/office selection and initial
  * status fields.
  */
-export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
+export function AdminOrderForm({ clients, allOffices, venues, buildings, rooms }: Props) {
   const [needsDM, setNeedsDM] = useState(true)
   const [needsDigital, setNeedsDigital] = useState(false)
   const [needsSheet, setNeedsSheet] = useState(false)
@@ -73,8 +80,21 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
   const clientOffices = allOffices.filter((o) => o.client_id === clientId)
   const selectedOffice = clientOffices.find((o) => o.id === officeId)
 
-  const [venueText, setVenueText] = useState('')
-  const [venueAddress, setVenueAddress] = useState('')
+  // Cascade: Office → Venue → Building → Room. Each select filters by the parent's id.
+  const [venueId, setVenueId] = useState('')
+  const [buildingId, setBuildingId] = useState('')
+  const [roomId, setRoomId] = useState('')
+
+  const officeVenues = venues.filter((v) => v.office_id === officeId)
+  const selectedVenue = officeVenues.find((v) => v.id === venueId) ?? null
+  const venueBuildings = buildings.filter((b) => b.venue_id === venueId)
+  const selectedBuilding = venueBuildings.find((b) => b.id === buildingId) ?? null
+  const buildingRooms = rooms.filter((r) => r.building_id === buildingId)
+  const selectedRoom = buildingRooms.find((r) => r.id === roomId) ?? null
+
+  // Build the venue_text the server expects: "Venue • Building • Room" (skip nulls).
+  const venueText = [selectedVenue?.name, selectedBuilding?.name, selectedRoom?.name].filter(Boolean).join(' • ')
+  const venueAddress = selectedVenue?.address?.formatted ?? ''
 
   // Most seminar pairs are Mon+Wed or Tue+Thu — show 2 event slots by default.
   // User can click "+ Add another event" up to 4.
@@ -200,44 +220,56 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
         {/* Job name is auto-generated server-side from the new order's number — no manual field needed. */}
       </Card>
 
-      {/* ── Venue ──────────────────────────────────────────────────── */}
+      {/* ── Venue cascade ──────────────────────────────────────────── */}
       <Card className="space-y-4">
         <h2 className="text-sm font-medium">Venue</h2>
+        <p className="text-xs text-muted">
+          Filtered to the venues this office uses. Each step narrows the next.
+        </p>
 
-        {pastVenues.length > 0 && (
-          <Select
-            label="Fill from past order"
-            value=""
-            onChange={(e) => {
-              const v = pastVenues.find((p) => p.venue_text === e.target.value)
-              if (!v) return
-              setVenueText(v.venue_text)
-              setVenueAddress(v.venue_address_text ?? '')
-            }}
-          >
-            <option value="">— select a past venue —</option>
-            {pastVenues.map((v) => (
-              <option key={v.venue_text} value={v.venue_text}>
-                {v.venue_text}
-              </option>
-            ))}
-          </Select>
+        <Select
+          label="Venue"
+          value={venueId}
+          onChange={(e) => { setVenueId(e.target.value); setBuildingId(''); setRoomId('') }}
+          disabled={!officeId}
+        >
+          <option value="">{officeId ? 'Select a venue…' : 'Pick an office first'}</option>
+          {officeVenues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+        </Select>
+
+        <Select
+          label="Building (optional)"
+          value={buildingId}
+          onChange={(e) => { setBuildingId(e.target.value); setRoomId('') }}
+          disabled={!venueId || venueBuildings.length === 0}
+        >
+          <option value="">{venueBuildings.length === 0 ? 'No buildings on this venue' : 'Select a building…'}</option>
+          {venueBuildings.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </Select>
+
+        <Select
+          label="Room (optional)"
+          value={roomId}
+          onChange={(e) => setRoomId(e.target.value)}
+          disabled={!buildingId || buildingRooms.length === 0}
+        >
+          <option value="">{buildingRooms.length === 0 ? 'No rooms on this building' : 'Select a room…'}</option>
+          {buildingRooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </Select>
+
+        {/* Hidden inputs carry the IDs + the composed text/address into the server action. */}
+        <input type="hidden" name="venue_id" value={venueId} />
+        <input type="hidden" name="building_id" value={buildingId} />
+        <input type="hidden" name="room_id" value={roomId} />
+        <input type="hidden" name="venue_text" value={venueText} />
+        <input type="hidden" name="venue_address_text" value={venueAddress} />
+
+        {venueText && (
+          <p className="text-xs text-muted">
+            Will save as: <code className="text-ink">{venueText}</code>
+            {venueAddress && <> · <code className="text-ink">{venueAddress}</code></>}
+          </p>
         )}
-
-        <Input
-          name="venue_text"
-          label="Venue name"
-          value={venueText}
-          onChange={(e) => setVenueText(e.target.value)}
-          placeholder="e.g. DoubleTree by Hilton St. Louis Airport"
-        />
-        <Input
-          name="venue_address_text"
-          label="Venue address"
-          value={venueAddress}
-          onChange={(e) => setVenueAddress(e.target.value)}
-          placeholder="123 Main St, St. Louis, MO 63101"
-        />
       </Card>
 
       {/* ── Events ─────────────────────────────────────────────────── */}
@@ -378,4 +410,54 @@ export function AdminOrderForm({ clients, allOffices, pastVenues }: Props) {
               label="Privacy company website"
             />
           </div>
-        </Ca
+        </Card>
+      )}
+
+      {/* ── Notes ──────────────────────────────────────────────────── */}
+      <Card className="space-y-4">
+        <h2 className="text-sm font-medium">Notes</h2>
+        <Input name="order_instructions" label="Instructions (optional)" />
+        <Input name="notes" label="Internal notes (optional)" />
+      </Card>
+
+      <Button type="submit">Create order</Button>
+    </form>
+  )
+}
+
+function Select(props: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+  const { label, id, className, children, ...rest } = props
+  const inputId = id ?? `sel-${label.toLowerCase().replace(/\W+/g, '-')}`
+  const base =
+    'block w-full rounded border border-border bg-surface px-3 py-2 ' +
+    'text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
+  return (
+    <div className="space-y-1">
+      <label htmlFor={inputId} className="block text-xs font-medium text-ink">
+        {label}
+      </label>
+      <select id={inputId} className={`${base} ${className ?? ''}`} {...rest}>
+        {children}
+      </select>
+    </div>
+  )
+}
+
+function AdvisorNameInput({ office }: { office?: OfficeOption }) {
+  const suggestions = office?.advisor_names ?? []
+  return (
+    <div>
+      <Input
+        name="advisor_name"
+        label="Advisor name"
+        list="advisor-name-suggestions"
+        placeholder={suggestions[0] ?? 'e.g. John Smith'}
+      />
+      <datalist id="advisor-name-suggestions">
+        {suggestions.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
+    </div>
+  )
+}

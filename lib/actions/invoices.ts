@@ -297,4 +297,16 @@ export async function voidInvoice(form: FormData) {
     .eq('id', id)
   if (error) throw error
 
-  const user = await get
+  const user = await getAuthUser()
+  await recordAudit({
+    table_name: 'invoices',
+    row_id: id,
+    action: 'UPDATE',
+    source: 'admin-invoice-void',
+    actor_email: user?.email ?? null,
+    after: { status: 'Void', stripe_status: voided.status, stripe_invoice_id: stripeInvoiceId }
+  })
+
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${id}`)
+}

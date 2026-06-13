@@ -169,4 +169,16 @@ export async function getProofDownloadUrl(proofId: string): Promise<string> {
   const supabase = createClient()
   const { data: proof, error } = await supabase
     .from('proofs')
-    .select('storage_path')
+    .select('storage_path')
+    .eq('id', proofId)
+    .single()
+  if (error || !proof) throw error ?? new Error('Proof not found')
+
+  const { data: signed, error: signedErr } = await supabase
+    .storage
+    .from('proofs')
+    .createSignedUrl(proof.storage_path, 600)
+  if (signedErr || !signed) throw signedErr ?? new Error('Could not sign URL')
+
+  return signed.signedUrl
+}

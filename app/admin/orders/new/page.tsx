@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import { OrderFormSkeleton } from '@/components/orders/OrderFormSkeleton'
 import { adminListClients } from '@/lib/db/clients'
 import { adminListAllOffices } from '@/lib/db/offices'
-import { listDistinctVenuesFromOrders } from '@/lib/db/orders'
+import { loadVenueCascade } from '@/lib/db/venue-cascade'
 
 const AdminOrderForm = dynamic(
   () => import('@/components/admin/AdminOrderForm').then((m) => ({ default: m.AdminOrderForm })),
@@ -13,15 +13,15 @@ const AdminOrderForm = dynamic(
 /**
  * /admin/orders/new — admin-only order creation.
  *
- * Fetches all clients + all offices upfront so the client component can
- * filter offices by the selected client without any async round-trips.
- * Past venues drive the quick-fill dropdown in the Venue card.
+ * Fetches clients + offices + the venue cascade (venues, buildings, rooms)
+ * upfront so the client component can filter every dropdown in-memory
+ * without async round-trips when the operator changes a selection.
  */
 export default async function AdminNewOrderPage() {
-  const [clients, allOffices, pastVenues] = await Promise.all([
+  const [clients, allOffices, cascade] = await Promise.all([
     adminListClients(),
     adminListAllOffices(),
-    listDistinctVenuesFromOrders()
+    loadVenueCascade()
   ])
 
   return (
@@ -37,14 +37,16 @@ export default async function AdminNewOrderPage() {
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">New order</h1>
         <p className="text-sm text-muted">
-          Select the client first — offices and advisor suggestions update automatically.
+          Pick a client → office → venue. Buildings and rooms filter automatically.
         </p>
       </header>
 
       <AdminOrderForm
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         allOffices={allOffices}
-        pastVenues={pastVenues}
+        venues={cascade.venues}
+        buildings={cascade.buildings}
+        rooms={cascade.rooms}
       />
     </section>
   )

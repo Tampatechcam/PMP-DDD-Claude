@@ -450,4 +450,29 @@ export async function bulkDeleteOrders(
     .from('invoices')
     .select('order_id')
     .in('order_id', ids)
-  if (invErr) 
+  if (invErr) throw invErr
+  const blocked = new Set((invoiced ?? []).map((r) => (r as { order_id: string }).order_id))
+  const deletable = ids.filter((id) => !blocked.has(id))
+
+  let deleted = 0
+  if (deletable.length > 0) {
+    const { error } = await supabase.from('orders').delete().in('id', deletable)
+    if (error) throw error
+    deleted = deletable.length
+
+    const user = await getAuthUser()
+    await recordAudit(
+      deletable.map((id) => ({
+        table_name: 'orders',
+        row_id: id,
+        action: 'DELETE' as const,
+        source: 'admin-bulk-delete',
+        actor_email: user?.email ?? null
+      }))
+    )
+  }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  return { deleted, skipped: ids.length - deletable.length }
+}

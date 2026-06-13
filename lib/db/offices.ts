@@ -75,4 +75,20 @@ export async function adminListAllOffices() {
 }
 
 /**
- * Single office by uuid. Returns null when the order has no office_id
+ * Single office by uuid. Returns null when the order has no office_id
+ * (digital-only orders sometimes do) or when the row was removed.
+ */
+export async function getOfficeForOrderCard(
+  officeId: string
+): Promise<OfficeForOrderCard | null> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('offices')
+    .select(
+      'name, state, registration_phone, registration_url_direct, registration_url_digital, advisor_names, main_contact, secondary_contact, mailer_return_address'
+    )
+    .eq('id', officeId)
+    .maybeSingle()
+  if (error) throw error
+  return (data ?? null) as OfficeForOrderCard | null
+}
