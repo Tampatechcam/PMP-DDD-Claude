@@ -113,12 +113,6 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
 
         <AdvisorNameInput office={office} />
 
-        <Input
-          name="market"
-          label="Market"
-          placeholder='e.g. "South STL #7"'
-          required
-        />
         <Input name="charity" label="Charity / sponsor (optional)" />
         <Input name="job_name" label="Job name (optional)" />
       </Card>
@@ -196,7 +190,6 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
           <Input name="start_time" type="time" label="Start time" />
           <Input name="end_time" type="time" label="End time" />
         </div>
-        <Input name="time_notes" label="Time notes (optional)" />
       </Card>
 
       {needsDM && (
@@ -225,13 +218,6 @@ export function OrderForm({ isGroup, defaultOfficeId, offices, pastVenues }: Pro
               label="Send deadline"
             />
           </div>
-          <Input
-            name="sending_list_folder_url"
-            type="url"
-            label="Sending list folder URL"
-          />
-          <Input name="qr_code_link" type="url" label="QR code link (optional)" />
-
           <details>
             <summary className="cursor-pointer text-xs text-muted">
               Override mailer return address (otherwise uses your office default)

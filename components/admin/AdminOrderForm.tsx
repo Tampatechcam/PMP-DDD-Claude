@@ -206,11 +206,6 @@ export function AdminOrderForm({ clients, allOffices, venues, buildings, rooms }
         </Select>
 
         <Input
-          name="market"
-          label="Market"
-          placeholder='e.g. "South STL #7"'
-        />
-        <Input
           name="charity"
           label="Charity / sponsor"
           value={charity}
@@ -307,7 +302,6 @@ export function AdminOrderForm({ clients, allOffices, venues, buildings, rooms }
           <Input name="start_time" type="time" label="Start time" />
           <Input name="end_time" type="time" label="End time" />
         </div>
-        <Input name="time_notes" label="Time notes (optional)" />
       </Card>
 
       {/* ── Direct mail ────────────────────────────────────────────── */}
@@ -344,13 +338,6 @@ export function AdminOrderForm({ clients, allOffices, venues, buildings, rooms }
               label="Send deadline"
             />
           </div>
-          <Input
-            name="sending_list_folder_url"
-            type="url"
-            label="Sending list folder URL"
-          />
-          <Input name="qr_code_link" type="url" label="QR code link (optional)" />
-
           <details>
             <summary className="cursor-pointer text-xs text-muted">
               Override mailer return address

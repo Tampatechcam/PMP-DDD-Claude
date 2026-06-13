@@ -97,7 +97,6 @@ export async function createOrder(form: FormData) {
     needs_google_sheet,
     class_type: s(form, 'class_type'),
     job_name: s(form, 'job_name'),
-    market: s(form, 'market'),
     charity: s(form, 'charity'),
     venue_id: s(form, 'venue_id'),
     venue_text: s(form, 'venue_text'),
@@ -114,17 +113,12 @@ export async function createOrder(form: FormData) {
     event_4_room: s(form, 'event_4_room'),
     start_time: timeStr(form, 'start_time'),
     end_time: timeStr(form, 'end_time'),
-    time_notes: s(form, 'time_notes'),
     // DM block — only persist when the order is DM (avoid stray numbers
     // for digital-only orders).
     mailing_quantity: needs_direct_mail ? num(form, 'mailing_quantity') : null,
     mailer_type: needs_direct_mail ? s(form, 'mailer_type') : null,
     mailer_return_address_override: needs_direct_mail
       ? jsonAddress(form, 'return_address')
-      : null,
-    qr_code_link: needs_direct_mail ? s(form, 'qr_code_link') : null,
-    sending_list_folder_url: needs_direct_mail
-      ? s(form, 'sending_list_folder_url')
       : null,
     client_approval_deadline: needs_direct_mail
       ? dateStr(form, 'client_approval_deadline')
@@ -241,7 +235,6 @@ export async function createOrderAsAdmin(form: FormData) {
     needs_google_sheet,
     class_type: s(form, 'class_type'),
     job_name: s(form, 'job_name'),
-    market: s(form, 'market'),
     charity: s(form, 'charity'),
     venue_text: s(form, 'venue_text'),
     venue_address_text: s(form, 'venue_address_text'),
@@ -255,15 +248,10 @@ export async function createOrderAsAdmin(form: FormData) {
     event_4_room: s(form, 'event_4_room'),
     start_time: timeStr(form, 'start_time'),
     end_time: timeStr(form, 'end_time'),
-    time_notes: s(form, 'time_notes'),
     mailing_quantity: needs_direct_mail ? num(form, 'mailing_quantity') : null,
     mailer_type: needs_direct_mail ? s(form, 'mailer_type') : null,
     mailer_return_address_override: needs_direct_mail
       ? jsonAddress(form, 'return_address')
-      : null,
-    qr_code_link: needs_direct_mail ? s(form, 'qr_code_link') : null,
-    sending_list_folder_url: needs_direct_mail
-      ? s(form, 'sending_list_folder_url')
       : null,
     client_approval_deadline: needs_direct_mail
       ? dateStr(form, 'client_approval_deadline')
