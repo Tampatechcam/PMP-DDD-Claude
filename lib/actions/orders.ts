@@ -97,7 +97,6 @@ export async function createOrder(form: FormData) {
     needs_google_sheet,
     class_type: s(form, 'class_type'),
     job_name: s(form, 'job_name'),
-    market: s(form, 'market'),
     charity: s(form, 'charity'),
     venue_id: s(form, 'venue_id'),
     venue_text: s(form, 'venue_text'),
@@ -114,17 +113,12 @@ export async function createOrder(form: FormData) {
     event_4_room: s(form, 'event_4_room'),
     start_time: timeStr(form, 'start_time'),
     end_time: timeStr(form, 'end_time'),
-    time_notes: s(form, 'time_notes'),
     // DM block — only persist when the order is DM (avoid stray numbers
     // for digital-only orders).
     mailing_quantity: needs_direct_mail ? num(form, 'mailing_quantity') : null,
     mailer_type: needs_direct_mail ? s(form, 'mailer_type') : null,
     mailer_return_address_override: needs_direct_mail
       ? jsonAddress(form, 'return_address')
-      : null,
-    qr_code_link: needs_direct_mail ? s(form, 'qr_code_link') : null,
-    sending_list_folder_url: needs_direct_mail
-      ? s(form, 'sending_list_folder_url')
       : null,
     client_approval_deadline: needs_direct_mail
       ? dateStr(form, 'client_approval_deadline')
@@ -241,7 +235,6 @@ export async function createOrderAsAdmin(form: FormData) {
     needs_google_sheet,
     class_type: s(form, 'class_type'),
     job_name: s(form, 'job_name'),
-    market: s(form, 'market'),
     charity: s(form, 'charity'),
     venue_text: s(form, 'venue_text'),
     venue_address_text: s(form, 'venue_address_text'),
@@ -255,15 +248,10 @@ export async function createOrderAsAdmin(form: FormData) {
     event_4_room: s(form, 'event_4_room'),
     start_time: timeStr(form, 'start_time'),
     end_time: timeStr(form, 'end_time'),
-    time_notes: s(form, 'time_notes'),
     mailing_quantity: needs_direct_mail ? num(form, 'mailing_quantity') : null,
     mailer_type: needs_direct_mail ? s(form, 'mailer_type') : null,
     mailer_return_address_override: needs_direct_mail
       ? jsonAddress(form, 'return_address')
-      : null,
-    qr_code_link: needs_direct_mail ? s(form, 'qr_code_link') : null,
-    sending_list_folder_url: needs_direct_mail
-      ? s(form, 'sending_list_folder_url')
       : null,
     client_approval_deadline: needs_direct_mail
       ? dateStr(form, 'client_approval_deadline')
@@ -393,4 +381,86 @@ export async function updateOrderStatus(form: FormData) {
  * first. Redirects to the orders list on success.
  */
 export async function deleteOrder(form: FormData) {
-  await 
+  await requireAdmin()
+  const supabase = createClient()
+
+  const orderId = s(form, 'order_id')
+  if (!orderId) throw new Error('order_id is required.')
+
+  const { data: invoices, error: invErr } = await supabase
+    .from('invoices')
+    .select('id')
+    .eq('order_id', orderId)
+    .limit(1)
+  if (invErr) throw invErr
+  if (invoices && invoices.length > 0) {
+    throw new Error(
+      'This order has an invoice. Void or remove the invoice first, then delete the order.'
+    )
+  }
+
+  const { error } = await supabase.from('orders').delete().eq('id', orderId)
+  if (error) throw error
+
+  const user = await getAuthUser()
+  await recordAudit({
+    table_name: 'orders',
+    row_id: orderId,
+    action: 'DELETE',
+    source: 'admin-delete',
+    actor_email: user?.email ?? null
+  })
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  redirect('/admin/orders')
+}
+
+/**
+ * Bulk-delete orders (admin only). Orders that still have an invoice are skipped
+ * (not deleted) so billing records survive — returns how many were deleted vs
+ * skipped so the UI can report it. No redirect; the caller refreshes the list.
+ */
+export async function bulkDeleteOrders(
+  form: FormData
+): Promise<{ deleted: number; skipped: number }> {
+  await requireAdmin()
+  const supabase = createClient()
+
+  const ids = String(form.get('order_ids') ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  if (ids.length === 0) return { deleted: 0, skipped: 0 }
+
+  // Skip any order that has an invoice (don't destroy billing records).
+  const { data: invoiced, error: invErr } = await supabase
+    .from('invoices')
+    .select('order_id')
+    .in('order_id', ids)
+  if (invErr) throw invErr
+  const blocked = new Set((invoiced ?? []).map((r) => (r as { order_id: string }).order_id))
+  const deletable = ids.filter((id) => !blocked.has(id))
+
+  let deleted = 0
+  if (deletable.length > 0) {
+    const { error } = await supabase.from('orders').delete().in('id', deletable)
+    if (error) throw error
+    deleted = deletable.length
+
+    const user = await getAuthUser()
+    await recordAudit(
+      deletable.map((id) => ({
+        table_name: 'orders',
+        row_id: id,
+        action: 'DELETE' as const,
+        source: 'admin-bulk-delete',
+        actor_email: user?.email ?? null
+      }))
+    )
+  }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  return { deleted, skipped: ids.length - deletable.length }
+}
