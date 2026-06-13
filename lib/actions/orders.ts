@@ -407,3 +407,41 @@ export async function deleteOrder(form: FormData) {
   revalidatePath('/admin')
   redirect('/admin/orders')
 }
+
+/**
+ * Bulk-delete orders (admin only). Orders that still have an invoice are skipped
+ * (not deleted) so billing records survive — returns how many were deleted vs
+ * skipped so the UI can report it. No redirect; the caller refreshes the list.
+ */
+export async function bulkDeleteOrders(
+  form: FormData
+): Promise<{ deleted: number; skipped: number }> {
+  await requireAdmin()
+  const supabase = createClient()
+
+  const ids = String(form.get('order_ids') ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  if (ids.length === 0) return { deleted: 0, skipped: 0 }
+
+  // Skip any order that has an invoice (don't destroy billing records).
+  const { data: invoiced, error: invErr } = await supabase
+    .from('invoices')
+    .select('order_id')
+    .in('order_id', ids)
+  if (invErr) throw invErr
+  const blocked = new Set((invoiced ?? []).map((r) => (r as { order_id: string }).order_id))
+  const deletable = ids.filter((id) => !blocked.has(id))
+
+  let deleted = 0
+  if (deletable.length > 0) {
+    const { error } = await supabase.from('orders').delete().in('id', deletable)
+    if (error) throw error
+    deleted = deletable.length
+  }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin')
+  return { deleted, skipped: ids.length - deletable.length }
+}

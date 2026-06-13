@@ -154,6 +154,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         showClient
         clientNameById={clientNameById}
         preserveParams={preserve}
+        selectable
       />
     </section>
   )
